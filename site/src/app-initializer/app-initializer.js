@@ -45,6 +45,12 @@ export class AppInitializer extends BaseElement {
     // Make sure this component is still connected after loading the above. We don't want to start
     // making requests for group data if the user navigated away before the preload completed.
     if (this.isConnected) {
+      if (!group) {
+        window.history.pushState("", "", "/login");
+        loadingScreenManager.hideLoadingScreen();
+        return;
+      }
+
       if (group.groupName === "@EXAMPLE") {
         await this.loadExampleData();
       } else {

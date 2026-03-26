@@ -2,6 +2,7 @@ import { pubsub } from "./pubsub";
 import { utility } from "../utility";
 import { groupData } from "./group-data";
 import { exampleData } from "./example-data";
+import { captchaEnabledSchema, createGroupRequestSchema } from "../validators";
 
 class Api {
   constructor() {
@@ -117,8 +118,14 @@ class Api {
   }
 
   async createGroup(groupName, memberNames, captchaResponse) {
+    const requestPayload = createGroupRequestSchema.parse({
+      name: groupName,
+      member_names: memberNames,
+      captcha_response: captchaResponse,
+    });
+
     const response = await fetch(this.createGroupUrl, {
-      body: JSON.stringify({ name: groupName, member_names: memberNames, captcha_response: captchaResponse }),
+      body: JSON.stringify(requestPayload),
       headers: {
         "Content-Type": "application/json",
       },
@@ -196,7 +203,7 @@ class Api {
 
   async getCaptchaEnabled() {
     const response = await fetch(this.captchaEnabledUrl);
-    return response.json();
+    return captchaEnabledSchema.parse(await response.json());
   }
 }
 

@@ -1,6 +1,7 @@
 import { BaseElement } from "../base-element/base-element";
 import { storage } from "../data/storage";
 import { api } from "../data/api";
+import { loginFieldSchema, validationErrorFromSchema } from "../validators";
 
 export class LoginPage extends BaseElement {
   constructor() {
@@ -14,16 +15,10 @@ export class LoginPage extends BaseElement {
   connectedCallback() {
     super.connectedCallback();
     this.render();
-
-    const fieldRequiredValidator = (value) => {
-      if (value.length === 0) {
-        return "This field is required.";
-      }
-    };
     this.name = this.querySelector(".login__name");
-    this.name.validators = [fieldRequiredValidator];
+    this.name.validators = [(value) => validationErrorFromSchema(loginFieldSchema, value)];
     this.token = this.querySelector(".login__token");
-    this.token.validators = [fieldRequiredValidator];
+    this.token.validators = [(value) => validationErrorFromSchema(loginFieldSchema, value)];
     this.loginButton = this.querySelector(".login__button");
     this.error = this.querySelector(".login__error");
     this.eventListener(this.loginButton, "click", this.login.bind(this));

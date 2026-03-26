@@ -1,14 +1,19 @@
+import { storedGroupSchema } from "../validators";
+
 class Storage {
   storeGroup(groupName, groupToken) {
-    localStorage.setItem("groupName", groupName);
-    localStorage.setItem("groupToken", groupToken);
+    const group = storedGroupSchema.parse({ groupName, groupToken });
+    localStorage.setItem("groupName", group.groupName);
+    localStorage.setItem("groupToken", group.groupToken);
   }
 
   getGroup() {
-    return {
+    const parsedGroup = storedGroupSchema.safeParse({
       groupName: localStorage.getItem("groupName"),
       groupToken: localStorage.getItem("groupToken"),
-    };
+    });
+
+    return parsedGroup.success ? parsedGroup.data : null;
   }
 
   clearGroup() {

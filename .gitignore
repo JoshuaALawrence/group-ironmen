@@ -1,2 +1,25 @@
 .#*
+
+# Environment / secrets
 .env
+.env.*
+!.env.example
+
+# Private keys & credentials
+*.pem
+*.key
+*.p12
+*.pfx
+*.jks
+*.keystore
+id_rsa
+id_ed25519
+
+# OS artifacts
+.DS_Store
+Thumbs.db
+
+# Editor artifacts
+*.swp
+*.swo
+*~

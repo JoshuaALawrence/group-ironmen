@@ -1,0 +1,16 @@
+* @JoshuaALawrence
+
+# Frontend
+/site/ @JoshuaALawrence
+
+# Backend
+/server/ @JoshuaALawrence
+
+# Infrastructure & CI
+/.github/ @JoshuaALawrence
+/docker-compose.yml @JoshuaALawrence
+Makefile @JoshuaALawrence
+
+# Cache & Backup utilities
+/cache/ @JoshuaALawrence
+/backup/ @JoshuaALawrence

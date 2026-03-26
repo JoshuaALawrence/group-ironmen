@@ -1,22 +1,21 @@
-###############################################
-# Backend Image
-###############################################
-FROM rust:1.89 as builder
+FROM rust:1.89 AS builder
 WORKDIR /app
-COPY src ./src
-COPY Cargo.toml .
-COPY Cargo.lock .
-COPY collection_log_info.json .
+COPY . .
 RUN cargo build --release
 
 FROM debian:bookworm-slim
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends ca-certificates libssl3 curl && \
+    rm -rf /var/lib/apt/lists/* && \
+    groupadd -r appgroup && useradd -r -g appgroup -s /usr/sbin/nologin appuser
 WORKDIR /app
-RUN apt-get update
-RUN apt-get install -y openssl ca-certificates
-RUN rm -rf /var/lib/apt/lists/*
 COPY --from=builder /app/target/release/server ./
 COPY --from=builder /app/collection_log_info.json ./
 COPY ./docker-entrypoint.sh ./
-
+RUN chmod +x docker-entrypoint.sh
+USER appuser
+EXPOSE 8080
+HEALTHCHECK --interval=30s --timeout=5s --start-period=15s --retries=3 \
+  CMD curl -f http://localhost:8080/api/captcha-enabled || exit 1
 ENTRYPOINT ["/app/docker-entrypoint.sh"]
 CMD ["/app/server"]

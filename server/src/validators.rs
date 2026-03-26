@@ -5,6 +5,7 @@ use regex::Regex;
 #[cfg(test)]
 mod valid_name_tests {
     use super::*;
+    use crate::error::ApiError;
 
     #[test]
     fn valid_names() {
@@ -63,6 +64,32 @@ mod valid_name_tests {
                 "{} should have been an invalid name",
                 name
             );
+        }
+    }
+
+    #[test]
+    fn validate_member_prop_length_accepts_missing_values() {
+        let value: Option<Vec<i32>> = None;
+
+        assert!(validate_member_prop_length("skills", &value, 1, 3).is_ok());
+    }
+
+    #[test]
+    fn validate_member_prop_length_accepts_values_in_range() {
+        let value = Some(vec![1, 2, 3]);
+
+        assert!(validate_member_prop_length("skills", &value, 1, 3).is_ok());
+    }
+
+    #[test]
+    fn validate_member_prop_length_rejects_values_out_of_range() {
+        let value = Some(vec![1, 2, 3, 4]);
+
+        match validate_member_prop_length("skills", &value, 1, 3) {
+            Err(ApiError::GroupMemberValidationError(reason)) => {
+                assert!(reason.contains("skills length violated range constraint 1..=3 actual=4"));
+            }
+            other => panic!("expected validation error, got {:?}", other),
         }
     }
 }

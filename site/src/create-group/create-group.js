@@ -2,7 +2,7 @@
 import { BaseElement } from "../base-element/base-element";
 import { api } from "../data/api";
 import { storage } from "../data/storage";
-import { validCharacters, validLength } from "../validators";
+import { createGroupResponseSchema, groupNameSchema, validationErrorFromSchema } from "../validators";
 import { loadingScreenManager } from "../loading-screen/loading-screen-manager";
 
 export class CreateGroup extends BaseElement {
@@ -23,14 +23,7 @@ export class CreateGroup extends BaseElement {
 
       this.render();
       this.groupName = this.querySelector(".create-group__name");
-      this.groupName.validators = [
-        (value) => {
-          return !validCharacters(value) ? "Group name has some unsupported special characters." : null;
-        },
-        (value) => {
-          return !validLength(value) ? "Group name must be between 1 and 16 characters." : null;
-        },
-      ];
+      this.groupName.validators = [(value) => validationErrorFromSchema(groupNameSchema, value)];
       this.serverError = this.querySelector(".create-group__server-error");
 
       this.eventListener(this.querySelector("#group-member-count"), "change", this.handleMemberCountChange.bind(this));
@@ -136,7 +129,7 @@ export class CreateGroup extends BaseElement {
         const message = await result.text();
         this.serverError.innerHTML = `Error creating group: ${message}`;
       } else {
-        const createdGroup = await result.json();
+        const createdGroup = createGroupResponseSchema.parse(await result.json());
 
         storage.storeGroup(createdGroup.name, createdGroup.token);
         window.history.pushState("", "", "/setup-instructions");

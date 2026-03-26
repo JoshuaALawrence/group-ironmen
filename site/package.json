@@ -1,8 +1,9 @@
 {
   "name": "group-ironmen",
   "version": "1.0.0",
-  "description": "",
+  "description": "Group Ironmen Tracker",
   "devDependencies": {
+    "@vitest/coverage-v8": "^3.1.1",
     "axios": "^0.26.1",
     "chokidar": "^3.5.3",
     "clean-css": "^5.3.2",
@@ -15,8 +16,10 @@
     "glob": "^7.2.0",
     "husky": "^7.0.2",
     "jsdom": "^17.0.0",
+    "lint-staged": "^15.2.0",
     "prettier": "^2.4.1",
     "terser": "^5.16.5",
+    "vitest": "^3.1.1",
     "winston": "^3.3.3"
   },
   "scripts": {
@@ -30,9 +33,21 @@
     "format": "prettier --write src/",
     "format:check": "prettier --check src/",
     "fix": "npm run lint -- --fix",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
     "generate-component": "node scripts/generate-component.js",
     "prepare": "cd .. && husky install site/.husky",
-    "precommit": "npm run format:check && npm run lint"
+    "precommit": "lint-staged && npm run lint"
   },
-  "author": "Christopher Brown"
+  "lint-staged": {
+    "*.js": [
+      "prettier --write",
+      "eslint --fix"
+    ]
+  },
+  "author": "Christopher Brown",
+  "dependencies": {
+    "zod": "^4.3.6"
+  }
 }
