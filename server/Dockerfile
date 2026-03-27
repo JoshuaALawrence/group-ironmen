@@ -14,8 +14,8 @@ COPY --from=builder /app/collection_log_info.json ./
 COPY ./docker-entrypoint.sh ./
 RUN chmod +x docker-entrypoint.sh
 USER appuser
-EXPOSE 8080
+EXPOSE 8081
 HEALTHCHECK --interval=30s --timeout=5s --start-period=15s --retries=3 \
-  CMD curl -f http://localhost:8080/api/captcha-enabled || exit 1
+  CMD curl -f http://localhost:8081/api/captcha-enabled || exit 1
 ENTRYPOINT ["/app/docker-entrypoint.sh"]
 CMD ["/app/server"]

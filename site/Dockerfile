@@ -9,7 +9,6 @@ FROM node:20-alpine AS production
 RUN addgroup -g 1001 -S appgroup && \
     adduser -S appuser -u 1001 -G appgroup
 WORKDIR /app
-COPY --from=build /app/dist ./dist
 COPY --from=build /app/public ./public
 COPY --from=build /app/scripts ./scripts
 COPY --from=build /app/package*.json ./

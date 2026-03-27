@@ -4,3 +4,6 @@
 **/prettier*
 README.md
 .gitignore
+.git
+dist
+coverage

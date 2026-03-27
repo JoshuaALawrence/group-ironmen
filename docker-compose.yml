@@ -1,7 +1,7 @@
 version: "3.8"
 services:
   group-ironmen-tracker-frontend:
-    image: ${FRONTEND_IMAGE:-chrisleeeee/group-ironmen-tracker-frontend}:${IMAGE_TAG:-latest}
+    image: ${FRONTEND_IMAGE:-joshuaalawrence/osrs-group-ironman-tracker-frontend}:${IMAGE_TAG:-latest}
     environment:
       - HOST_URL=${HOST_URL}
     restart: always
@@ -25,7 +25,7 @@ services:
         max-file: "3"
 
   group-ironmen-tracker-backend:
-    image: ${BACKEND_IMAGE:-chrisleeeee/group-ironmen-tracker-backend}:${IMAGE_TAG:-latest}
+    image: ${BACKEND_IMAGE:-joshuaalawrence/osrs-group-ironman-tracker-backend}:${IMAGE_TAG:-latest}
     environment:
       - PG_USER=${PG_USER}
       - PG_PASSWORD=${PG_PASSWORD}

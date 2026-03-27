@@ -8,4 +8,6 @@ config.toml
 Dockerfile
 secret
 target
+target-*
+.git
 .dockerignore
