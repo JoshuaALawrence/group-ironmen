@@ -1,7 +1,8 @@
 use crate::crypto::token_hash;
 use crate::error::ApiError;
 use crate::models::{
-    AggregateSkillData, CreateGroup, GroupMember, GroupSkillData, MemberSkillData, SHARED_MEMBER,
+    AggregateSkillData, CreateGroup, GroupMember, GroupSkillData, MemberSkillData,
+    WiseOldManPlayerBossKc, SHARED_MEMBER,
 };
 use chrono::{DateTime, Utc};
 use deadpool_postgres::{Client, Transaction};
@@ -178,6 +179,65 @@ pub async fn rename_group_member(
     Ok(())
 }
 
+pub async fn get_cached_wise_old_man_player_boss_kc(
+    client: &Client,
+    cache_key: &str,
+) -> Result<Option<WiseOldManPlayerBossKc>, ApiError> {
+    let stmt = client
+        .prepare_cached(
+            r#"
+SELECT payload
+FROM groupironman.wise_old_man_player_boss_kc_cache
+WHERE player_name=$1 AND expires_at > NOW()
+"#,
+        )
+        .await?;
+
+    let row_opt = client.query_opt(&stmt, &[&cache_key]).await?;
+    let Some(row) = row_opt else {
+        return Ok(None);
+    };
+
+    let payload: serde_json::Value = row.try_get("payload")?;
+    match serde_json::from_value::<WiseOldManPlayerBossKc>(payload) {
+        Ok(cached_payload) => Ok(Some(cached_payload)),
+        Err(err) => {
+            log::error!(
+                "Failed to deserialize cached Wise Old Man boss KC payload for '{}': {}",
+                cache_key,
+                err
+            );
+            Ok(None)
+        }
+    }
+}
+
+pub async fn upsert_wise_old_man_player_boss_kc(
+    client: &Client,
+    cache_key: &str,
+    payload: &WiseOldManPlayerBossKc,
+    expires_at: &DateTime<Utc>,
+) -> Result<(), ApiError> {
+    let stmt = client
+        .prepare_cached(
+            r#"
+INSERT INTO groupironman.wise_old_man_player_boss_kc_cache (player_name, payload, fetched_at, expires_at)
+VALUES ($1, $2, NOW(), $3)
+ON CONFLICT (player_name)
+DO UPDATE SET
+  payload=EXCLUDED.payload,
+  fetched_at=EXCLUDED.fetched_at,
+  expires_at=EXCLUDED.expires_at
+"#,
+        )
+        .await?;
+    let payload_json = serde_json::to_value(payload)?;
+    client
+        .execute(&stmt, &[&cache_key, &payload_json, expires_at])
+        .await?;
+    Ok(())
+}
+
 pub async fn is_member_in_group(
     client: &Client,
     group_id: i64,
@@ -286,6 +346,14 @@ FROM groupironman.members WHERE group_id=$2
             deposited: Option::None,
             collection_log_v2: row.try_get("collection_log").ok()
         };
+        log::info!(
+            "Loaded group data group_id={} member={} from_time={} last_updated={:?} fields={:?}",
+            group_id,
+            group_member.name,
+            timestamp,
+            group_member.last_updated,
+            group_member.present_fields()
+        );
         result.push(group_member);
     }
 
@@ -726,6 +794,35 @@ ADD COLUMN IF NOT EXISTS collection_log INTEGER[]
             )
             .await?;
         commit_migration(&transaction, "add_collection_log_member_column").await?;
+        transaction.commit().await?;
+    }
+
+    if !has_migration_run(client, "add_wise_old_man_player_boss_kc_cache").await? {
+        let transaction = client.transaction().await?;
+        transaction
+            .execute(
+                r#"
+CREATE TABLE IF NOT EXISTS groupironman.wise_old_man_player_boss_kc_cache (
+  player_name TEXT PRIMARY KEY,
+  payload JSONB NOT NULL,
+  fetched_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  expires_at TIMESTAMPTZ NOT NULL
+)
+"#,
+                &[],
+            )
+            .await?;
+        transaction
+            .execute(
+                r#"
+CREATE INDEX IF NOT EXISTS wise_old_man_player_boss_kc_cache_expires_at_idx
+ON groupironman.wise_old_man_player_boss_kc_cache (expires_at)
+"#,
+                &[],
+            )
+            .await?;
+
+        commit_migration(&transaction, "add_wise_old_man_player_boss_kc_cache").await?;
         transaction.commit().await?;
     }
 

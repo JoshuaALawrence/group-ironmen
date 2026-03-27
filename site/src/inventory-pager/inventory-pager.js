@@ -21,15 +21,28 @@ export class InventoryPager extends BaseElement {
     this.searchElement = document.querySelector(".items-page__search");
     this.showIndividualPricesInput = document.querySelector("#items-page__individual-items");
     this.showIndividualPrices = this.showIndividualPricesInput.checked;
+    this.showGePriceInput = document.querySelector("#items-page__show-ge-price");
+    this.showGePriceInput.checked = localStorage.getItem("showGePrice") !== "false";
+    this.showGePrice = this.showGePriceInput.checked;
+    this.showAlchPriceInput = document.querySelector("#items-page__show-alch-price");
+    this.showAlchPriceInput.checked = localStorage.getItem("showAlchPrice") !== "false";
+    this.showAlchPrice = this.showAlchPriceInput.checked;
+    this.hideUntradeablesInput = document.querySelector("#items-page__hide-untradeables");
+    this.hideUntradeablesInput.checked = localStorage.getItem("hideUntradeables") === "true";
+    this.hideUntradeables = this.hideUntradeablesInput.checked;
     this.playerFilter = document.querySelector(".items-page__player-filter");
     this.eventListener(this.searchElement, "input", this.handleSearch.bind(this));
     this.eventListener(this.sortTarget, "change", this.handleSortChange.bind(this));
     this.eventListener(this, "click", this.handleClick.bind(this));
     this.eventListener(this.showIndividualPricesInput, "change", this.handleIndividualPricesChange.bind(this));
+    this.eventListener(this.showGePriceInput, "change", this.handleGePriceToggle.bind(this));
+    this.eventListener(this.showAlchPriceInput, "change", this.handleAlchPriceToggle.bind(this));
+    this.eventListener(this.hideUntradeablesInput, "change", this.handleHideUntradeablesToggle.bind(this));
     this.eventListener(this.playerFilter, "change", this.handlePlayerFilterChange.bind(this));
     this.subscribe("items-updated", this.handleUpdatedItems.bind(this));
 
     this.searchElement.searchInput.value = groupData.textFilter;
+    groupData.applyTradeabilityFilter(this.hideUntradeables);
   }
 
   /* eslint-disable no-unused-vars */
@@ -60,6 +73,28 @@ export class InventoryPager extends BaseElement {
 
   handleIndividualPricesChange() {
     this.showIndividualPrices = this.showIndividualPricesInput.checked;
+    this.maybeRenderPage(this.currentPage, true);
+    this.render();
+  }
+
+  handleGePriceToggle() {
+    this.showGePrice = this.showGePriceInput.checked;
+    localStorage.setItem("showGePrice", this.showGePrice);
+    this.maybeRenderPage(this.currentPage, true);
+    this.render();
+  }
+
+  handleAlchPriceToggle() {
+    this.showAlchPrice = this.showAlchPriceInput.checked;
+    localStorage.setItem("showAlchPrice", this.showAlchPrice);
+    this.maybeRenderPage(this.currentPage, true);
+    this.render();
+  }
+
+  handleHideUntradeablesToggle() {
+    this.hideUntradeables = this.hideUntradeablesInput.checked;
+    localStorage.setItem("hideUntradeables", this.hideUntradeables);
+    groupData.applyTradeabilityFilter(this.hideUntradeables);
     this.maybeRenderPage(this.currentPage, true);
     this.render();
   }
@@ -133,7 +168,7 @@ export class InventoryPager extends BaseElement {
   maybeRenderPage(pageNumber, forceRender = false) {
     const previousPageItems = this.pageItems;
 
-    const items = Object.values(groupData.groupItems).filter((item) => item.visible);
+    const items = groupData.getDisplayItems();
     this.numberOfPages = Math.floor(items.length / this.pageLimit);
     this.numberOfItems = items.length;
     if (items.length - this.pageLimit * this.numberOfPages > 0) this.numberOfPages++;
@@ -179,10 +214,14 @@ export class InventoryPager extends BaseElement {
   renderPage(page) {
     let items = "";
     for (const item of page) {
+      const groupedAttr = item.isGrouped ? `grouped-ids="${item.variantIds.join(",")}"` : "";
       items += `
 <inventory-item item-id="${item.id}"
+                ${groupedAttr}
                 class="rsborder rsbackground"
                 ${this.showIndividualPrices ? "individual-prices" : ""}
+                ${!this.showGePrice ? "hide-ge-price" : ""}
+                ${!this.showAlchPrice ? "hide-alch-price" : ""}
                 ${groupData.playerFilter !== "@ALL" ? `player-filter="${groupData.playerFilter}"` : ""}>
 </inventory-item>
 `;

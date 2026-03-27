@@ -1,0 +1,55 @@
+<div class="banked-xp">
+  <div class="banked-xp__sidebar">
+    <h3 class="banked-xp__title rstext">Banked Experience</h3>
+
+    <div class="banked-xp__skills">
+      ${this.renderSkillTabs()}
+    </div>
+
+    <div class="banked-xp__modifiers">
+      <h4 class="banked-xp__section-title">Modifiers</h4>
+      ${this.renderModifiers()}
+    </div>
+
+    <div class="banked-xp__options">
+      <h4 class="banked-xp__section-title">Options</h4>
+      <div class="banked-xp__option">
+        <input type="checkbox" id="banked-xp__cascade" ${this.cascadeEnabled ? 'checked' : ''} />
+        <label for="banked-xp__cascade">Cascade linked items</label>
+      </div>
+      <div class="banked-xp__option">
+        <input type="checkbox" id="banked-xp__limit-level" ${this.limitToLevel ? 'checked' : ''} />
+        <label for="banked-xp__limit-level">Limit to current level</label>
+      </div>
+      <div class="banked-xp__option banked-xp__xp-multiplier">
+        <label for="banked-xp__multiplier">XP Multiplier:</label>
+        <input type="number" id="banked-xp__multiplier" value="${this.xpMultiplier}" min="1" max="100" step="1" />
+      </div>
+    </div>
+
+    <div class="banked-xp__secondaries-section">
+      <h4 class="banked-xp__section-title">Secondaries Needed</h4>
+      <div class="banked-xp__secondaries-list">
+        ${this.renderSecondaries()}
+      </div>
+    </div>
+  </div>
+
+  <div class="banked-xp__main">
+    <div class="banked-xp__xp-summary">
+      ${this.renderXpSummary()}
+    </div>
+
+    <div class="banked-xp__items-header">
+      <span class="banked-xp__items-count">${this.bankedItems.filter(bi => !bi.ignored).length} items</span>
+      <div class="banked-xp__items-actions">
+        <button class="men-button small" id="banked-xp__ignore-all">Ignore All</button>
+        <button class="men-button small" id="banked-xp__unignore-all">Include All</button>
+      </div>
+    </div>
+
+    <div class="banked-xp__items-grid">
+      ${this.renderItems()}
+    </div>
+  </div>
+</div>

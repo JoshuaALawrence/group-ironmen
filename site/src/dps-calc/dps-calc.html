@@ -1,0 +1,455 @@
+<div class="dps-calc">
+  <div class="dps-calc__content">
+    <!-- Column 1: Player setup -->
+    <div class="dps-calc__player-section">
+      <!-- Player header with member loader -->
+      <div class="dps-calc__player-header">
+        <div class="dps-calc__member-row">
+          <select class="dps-calc__select dps-calc__member-select"></select>
+          <button class="dps-calc__load-btn men-button" type="button">Load</button>
+        </div>
+      </div>
+
+      <!-- Loadout tabs -->
+      <div class="dps-calc__loadout-bar">
+        <div class="dps-calc__loadout-tabs"></div>
+        <button class="dps-calc__loadout-add" type="button" title="Add loadout">+</button>
+        <button class="dps-calc__loadout-export" type="button" title="Export loadouts">&#x2193;</button>
+        <button class="dps-calc__loadout-import" type="button" title="Import loadouts">&#x2191;</button>
+        <input type="file" class="dps-calc__loadout-file" accept=".json" style="display:none" />
+        <button class="dps-calc__loadout-clear" type="button" title="Reset all loadouts">&#x2715;</button>
+      </div>
+
+      <div class="dps-calc__player-card">
+        <!-- Tab bar -->
+        <div class="dps-calc__tab-bar">
+          <button class="dps-calc__tab-btn" data-tab="combat" type="button" title="Combat Style">
+            <img loading="lazy" src="/dps-calc/tabs/combat.png" class="dps-calc__tab-icon" />
+          </button>
+          <button class="dps-calc__tab-btn" data-tab="skills" type="button" title="Skills &amp; Boosts">
+            <img loading="lazy" src="/dps-calc/tabs/skills.png" class="dps-calc__tab-icon" />
+          </button>
+          <button class="dps-calc__tab-btn dps-calc__tab-btn--active" data-tab="equipment" type="button" title="Equipment">
+            <img loading="lazy" src="/dps-calc/tabs/equipment.png" class="dps-calc__tab-icon" />
+          </button>
+          <button class="dps-calc__tab-btn" data-tab="prayer" type="button" title="Prayer">
+            <img loading="lazy" src="/dps-calc/tabs/prayer.png" class="dps-calc__tab-icon" />
+          </button>
+          <button class="dps-calc__tab-btn" data-tab="options" type="button" title="Extra Options">
+            <img loading="lazy" src="/dps-calc/tabs/options.webp" class="dps-calc__tab-icon" />
+          </button>
+        </div>
+
+        <div class="dps-calc__player-summary">
+          <div>
+            <div class="dps-calc__player-summary-title">Manual Loadout</div>
+            <div class="dps-calc__player-summary-subtitle">Current setup</div>
+          </div>
+          <div class="dps-calc__player-summary-level">Lvl 126</div>
+        </div>
+
+        <!-- Tab: Equipment -->
+        <div class="dps-calc__tab-content dps-calc__tab-content--active" data-tab-content="equipment">
+          <div class="dps-calc__equipment">
+            <div class="dps-calc__equip-slot" data-slot="head">
+              <img loading="lazy" src="/ui/156-0.png" class="dps-calc__slot-placeholder" />
+            </div>
+            <div class="dps-calc__equip-slot" data-slot="cape">
+              <img loading="lazy" src="/ui/157-0.png" class="dps-calc__slot-placeholder" />
+            </div>
+            <div class="dps-calc__equip-slot" data-slot="neck">
+              <img loading="lazy" src="/ui/158-0.png" class="dps-calc__slot-placeholder" />
+            </div>
+            <div class="dps-calc__equip-slot" data-slot="ammo">
+              <img loading="lazy" src="/ui/166-0.png" class="dps-calc__slot-placeholder" />
+            </div>
+            <div class="dps-calc__equip-slot" data-slot="weapon">
+              <img loading="lazy" src="/ui/159-0.png" class="dps-calc__slot-placeholder" />
+            </div>
+            <div class="dps-calc__equip-slot" data-slot="body">
+              <img loading="lazy" src="/ui/161-0.png" class="dps-calc__slot-placeholder" />
+            </div>
+            <div class="dps-calc__equip-slot" data-slot="shield">
+              <img loading="lazy" src="/ui/162-0.png" class="dps-calc__slot-placeholder" />
+            </div>
+            <div class="dps-calc__equip-slot" data-slot="legs">
+              <img loading="lazy" src="/ui/163-0.png" class="dps-calc__slot-placeholder" />
+            </div>
+            <div class="dps-calc__equip-slot" data-slot="hands">
+              <img loading="lazy" src="/ui/164-0.png" class="dps-calc__slot-placeholder" />
+            </div>
+            <div class="dps-calc__equip-slot" data-slot="feet">
+              <img loading="lazy" src="/ui/165-0.png" class="dps-calc__slot-placeholder" />
+            </div>
+            <div class="dps-calc__equip-slot" data-slot="ring">
+              <img loading="lazy" src="/ui/160-0.png" class="dps-calc__slot-placeholder" />
+            </div>
+          </div>
+
+          <!-- Preset & Equipment search -->
+          <div class="dps-calc__equip-search-row">
+            <select class="dps-calc__preset-select">
+              <option value="">Presets</option>
+              <option value="max_melee">Max Melee</option>
+              <option value="max_ranged">Max Ranged</option>
+              <option value="max_mage">Max Mage</option>
+              <option value="mid_melee">Mid Level Melee</option>
+              <option value="mid_ranged">Mid Level Ranged</option>
+              <option value="mid_mage">Mid Level Mage</option>
+              <option value="bowfa">Bowfa + Crystal</option>
+              <option value="blood_moon">Blood Moon</option>
+              <option value="dharoks">Dharok's</option>
+              <option value="veracs">Verac's</option>
+              <option value="void_melee">Void Melee</option>
+              <option value="void_ranged">Void Ranged</option>
+              <option value="void_mage">Void Mage</option>
+              <option value="tank">Tank</option>
+            </select>
+            <input type="text" class="dps-calc__equip-search-inline" placeholder="Search for equipment..." />
+          </div>
+
+          <!-- Bonuses (3 columns: Offensive, Defensive, Other) -->
+          <div class="dps-calc__bonus-section-wrap">
+            <label class="dps-calc__label">Bonuses</label>
+            <div class="dps-calc__bonus-grid">
+              <div class="dps-calc__bonus-section">
+                <span class="dps-calc__bonus-header">Offensive</span>
+                <div class="dps-calc__bonus-row"><img loading="lazy" src="/dps-calc/bonuses/dagger.png" class="dps-calc__bonus-icon" /><span class="dps-calc__bonus-val" data-bonus="off-stab">+0</span></div>
+                <div class="dps-calc__bonus-row"><img loading="lazy" src="/dps-calc/bonuses/scimitar.png" class="dps-calc__bonus-icon" /><span class="dps-calc__bonus-val" data-bonus="off-slash">+0</span></div>
+                <div class="dps-calc__bonus-row"><img loading="lazy" src="/dps-calc/bonuses/warhammer.png" class="dps-calc__bonus-icon" /><span class="dps-calc__bonus-val" data-bonus="off-crush">+0</span></div>
+                <div class="dps-calc__bonus-row"><img loading="lazy" src="/dps-calc/bonuses/magic.png" class="dps-calc__bonus-icon" /><span class="dps-calc__bonus-val" data-bonus="off-magic">+0</span></div>
+                <div class="dps-calc__bonus-row"><img loading="lazy" src="/dps-calc/bonuses/ranged.png" class="dps-calc__bonus-icon" /><span class="dps-calc__bonus-val" data-bonus="off-ranged">+0</span></div>
+              </div>
+              <div class="dps-calc__bonus-section">
+                <span class="dps-calc__bonus-header">Defensive</span>
+                <div class="dps-calc__bonus-row"><img loading="lazy" src="/dps-calc/bonuses/dagger.png" class="dps-calc__bonus-icon" /><span class="dps-calc__bonus-val" data-bonus="def-stab">+0</span></div>
+                <div class="dps-calc__bonus-row"><img loading="lazy" src="/dps-calc/bonuses/scimitar.png" class="dps-calc__bonus-icon" /><span class="dps-calc__bonus-val" data-bonus="def-slash">+0</span></div>
+                <div class="dps-calc__bonus-row"><img loading="lazy" src="/dps-calc/bonuses/warhammer.png" class="dps-calc__bonus-icon" /><span class="dps-calc__bonus-val" data-bonus="def-crush">+0</span></div>
+                <div class="dps-calc__bonus-row"><img loading="lazy" src="/dps-calc/bonuses/magic.png" class="dps-calc__bonus-icon" /><span class="dps-calc__bonus-val" data-bonus="def-magic">+0</span></div>
+                <div class="dps-calc__bonus-row"><img loading="lazy" src="/dps-calc/bonuses/ranged.png" class="dps-calc__bonus-icon" /><span class="dps-calc__bonus-val" data-bonus="def-ranged">+0</span></div>
+              </div>
+              <div class="dps-calc__bonus-section">
+                <span class="dps-calc__bonus-header">Other</span>
+                <div class="dps-calc__bonus-row"><img loading="lazy" src="/dps-calc/bonuses/strength.png" class="dps-calc__bonus-icon" /><span class="dps-calc__bonus-val" data-bonus="str">+0</span></div>
+                <div class="dps-calc__bonus-row"><img loading="lazy" src="/dps-calc/bonuses/ranged_strength.png" class="dps-calc__bonus-icon" /><span class="dps-calc__bonus-val" data-bonus="ranged_str">+0</span></div>
+                <div class="dps-calc__bonus-row"><img loading="lazy" src="/dps-calc/bonuses/magic_strength.png" class="dps-calc__bonus-icon" /><span class="dps-calc__bonus-val" data-bonus="magic_str">+0</span></div>
+                <div class="dps-calc__bonus-row"><img loading="lazy" src="/dps-calc/tabs/prayer.png" class="dps-calc__bonus-icon" /><span class="dps-calc__bonus-val" data-bonus="prayer">+0</span></div>
+                <div class="dps-calc__bonus-row"><img loading="lazy" src="/dps-calc/bonuses/attack_speed.png" class="dps-calc__bonus-icon" /><span class="dps-calc__bonus-val" data-bonus="speed">+0</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tab: Skills & Boosts -->
+        <div class="dps-calc__tab-content" data-tab-content="skills">
+          <div class="dps-calc__stats-grid">
+            <div class="dps-calc__stat-row">
+              <img loading="lazy" src="/ui/197-0.png" class="dps-calc__stat-icon" />
+              <span class="dps-calc__stat-name">Attack</span>
+              <div class="dps-calc__stat-control">
+                <input type="number" class="dps-calc__stat-input" data-skill="atk" min="1" max="99" value="99" />
+              </div>
+            </div>
+            <div class="dps-calc__stat-row">
+              <img loading="lazy" src="/ui/198-0.png" class="dps-calc__stat-icon" />
+              <span class="dps-calc__stat-name">Strength</span>
+              <div class="dps-calc__stat-control">
+                <input type="number" class="dps-calc__stat-input" data-skill="str" min="1" max="99" value="99" />
+              </div>
+            </div>
+            <div class="dps-calc__stat-row">
+              <img loading="lazy" src="/ui/199-0.png" class="dps-calc__stat-icon" />
+              <span class="dps-calc__stat-name">Defence</span>
+              <div class="dps-calc__stat-control">
+                <input type="number" class="dps-calc__stat-input" data-skill="def" min="1" max="99" value="99" />
+              </div>
+            </div>
+            <div class="dps-calc__stat-row">
+              <img loading="lazy" src="/ui/203-0.png" class="dps-calc__stat-icon" />
+              <span class="dps-calc__stat-name">Hitpoints</span>
+              <div class="dps-calc__stat-control">
+                <input type="number" class="dps-calc__stat-input" data-skill="hp" min="1" max="99" value="99" />
+              </div>
+            </div>
+            <div class="dps-calc__stat-row">
+              <img loading="lazy" src="/ui/200-0.png" class="dps-calc__stat-icon" />
+              <span class="dps-calc__stat-name">Ranged</span>
+              <div class="dps-calc__stat-control">
+                <input type="number" class="dps-calc__stat-input" data-skill="ranged" min="1" max="99" value="99" />
+              </div>
+            </div>
+            <div class="dps-calc__stat-row">
+              <img loading="lazy" src="/ui/202-0.png" class="dps-calc__stat-icon" />
+              <span class="dps-calc__stat-name">Magic</span>
+              <div class="dps-calc__stat-control">
+                <input type="number" class="dps-calc__stat-input" data-skill="magic" min="1" max="99" value="99" />
+              </div>
+            </div>
+            <div class="dps-calc__stat-row">
+              <img loading="lazy" src="/ui/201-0.png" class="dps-calc__stat-icon" />
+              <span class="dps-calc__stat-name">Prayer</span>
+              <div class="dps-calc__stat-control">
+                <input type="number" class="dps-calc__stat-input" data-skill="prayer" min="1" max="99" value="99" />
+              </div>
+            </div>
+          </div>
+
+          <label class="dps-calc__label" style="margin-top:12px">Boosts</label>
+          <div class="dps-calc__boosts-list">
+            <!-- Populated by JS -->
+          </div>
+        </div>
+
+        <!-- Tab: Combat Style -->
+        <div class="dps-calc__tab-content" data-tab-content="combat">
+          <div class="dps-calc__style-list"></div>
+        </div>
+
+        <!-- Tab: Prayer -->
+        <div class="dps-calc__tab-content" data-tab-content="prayer">
+          <div class="dps-calc__prayer-grid"></div>
+        </div>
+
+        <!-- Tab: Extra Options -->
+        <div class="dps-calc__tab-content" data-tab-content="options">
+          <div class="dps-calc__extra-options">
+            <label class="dps-calc__toggle-row">
+              <div class="dps-calc__toggle-switch">
+                <input type="checkbox" class="dps-calc__slayer-checkbox" />
+                <span class="dps-calc__toggle-slider"></span>
+              </div>
+              <span class="dps-calc__option-label"><img loading="lazy" src="/dps-calc/misc/slayer.webp" class="dps-calc__option-icon" />On Slayer task</span>
+            </label>
+            <label class="dps-calc__toggle-row">
+              <div class="dps-calc__toggle-switch">
+                <input type="checkbox" class="dps-calc__wilderness-checkbox" />
+                <span class="dps-calc__toggle-slider"></span>
+              </div>
+              <span class="dps-calc__option-label"><img loading="lazy" src="/dps-calc/misc/skull.webp" class="dps-calc__option-icon" />In the Wilderness</span>
+            </label>
+            <label class="dps-calc__toggle-row">
+              <div class="dps-calc__toggle-switch">
+                <input type="checkbox" class="dps-calc__forinthry-checkbox" />
+                <span class="dps-calc__toggle-slider"></span>
+              </div>
+              <span class="dps-calc__option-label"><img loading="lazy" src="/dps-calc/misc/forinthry_surge.webp" class="dps-calc__option-icon" />Forinthry Surge</span>
+            </label>
+            <label class="dps-calc__toggle-row">
+              <div class="dps-calc__toggle-switch">
+                <input type="checkbox" class="dps-calc__kandarin-checkbox" />
+                <span class="dps-calc__toggle-slider"></span>
+              </div>
+              <span class="dps-calc__option-label"><img loading="lazy" src="/dps-calc/misc/diary.png" class="dps-calc__option-icon" />Kandarin Hard Diary</span>
+            </label>
+
+            <div class="dps-calc__num-option">
+              <input type="number" class="dps-calc__num-option-input" data-buff="soulreaperStacks" min="0" max="5" value="0" />
+              <span class="dps-calc__option-label"><img loading="lazy" src="/dps-calc/misc/soulreaper_axe.png" class="dps-calc__option-icon" />Soul stacks</span>
+            </div>
+            <div class="dps-calc__num-option">
+              <input type="number" class="dps-calc__num-option-input" data-buff="baAttackerLevel" min="0" max="5" value="0" />
+              <span class="dps-calc__option-label"><img loading="lazy" src="/dps-calc/misc/ba_attacker.webp" class="dps-calc__option-icon" />BA Attacker level</span>
+            </div>
+            <div class="dps-calc__num-option">
+              <input type="number" class="dps-calc__num-option-input" data-buff="chinchompaDistance" min="1" max="10" value="4" />
+              <span class="dps-calc__option-label"><img loading="lazy" src="/dps-calc/misc/chinchompa.png" class="dps-calc__option-icon" />Chinchompa distance (tiles)</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Equipment search overlay -->
+      <div class="dps-calc__equip-search" style="display:none">
+        <div class="dps-calc__equip-search-header">
+          <span class="dps-calc__equip-search-title">Select item</span>
+          <button class="dps-calc__equip-search-close" type="button">&times;</button>
+        </div>
+        <input type="text" class="dps-calc__equip-search-input" placeholder="Search equipment..." />
+        <div class="dps-calc__equip-search-results"></div>
+      </div>
+    </div>
+
+    <!-- Column 2: Monster -->
+    <div class="dps-calc__monster-section">
+      <div class="dps-calc__monster-card">
+        <div class="dps-calc__monster-header">
+          <div class="dps-calc__monster-name-display">
+            <span class="dps-calc__monster-name-text">Monster</span>
+          </div>
+        </div>
+        <div class="dps-calc__monster-body">
+          <input type="text" class="dps-calc__monster-search" placeholder="Search for monster..." />
+          <div class="dps-calc__monster-results" style="display:none"></div>
+
+          <div class="dps-calc__monster-info" style="display:none">
+            <!-- Monster stats table: Skills | Offensive | Defensive -->
+            <div class="dps-calc__monster-table">
+              <div class="dps-calc__monster-col">
+                <span class="dps-calc__monster-col-header">Skills</span>
+                <div class="dps-calc__monster-stat-row"><img loading="lazy" src="/ui/203-0.png" class="dps-calc__stat-icon-sm" /><span class="dps-calc__mstat" data-mstat="hp">—</span></div>
+                <div class="dps-calc__monster-stat-row"><img loading="lazy" src="/ui/197-0.png" class="dps-calc__stat-icon-sm" /><span class="dps-calc__mstat" data-mstat="atk">—</span></div>
+                <div class="dps-calc__monster-stat-row"><img loading="lazy" src="/ui/198-0.png" class="dps-calc__stat-icon-sm" /><span class="dps-calc__mstat" data-mstat="str">—</span></div>
+                <div class="dps-calc__monster-stat-row"><img loading="lazy" src="/ui/199-0.png" class="dps-calc__stat-icon-sm" /><span class="dps-calc__mstat" data-mstat="def">—</span></div>
+                <div class="dps-calc__monster-stat-row"><img loading="lazy" src="/ui/202-0.png" class="dps-calc__stat-icon-sm" /><span class="dps-calc__mstat" data-mstat="magic">—</span></div>
+                <div class="dps-calc__monster-stat-row"><img loading="lazy" src="/ui/200-0.png" class="dps-calc__stat-icon-sm" /><span class="dps-calc__mstat" data-mstat="ranged">—</span></div>
+                <div class="dps-calc__monster-stat-row"><img loading="lazy" src="/ui/201-0.png" class="dps-calc__stat-icon-sm" /><span class="dps-calc__mstat" data-mstat="prayer">—</span></div>
+              </div>
+              <div class="dps-calc__monster-col">
+                <span class="dps-calc__monster-col-header">Offensive</span>
+                <div class="dps-calc__monster-stat-row"><img loading="lazy" src="/dps-calc/bonuses/attack.png" class="dps-calc__stat-icon-sm" /><span class="dps-calc__mstat" data-mstat="off-atk">—</span></div>
+                <div class="dps-calc__monster-stat-row"><img loading="lazy" src="/dps-calc/bonuses/strength.png" class="dps-calc__stat-icon-sm" /><span class="dps-calc__mstat" data-mstat="off-str">—</span></div>
+                <div class="dps-calc__monster-stat-row"><img loading="lazy" src="/dps-calc/bonuses/magic.png" class="dps-calc__stat-icon-sm" /><span class="dps-calc__mstat" data-mstat="off-magic">—</span></div>
+                <div class="dps-calc__monster-stat-row"><img loading="lazy" src="/dps-calc/bonuses/magic_strength.png" class="dps-calc__stat-icon-sm" /><span class="dps-calc__mstat" data-mstat="off-mstr">—</span></div>
+                <div class="dps-calc__monster-stat-row"><img loading="lazy" src="/dps-calc/bonuses/ranged.png" class="dps-calc__stat-icon-sm" /><span class="dps-calc__mstat" data-mstat="off-range">—</span></div>
+                <div class="dps-calc__monster-stat-row"><img loading="lazy" src="/dps-calc/bonuses/ranged_strength.png" class="dps-calc__stat-icon-sm" /><span class="dps-calc__mstat" data-mstat="off-rstr">—</span></div>
+              </div>
+              <div class="dps-calc__monster-col">
+                <span class="dps-calc__monster-col-header">Defensive</span>
+                <div class="dps-calc__monster-stat-row"><img loading="lazy" src="/dps-calc/bonuses/dagger.png" class="dps-calc__stat-icon-sm" /><span class="dps-calc__mstat" data-mstat="def-stab">—</span></div>
+                <div class="dps-calc__monster-stat-row"><img loading="lazy" src="/dps-calc/bonuses/scimitar.png" class="dps-calc__stat-icon-sm" /><span class="dps-calc__mstat" data-mstat="def-slash">—</span></div>
+                <div class="dps-calc__monster-stat-row"><img loading="lazy" src="/dps-calc/bonuses/warhammer.png" class="dps-calc__stat-icon-sm" /><span class="dps-calc__mstat" data-mstat="def-crush">—</span></div>
+                <div class="dps-calc__monster-stat-row"><img loading="lazy" src="/dps-calc/bonuses/magic.png" class="dps-calc__stat-icon-sm" /><span class="dps-calc__mstat" data-mstat="def-magic">—</span></div>
+                <div class="dps-calc__monster-stat-row"><img loading="lazy" src="/dps-calc/bonuses/ranged_light.webp" class="dps-calc__stat-icon-sm" /><span class="dps-calc__mstat" data-mstat="def-light">—</span></div>
+                <div class="dps-calc__monster-stat-row"><img loading="lazy" src="/dps-calc/bonuses/ranged_standard.webp" class="dps-calc__stat-icon-sm" /><span class="dps-calc__mstat" data-mstat="def-standard">—</span></div>
+                <div class="dps-calc__monster-stat-row"><img loading="lazy" src="/dps-calc/bonuses/ranged_heavy.webp" class="dps-calc__stat-icon-sm" /><span class="dps-calc__mstat" data-mstat="def-heavy">—</span></div>
+              </div>
+            </div>
+
+            <!-- Weakness banner -->
+            <div class="dps-calc__monster-weakness" style="display:none"></div>
+
+            <!-- Collapsible: Attributes -->
+            <div class="dps-calc__collapsible">
+              <button class="dps-calc__collapsible-btn dps-calc__attrs-toggle" type="button">
+                <span>Attributes</span>
+                <span class="dps-calc__chevron">&#x25BC;</span>
+              </button>
+              <div class="dps-calc__collapsible-body dps-calc__monster-attrs" style="display:none">
+                <div class="dps-calc__monster-attr-list"></div>
+              </div>
+            </div>
+
+            <!-- Collapsible: Defensive Reductions -->
+            <div class="dps-calc__collapsible">
+              <button class="dps-calc__collapsible-btn dps-calc__defred-toggle" type="button">
+                <span>Defensive Reductions</span>
+                <span class="dps-calc__chevron">&#x25BC;</span>
+              </button>
+              <div class="dps-calc__collapsible-body dps-calc__defred-body" style="display:none">
+                <div class="dps-calc__defred-grid">
+                  <div class="dps-calc__defred-row">
+                    <img loading="lazy" src="/icons/items/21003.webp" class="dps-calc__defred-icon" />
+                    <span class="dps-calc__defred-label">Elder maul</span>
+                    <input type="number" class="dps-calc__defred-input" data-defred="elderMaul" min="0" max="20" value="0" />
+                  </div>
+                  <div class="dps-calc__defred-row">
+                    <img loading="lazy" src="/icons/items/13576.webp" class="dps-calc__defred-icon" />
+                    <span class="dps-calc__defred-label">DWH</span>
+                    <input type="number" class="dps-calc__defred-input" data-defred="dwh" min="0" max="20" value="0" />
+                  </div>
+                  <div class="dps-calc__defred-row">
+                    <img loading="lazy" src="/icons/items/19675.webp" class="dps-calc__defred-icon" />
+                    <span class="dps-calc__defred-label">Arclight</span>
+                    <input type="number" class="dps-calc__defred-input" data-defred="arclight" min="0" max="20" value="0" />
+                  </div>
+                  <div class="dps-calc__defred-row">
+                    <img loading="lazy" src="/icons/items/29589.webp" class="dps-calc__defred-icon" />
+                    <span class="dps-calc__defred-label">Emberlight</span>
+                    <input type="number" class="dps-calc__defred-input" data-defred="emberlight" min="0" max="20" value="0" />
+                  </div>
+                  <div class="dps-calc__defred-row">
+                    <img loading="lazy" src="/icons/items/28922.webp" class="dps-calc__defred-icon" />
+                    <span class="dps-calc__defred-label">Tonalztics</span>
+                    <input type="number" class="dps-calc__defred-input" data-defred="tonalztic" min="0" max="20" value="0" />
+                  </div>
+                  <div class="dps-calc__defred-row">
+                    <img loading="lazy" src="/icons/items/11804.webp" class="dps-calc__defred-icon" />
+                    <span class="dps-calc__defred-label">BGS damage</span>
+                    <input type="number" class="dps-calc__defred-input" data-defred="bgs" min="0" max="500" value="0" />
+                  </div>
+                  <div class="dps-calc__defred-row">
+                    <img loading="lazy" src="/icons/items/6724.webp" class="dps-calc__defred-icon" />
+                    <span class="dps-calc__defred-label">Seercull</span>
+                    <input type="number" class="dps-calc__defred-input" data-defred="seercull" min="0" max="500" value="0" />
+                  </div>
+                  <div class="dps-calc__defred-row">
+                    <img loading="lazy" src="/icons/items/31113.webp" class="dps-calc__defred-icon" />
+                    <span class="dps-calc__defred-label">Eye of Ayak</span>
+                    <input type="number" class="dps-calc__defred-input" data-defred="ayak" min="0" max="500" value="0" />
+                  </div>
+                  <label class="dps-calc__defred-toggle">
+                    <div class="dps-calc__toggle-switch">
+                      <input type="checkbox" class="dps-calc__defred-checkbox" data-defred="accursed" />
+                      <span class="dps-calc__toggle-slider"></span>
+                    </div>
+                    <img loading="lazy" src="/icons/items/27665.webp" class="dps-calc__defred-icon" />
+                    <span class="dps-calc__defred-label">Accursed sceptre</span>
+                  </label>
+                  <label class="dps-calc__defred-toggle">
+                    <div class="dps-calc__toggle-switch">
+                      <input type="checkbox" class="dps-calc__defred-checkbox" data-defred="vulnerability" />
+                      <span class="dps-calc__toggle-slider"></span>
+                    </div>
+                    <img loading="lazy" src="/dps-calc/bonuses/magic.png" class="dps-calc__defred-icon" />
+                    <span class="dps-calc__defred-label">Vulnerability</span>
+                  </label>
+                </div>
+              </div>
+            </div>
+
+            <!-- Collapsible: Monster Settings -->
+            <div class="dps-calc__collapsible">
+              <button class="dps-calc__collapsible-btn dps-calc__monsettings-toggle" type="button">
+                <span>Monster Settings</span>
+                <span class="dps-calc__chevron dps-calc__chevron--open">&#x25BC;</span>
+              </button>
+              <div class="dps-calc__collapsible-body dps-calc__monsettings-body">
+                <div class="dps-calc__monsettings-row">
+                  <img loading="lazy" src="/ui/203-0.png" class="dps-calc__stat-icon" />
+                  <span>Monster's current HP</span>
+                </div>
+                <input type="number" class="dps-calc__monster-hp-input" min="0" value="1" />
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Column 3: Results -->
+    <div class="dps-calc__results-section">
+      <div class="dps-calc__results-card">
+        <label class="dps-calc__label">Results</label>
+        <div class="dps-calc__results-body"></div>
+        <button class="dps-calc__show-more-btn" type="button">
+          <span class="dps-calc__show-more-arrow">&#x2193;</span>
+          Show more
+          <span class="dps-calc__show-more-arrow">&#x2193;</span>
+        </button>
+        <div class="dps-calc__results-extra" style="display:none"></div>
+      </div>
+
+      <!-- Hit Distribution -->
+      <div class="dps-calc__hitdist-card">
+        <button class="dps-calc__collapsible-btn dps-calc__hitdist-toggle" type="button">
+            <span class="dps-calc__hitdist-title"><img loading="lazy" src="/dps-calc/hitsplat.webp" class="dps-calc__hitdist-icon" />Hit Distribution</span>
+          <span class="dps-calc__chevron dps-calc__chevron--open">&#x25BC;</span>
+        </button>
+        <div class="dps-calc__hitdist-body">
+          <div class="dps-calc__hitdist-toggles">
+            <label class="dps-calc__toggle-row dps-calc__toggle-row--sm">
+              <div class="dps-calc__toggle-switch">
+                <input type="checkbox" class="dps-calc__hitdist-hide-zeros" checked />
+                <span class="dps-calc__toggle-slider"></span>
+              </div>
+              <span>Hide misses</span>
+            </label>
+          </div>
+          <div class="dps-calc__hitdist-chart">
+            <canvas class="dps-calc__hitdist-canvas" width="460" height="225"></canvas>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

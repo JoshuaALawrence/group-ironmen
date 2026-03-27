@@ -1,0 +1,33 @@
+<div class="stash-page">
+  <div class="stash-page__sidebar">
+    <h3 class="stash-page__title rstext">STASH Units</h3>
+
+    <div class="stash-page__tiers">
+      ${this.renderTierTabs()}
+    </div>
+
+    <div class="stash-page__summary">
+      <h4 class="stash-page__section-title">Summary</h4>
+      <div class="stash-page__summary-content">
+        ${this.renderSummary()}
+      </div>
+    </div>
+  </div>
+
+  <div class="stash-page__main">
+    <div class="stash-page__header">
+      <span class="stash-page__count">${this.getFilteredStashes().length} stashes</span>
+      <div class="stash-page__filter">
+        <input type="text" id="stash-page__search" class="stash-page__search" placeholder="Search items, areas, difficulty..." value="${this.searchQuery || ''}" />
+        <label>
+          <input type="checkbox" id="stash-page__hide-complete" ${this.hideComplete ? 'checked' : ''} />
+          Hide complete
+        </label>
+      </div>
+    </div>
+
+    <div class="stash-page__grid">
+      ${this.renderStashes()}
+    </div>
+  </div>
+</div>

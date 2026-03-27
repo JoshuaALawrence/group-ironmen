@@ -2,6 +2,8 @@ import { utility } from "../utility";
 import { pubsub } from "./pubsub";
 import { api } from "./api";
 
+const DEGRADED_CHARGES = new Set([0, 25, 50, 75, 100]);
+
 export class Item {
   constructor(id, quantity) {
     if (typeof id === "string") {
@@ -63,7 +65,38 @@ export class Item {
   }
 
   get gePrice() {
-    return Item.gePrices[this.id] || 0;
+    const price = Item.gePrices[this.id];
+    if (price) return price;
+
+    const itemDetails = Item.itemDetails[this.id];
+    const match = itemDetails?.name?.match(/^(.+)\s+(\d+)$/);
+    if (match && DEGRADED_CHARGES.has(parseInt(match[2]))) {
+      const baseId = Item.itemNameToId?.[match[1].toLowerCase()];
+      if (baseId !== undefined) {
+        return Item.gePrices[baseId] || 0;
+      }
+    }
+
+    return 0;
+  }
+
+  get isTradeable() {
+    const itemDetails = Item.itemDetails[this.id];
+    if (typeof itemDetails?.isTradeable === "boolean") {
+      if (itemDetails.isTradeable) return true;
+
+      const match = itemDetails.name.match(/^(.+)\s+(\d+)$/);
+      if (match && DEGRADED_CHARGES.has(parseInt(match[2]))) {
+        const baseId = Item.itemNameToId?.[match[1].toLowerCase()];
+        if (baseId !== undefined) {
+          const baseDetails = Item.itemDetails[baseId];
+          if (baseDetails?.isTradeable === true) return true;
+        }
+      }
+
+      return false;
+    }
+    return null;
   }
 
   isValid() {
@@ -97,10 +130,15 @@ export class Item {
   static async loadItems() {
     const response = await fetch("/data/item_data.json");
     Item.itemDetails = await response.json();
+    Item.itemNameToId = {};
     for (const [itemId, itemDetails] of Object.entries(Item.itemDetails)) {
       const stacks = itemDetails.stacks;
       itemDetails.stacks = stacks ? stacks.map((stack) => ({ id: stack[1], count: stack[0] })) : null;
       itemDetails.id = itemId;
+      const lowerName = itemDetails.name.toLowerCase();
+      if (!Item.itemNameToId[lowerName]) {
+        Item.itemNameToId[lowerName] = itemId;
+      }
     }
 
     pubsub.publish("item-data-loaded");

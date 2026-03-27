@@ -1,0 +1,139 @@
+bank-dialog {
+  display: block;
+  color: var(--orange);
+}
+
+bank-dialog h2 {
+  font-size: 20px;
+  text-shadow: 1.3px 1.3px var(--black);
+}
+
+.bank-dialog__container {
+  width: min(95%, 820px);
+  height: min(90%, 900px);
+  padding: 0;
+  cursor: auto;
+}
+
+.bank-dialog__header {
+  display: grid;
+  grid-template-columns: 40px 1fr 40px;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 12px;
+  text-align: center;
+}
+
+.bank-dialog__title-group {
+  min-width: 0;
+}
+
+.bank-dialog__close {
+  justify-self: end;
+}
+
+.bank-dialog__title-border {
+  background: url("/ui/173-0.png") repeat;
+  width: 100%;
+  height: 6px;
+}
+
+.bank-dialog__search-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+}
+
+.bank-dialog__search-input {
+  flex: 1;
+  background: rgba(0, 0, 0, 0.35);
+  border: 1px solid hsl(40deg 15.79% 29.8%);
+  color: var(--yellow);
+  font-family: inherit;
+  font-size: 14px;
+  padding: 4px 8px;
+  outline: none;
+}
+
+.bank-dialog__search-input::placeholder {
+  color: hsl(40deg 30% 55%);
+}
+
+.bank-dialog__search-input:focus {
+  border-color: var(--orange);
+}
+
+.bank-dialog__item-count {
+  color: var(--yellow);
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+.bank-dialog__content {
+  padding: 0 8px;
+  overflow: auto;
+  flex: 1;
+  min-height: 0;
+}
+
+.bank-dialog__status {
+  text-align: center;
+  color: var(--yellow);
+  padding: 20px 12px;
+}
+
+.bank-dialog__items {
+  display: grid;
+  grid-template-columns: repeat(10, 1fr);
+  gap: 1px;
+  background: rgba(0, 0, 0, 0.15);
+  border: 1px solid hsl(40deg 15.79% 29.8%);
+}
+
+.bank-dialog__slot {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  aspect-ratio: 1;
+  background: rgba(0, 0, 0, 0.2);
+}
+
+.bank-dialog__slot:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.bank-dialog__slot item-box {
+  width: 42px;
+  height: 42px;
+}
+
+.bank-dialog__footer {
+  padding: 6px 10px;
+  text-align: center;
+  color: var(--yellow);
+  font-size: 13px;
+  text-shadow: 1px 1px var(--black);
+  border-top: 1px solid hsl(40deg 15.79% 29.8%);
+}
+
+@media (max-width: 640px) {
+  .bank-dialog__items {
+    grid-template-columns: repeat(6, 1fr);
+  }
+
+  .bank-dialog__container {
+    width: min(95%, 580px);
+  }
+}
+
+@media (min-width: 641px) and (max-width: 900px) {
+  .bank-dialog__items {
+    grid-template-columns: repeat(8, 1fr);
+  }
+
+  .bank-dialog__container {
+    width: min(95%, 640px);
+  }
+}

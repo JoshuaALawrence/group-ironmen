@@ -23,6 +23,7 @@ public class Cache {
 
     options.addOption("c", "cache", true, "cache base");
 
+    options.addOption(null, "items", true, "directory to dump item definition data to");
     options.addOption(null, "ids", true, "csv file with item ids to create images from");
     options.addOption(null, "output", true, "directory to dump item model images to");
 
@@ -40,7 +41,16 @@ public class Cache {
 
     Store store = loadStore(cache);
 
-    if (cmd.hasOption("output") && cmd.hasOption("ids")) {
+    if (cmd.hasOption("items")) {
+      String itemsDir = cmd.getOptionValue("items");
+      if (itemsDir == null) {
+        System.err.println("Item dump directory must be specified");
+        return;
+      }
+
+      System.out.println("Dumping items to " + itemsDir);
+      dumpItemData(store, new File(itemsDir));
+    } else if (cmd.hasOption("output") && cmd.hasOption("ids")) {
       String outputDir = cmd.getOptionValue("output");
       String imageIdsFile = cmd.getOptionValue("ids");
 
@@ -79,9 +89,18 @@ public class Cache {
     return store;
   }
 
+  private static void dumpItemData(Store store, File outputDir) throws IOException {
+    ItemManager dumper = new ItemManager(store);
+    dumper.load();
+    dumper.link();
+    dumper.export(outputDir);
+    dumper.java(outputDir);
+  }
+
   private static void dumpItemModelImages(Store store, File outputDir, List<Integer> itemIds) throws IOException {
     ItemManager dumper = new ItemManager(store);
     dumper.load();
+    dumper.link();
 
     ModelProvider modelProvider = modelId -> {
       Index models = store.getIndex(IndexType.MODELS);

@@ -16,6 +16,10 @@ class Api {
     return `${this.baseUrl}/group/${this.groupName}/get-group-data`;
   }
 
+  get groupEventsUrl() {
+    return `${this.baseUrl}/group/${this.groupName}/group-events`;
+  }
+
   get addMemberUrl() {
     return `${this.baseUrl}/group/${this.groupName}/add-group-member`;
   }
@@ -63,30 +67,153 @@ class Api {
     await this.disable();
     this.nextCheck = new Date(0).toISOString();
     this.setCredentials(groupName, groupToken);
+    this.groupDataSyncInFlight = false;
+    this.groupDataSyncQueued = false;
+    this.usingIntervalUpdates = this.exampleDataEnabled;
 
     if (!this.enabled) {
       this.enabled = true;
-      // getGroupInterval is a Promise so we can make sure this method does not leak
-      // any intervals with multiple calls to .enable(). This could be possible because of
-      // the wait for the item and quest data loads before we create the interval.
-      this.getGroupInterval = pubsub.waitForAllEvents("item-data-loaded", "quest-data-loaded").then(() => {
-        return utility.callOnInterval(this.getGroupData.bind(this), 1000);
+      // liveUpdateHandle is a Promise so we can make sure this method does not leak
+      // any intervals or SSE connections with multiple calls to .enable(). This could be
+      // possible because of the wait for the item and quest data loads before we start.
+      this.liveUpdateHandle = pubsub.waitForAllEvents("item-data-loaded", "quest-data-loaded").then(() => {
+        if (!this.enabled) {
+          return undefined;
+        }
+
+        if (this.exampleDataEnabled) {
+          return utility.callOnInterval(this.getGroupData.bind(this), 1000);
+        }
+
+        this.startGroupEvents();
+        return undefined;
       });
     }
 
-    await this.getGroupInterval;
+    await this.liveUpdateHandle;
   }
 
   async disable() {
     this.enabled = false;
     this.groupName = undefined;
     this.groupToken = undefined;
+    this.groupDataSyncQueued = false;
     groupData.members = new Map();
     groupData.groupItems = {};
     groupData.filters = [""];
-    if (this.getGroupInterval) {
-      window.clearInterval(await this.getGroupInterval);
+
+    if (this.groupEventsAbortController) {
+      this.groupEventsAbortController.abort();
+      this.groupEventsAbortController = undefined;
     }
+
+    if (this.liveUpdateHandle && this.usingIntervalUpdates) {
+      window.clearInterval(await this.liveUpdateHandle);
+    }
+
+    this.groupEventsTask = undefined;
+    this.liveUpdateHandle = undefined;
+    this.usingIntervalUpdates = false;
+  }
+
+  async triggerGroupDataSync() {
+    if (!this.enabled) {
+      return;
+    }
+
+    if (this.groupDataSyncInFlight) {
+      this.groupDataSyncQueued = true;
+      return;
+    }
+
+    this.groupDataSyncInFlight = true;
+    try {
+      do {
+        this.groupDataSyncQueued = false;
+        await this.getGroupData();
+      } while (this.enabled && this.groupDataSyncQueued);
+    } finally {
+      this.groupDataSyncInFlight = false;
+    }
+  }
+
+  startGroupEvents() {
+    this.groupEventsAbortController = new AbortController();
+    this.groupEventsTask = this.runGroupEventsLoop(this.groupEventsAbortController.signal);
+  }
+
+  async runGroupEventsLoop(signal) {
+    while (this.enabled && !signal.aborted) {
+      try {
+        const response = await fetch(this.groupEventsUrl, {
+          cache: "no-store",
+          headers: {
+            Accept: "text/event-stream",
+            Authorization: this.groupToken,
+          },
+          signal,
+        });
+
+        if (!response.ok) {
+          if (response.status === 401) {
+            await this.disable();
+            window.history.pushState("", "", "/login");
+            pubsub.publish("get-group-data");
+            return;
+          }
+
+          throw new Error(`Failed to subscribe to group events: ${response.status}`);
+        }
+
+        await this.triggerGroupDataSync();
+        await this.consumeGroupEvents(response, signal);
+      } catch (error) {
+        if (signal.aborted) {
+          return;
+        }
+
+        console.error(error);
+      }
+
+      await new Promise((resolve) => window.setTimeout(resolve, 1000));
+    }
+  }
+
+  async consumeGroupEvents(response, signal) {
+    const reader = response.body?.getReader();
+    if (!reader) {
+      throw new Error("Group event stream did not include a readable body.");
+    }
+
+    const decoder = new TextDecoder();
+    let buffer = "";
+
+    while (this.enabled && !signal.aborted) {
+      const { value, done } = await reader.read();
+      if (done) {
+        return;
+      }
+
+      buffer += decoder.decode(value, { stream: true }).replace(/\r\n/g, "\n");
+      buffer = this.processGroupEventBuffer(buffer);
+    }
+  }
+
+  processGroupEventBuffer(buffer) {
+    let eventBoundary = buffer.indexOf("\n\n");
+
+    while (eventBoundary !== -1) {
+      const rawEvent = buffer.slice(0, eventBoundary);
+      buffer = buffer.slice(eventBoundary + 2);
+
+      if (rawEvent.split("\n").some((line) => line.startsWith("data:"))) {
+        this.triggerGroupDataSync();
+      }
+
+      eventBoundary = buffer.indexOf("\n\n");
+    }
+
+    return buffer;
   }
 
   async getGroupData() {

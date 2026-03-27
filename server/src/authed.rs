@@ -4,19 +4,26 @@ use crate::error::ApiError;
 use crate::models::{
     AmIInGroupRequest, GroupMember, GroupSkillData, RenameGroupMember, SHARED_MEMBER,
 };
+use crate::notifier::GroupEventNotifier;
 use crate::validators::{valid_name, validate_member_prop_length};
-use actix_web::{delete, get, post, put, web, Error, HttpResponse};
+use actix_web::{delete, get, http::header, post, put, web, Error, HttpResponse};
+use actix_web::web::Bytes;
 use chrono::{DateTime, Utc};
 use deadpool_postgres::{Client, Pool};
+use futures_util::stream::{self, StreamExt};
 use serde::Deserialize;
 use std::collections::HashMap;
 use tokio::sync::mpsc;
+use tokio::time::{self, Duration};
+use tokio_stream::wrappers::errors::BroadcastStreamRecvError;
+use tokio_stream::wrappers::{BroadcastStream, IntervalStream};
 
 #[post("/add-group-member")]
 pub async fn add_group_member(
     auth: Authenticated,
     group_member: web::Json<GroupMember>,
     db_pool: web::Data<Pool>,
+    notifier: web::Data<GroupEventNotifier>,
 ) -> Result<HttpResponse, Error> {
     if group_member.name.eq(SHARED_MEMBER) {
         return Ok(
@@ -31,6 +38,7 @@ pub async fn add_group_member(
 
     let client: Client = db_pool.get().await.map_err(ApiError::PoolError)?;
     db::add_group_member(&client, auth.group_id, &group_member.name).await?;
+    notifier.notify_group(auth.group_id);
     Ok(HttpResponse::Created().finish())
 }
 
@@ -39,6 +47,7 @@ pub async fn delete_group_member(
     auth: Authenticated,
     group_member: web::Json<GroupMember>,
     db_pool: web::Data<Pool>,
+    notifier: web::Data<GroupEventNotifier>,
 ) -> Result<HttpResponse, Error> {
     if group_member.name.eq(SHARED_MEMBER) {
         return Ok(
@@ -48,6 +57,7 @@ pub async fn delete_group_member(
 
     let mut client: Client = db_pool.get().await.map_err(ApiError::PoolError)?;
     db::delete_group_member(&mut client, auth.group_id, &group_member.name).await?;
+    notifier.notify_group(auth.group_id);
     Ok(HttpResponse::Ok().finish())
 }
 
@@ -56,6 +66,7 @@ pub async fn rename_group_member(
     auth: Authenticated,
     rename_member: web::Json<RenameGroupMember>,
     db_pool: web::Data<Pool>,
+    notifier: web::Data<GroupEventNotifier>,
 ) -> Result<HttpResponse, Error> {
     if rename_member.original_name.eq(SHARED_MEMBER) || rename_member.new_name.eq(SHARED_MEMBER) {
         return Ok(
@@ -78,6 +89,7 @@ pub async fn rename_group_member(
         &rename_member.new_name,
     )
     .await?;
+    notifier.notify_group(auth.group_id);
     Ok(HttpResponse::Ok().finish())
 }
 
@@ -113,6 +125,13 @@ pub async fn update_group_member(
     validate_member_prop_length("diary_vars", &group_member_inner.diary_vars, 0, 62)?;
     validate_member_prop_length("collection_log_v2", &group_member_inner.collection_log_v2, 0, 4000)?;
 
+    log::info!(
+        "Queueing group update group_id={} member={} fields={:?}",
+        auth.group_id,
+        group_member_inner.name,
+        group_member_inner.present_fields()
+    );
+
     match sender.send(group_member_inner).await {
         Ok(_) => Ok(HttpResponse::Ok().finish()),
         Err(_) => Ok(HttpResponse::InternalServerError().body("Failed to submit player update")),
@@ -133,7 +152,41 @@ pub async fn get_group_data(
     let from_time = query.from_time;
     let client: Client = db_pool.get().await.map_err(ApiError::PoolError)?;
     let group_members = db::get_group_data(&client, auth.group_id, &from_time).await?;
+    log::info!(
+        "Returning group data group_id={} from_time={} members={}",
+        auth.group_id,
+        from_time,
+        group_members.len()
+    );
     Ok(web::Json(group_members))
+}
+
+#[get("/group-events")]
+pub async fn get_group_events(
+    auth: Authenticated,
+    notifier: web::Data<GroupEventNotifier>,
+) -> Result<HttpResponse, Error> {
+    let receiver = notifier.subscribe(auth.group_id);
+    let initial = stream::once(async { Ok::<Bytes, Error>(Bytes::from_static(b": connected\n\n")) });
+    let keep_alive = IntervalStream::new(time::interval(Duration::from_secs(30))).map(|_| {
+        Ok::<Bytes, Error>(Bytes::from_static(b": keep-alive\n\n"))
+    });
+    let updates = BroadcastStream::new(receiver).filter_map(|message| async move {
+        match message {
+            Ok(_) | Err(BroadcastStreamRecvError::Lagged(_)) => {
+                Some(Ok::<Bytes, Error>(Bytes::from_static(b"data: update\n\n")))
+            }
+        }
+    });
+
+    let body = initial.chain(stream::select(keep_alive, updates));
+
+    Ok(HttpResponse::Ok()
+        .insert_header((header::CONTENT_TYPE, "text/event-stream; charset=utf-8"))
+        .insert_header((header::CACHE_CONTROL, "no-cache, no-transform"))
+        .insert_header((header::CONNECTION, "keep-alive"))
+        .insert_header(("X-Accel-Buffering", "no"))
+        .streaming(body))
 }
 
 #[derive(Deserialize)]

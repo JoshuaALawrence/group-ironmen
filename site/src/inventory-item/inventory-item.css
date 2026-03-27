@@ -69,3 +69,17 @@ inventory-item.rendered {
 .inventory-item__name {
   font-size: 20px;
 }
+
+.inventory-item__tradeability {
+  margin: 2px 0 6px;
+  font-size: 14px;
+  line-height: 1.1;
+}
+
+.inventory-item__tradeability--tradeable {
+  color: #59d65d;
+}
+
+.inventory-item__tradeability--untradeable {
+  color: #ff5d5d;
+}

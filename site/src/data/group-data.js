@@ -12,6 +12,86 @@ export class GroupData {
     this.textFilter = "";
     this.textFilters = [""];
     this.playerFilter = "@ALL";
+    this.hideUntradeables = false;
+  }
+
+  static getDegradedBaseName(itemName) {
+    const match = itemName.match(/^(.+)\s+(\d+)$/);
+    if (match && GroupData.DEGRADED_CHARGES.has(parseInt(match[2]))) {
+      return match[1];
+    }
+    return null;
+  }
+
+  getDisplayItems() {
+    const visibleItems = Object.values(this.groupItems).filter((item) => item.visible);
+
+    const degradedGroups = new Map();
+    const result = [];
+
+    for (const item of visibleItems) {
+      const baseName = GroupData.getDegradedBaseName(item.name);
+      if (baseName) {
+        if (!degradedGroups.has(baseName)) {
+          degradedGroups.set(baseName, []);
+        }
+        degradedGroups.get(baseName).push(item);
+      } else {
+        result.push(item);
+      }
+    }
+
+    for (const [baseName, variants] of degradedGroups) {
+      if (variants.length === 1) {
+        result.push(variants[0]);
+      } else {
+        result.push(GroupData.createGroupedItem(baseName, variants));
+      }
+    }
+
+    return result;
+  }
+
+  static createGroupedItem(baseName, variants) {
+    variants.sort((a, b) => {
+      const chargeA = parseInt(a.name.match(/(\d+)$/)[1]);
+      const chargeB = parseInt(b.name.match(/(\d+)$/)[1]);
+      return chargeB - chargeA;
+    });
+
+    const primaryVariant = variants[0];
+
+    let totalQuantity = 0;
+    const combinedQuantities = {};
+
+    for (const variant of variants) {
+      totalQuantity += variant.quantity;
+      for (const [player, qty] of Object.entries(variant.quantities)) {
+        combinedQuantities[player] = (combinedQuantities[player] || 0) + qty;
+      }
+    }
+
+    const baseId = Item.itemNameToId?.[baseName.toLowerCase()];
+    const baseTradeability = baseId !== undefined ? Item.itemDetails[baseId]?.isTradeable : primaryVariant.isTradeable;
+
+    return {
+      id: primaryVariant.id,
+      name: baseName,
+      isGrouped: true,
+      isTradeable: baseTradeability === true ? true : primaryVariant.isTradeable,
+      variantIds: variants.map((v) => v.id),
+      quantity: totalQuantity,
+      quantities: combinedQuantities,
+      highAlch: primaryVariant.highAlch,
+      gePrice: primaryVariant.gePrice,
+      get imageUrl() {
+        return primaryVariant.imageUrl;
+      },
+      get wikiLink() {
+        return primaryVariant.wikiLink;
+      },
+      visible: true,
+    };
   }
 
   update(groupData) {
@@ -159,10 +239,18 @@ export class GroupData {
     return playerFilter === "@ALL" || item.quantities[playerFilter] === undefined || item.quantities[playerFilter] > 0;
   }
 
+  passesTradeabilityFilter(item, hideUntradeables) {
+    return !hideUntradeables || item.isTradeable !== false;
+  }
+
   shouldItemBeVisible(item, textFilters, playerFilter) {
     if (!item || !item.quantities) return false;
 
-    return this.passesTextFilter(item, textFilters) && this.passesPlayerFilter(item, playerFilter);
+    return (
+      this.passesTextFilter(item, textFilters) &&
+      this.passesPlayerFilter(item, playerFilter) &&
+      this.passesTradeabilityFilter(item, this.hideUntradeables)
+    );
   }
 
   applyTextFilter(textFilter) {
@@ -180,6 +268,14 @@ export class GroupData {
     const items = Object.values(this.groupItems);
     for (const item of items) {
       item.visible = this.shouldItemBeVisible(item, this.textFilters, playerFilter);
+    }
+  }
+
+  applyTradeabilityFilter(hideUntradeables) {
+    this.hideUntradeables = hideUntradeables;
+    const items = Object.values(this.groupItems);
+    for (const item of items) {
+      item.visible = this.shouldItemBeVisible(item, this.textFilters, this.playerFilter);
     }
   }
 
@@ -321,6 +417,9 @@ export class GroupData {
     }
   }
 }
+
+GroupData.DEGRADED_CHARGES = new Set([0, 25, 50, 75, 100]);
+
 const groupData = new GroupData();
 
 export { groupData };

@@ -1,3 +1,4 @@
+use crate::notifier::GroupEventNotifier;
 use crate::models::{GroupMember, SHARED_MEMBER};
 use deadpool_postgres::{Pool, Client};
 use std::collections::{HashMap, HashSet};
@@ -13,7 +14,38 @@ use tokio::time::{self, Instant, Duration};
 static BATCH_SIZE: usize = 5000;
 static CHUNK_SIZE: usize = 50;
 
-pub async fn background_worker(pool: Pool, mut rx: mpsc::Receiver<GroupMember>) {
+fn merge_option_field<T>(target: &mut Option<T>, incoming: Option<T>) {
+    if incoming.is_some() {
+        *target = incoming;
+    }
+}
+
+fn merge_group_member_updates(target: &mut GroupMember, incoming: GroupMember) {
+    debug_assert_eq!(target.group_id, incoming.group_id);
+    debug_assert_eq!(target.name, incoming.name);
+
+    merge_option_field(&mut target.stats, incoming.stats);
+    merge_option_field(&mut target.coordinates, incoming.coordinates);
+    merge_option_field(&mut target.skills, incoming.skills);
+    merge_option_field(&mut target.quests, incoming.quests);
+    merge_option_field(&mut target.inventory, incoming.inventory);
+    merge_option_field(&mut target.equipment, incoming.equipment);
+    merge_option_field(&mut target.bank, incoming.bank);
+    merge_option_field(&mut target.shared_bank, incoming.shared_bank);
+    merge_option_field(&mut target.rune_pouch, incoming.rune_pouch);
+    merge_option_field(&mut target.interacting, incoming.interacting);
+    merge_option_field(&mut target.seed_vault, incoming.seed_vault);
+    merge_option_field(&mut target.deposited, incoming.deposited);
+    merge_option_field(&mut target.diary_vars, incoming.diary_vars);
+    merge_option_field(&mut target.collection_log_v2, incoming.collection_log_v2);
+    merge_option_field(&mut target.last_updated, incoming.last_updated);
+}
+
+pub async fn background_worker(
+    pool: Pool,
+    mut rx: mpsc::Receiver<GroupMember>,
+    notifier: Arc<GroupEventNotifier>,
+) {
     let batch_timeout = Duration::from_millis(50);
 
     loop {
@@ -62,20 +94,31 @@ pub async fn background_worker(pool: Pool, mut rx: mpsc::Receiver<GroupMember>) 
             continue;
         }
 
-        // Filter out duplicate member updates to avoid deadlocks
-        let mut member_keys: HashSet<u64> = HashSet::new();
-        let mut filtered_buffer: Vec<GroupMember> = buffer.into_iter().rev()
-            .filter(|item| {
-                item.group_id.map(|group_id| {
-                    let mut s = DefaultHasher::new();
+        // Merge duplicate member updates in the same batch so fields from adjacent
+        // requests are combined instead of whichever request arrived last winning.
+        let mut merged_by_member: HashMap<u64, GroupMember> = HashMap::new();
+        let mut member_key_order: Vec<u64> = Vec::new();
+        for item in buffer.into_iter() {
+            let Some(group_id) = item.group_id else {
+                continue;
+            };
 
-                    let key_ref = (group_id, &item.name);
-                    key_ref.hash(&mut s);
-                    let key: u64 = s.finish();
+            let mut s = DefaultHasher::new();
+            let key_ref = (group_id, &item.name);
+            key_ref.hash(&mut s);
+            let key: u64 = s.finish();
 
-                    member_keys.insert(key)
-                }).unwrap_or(false)
-            }).collect();
+            if let Some(existing) = merged_by_member.get_mut(&key) {
+                merge_group_member_updates(existing, item);
+            } else {
+                member_key_order.push(key);
+                merged_by_member.insert(key, item);
+            }
+        }
+
+        let mut filtered_buffer: Vec<GroupMember> = member_key_order.into_iter()
+            .filter_map(|key| merged_by_member.remove(&key))
+            .collect();
 
         // process the batch in many chunks
         let mut tasks = Vec::new();
@@ -85,13 +128,15 @@ pub async fn background_worker(pool: Pool, mut rx: mpsc::Receiver<GroupMember>) 
             let end_index = start_index + chunk_slice.len();
             let pool_clone = pool.clone();
             let batch_clone = Arc::clone(&batch);
+            let notifier_clone = notifier.clone();
 
             let task = tokio::spawn(async move {
                 process_chunk(
                     &pool_clone,
                     batch_clone,
                     start_index,
-                    end_index
+                    end_index,
+                    notifier_clone,
                 ).await;
             });
 
@@ -100,6 +145,61 @@ pub async fn background_worker(pool: Pool, mut rx: mpsc::Receiver<GroupMember>) 
         }
 
         futures_util::future::join_all(tasks).await;
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::merge_group_member_updates;
+    use crate::models::GroupMember;
+
+    fn member_with_name(name: &str) -> GroupMember {
+        GroupMember {
+            group_id: Some(1),
+            name: name.to_string(),
+            stats: None,
+            coordinates: None,
+            skills: None,
+            quests: None,
+            inventory: None,
+            equipment: None,
+            bank: None,
+            shared_bank: None,
+            rune_pouch: None,
+            interacting: None,
+            seed_vault: None,
+            deposited: None,
+            diary_vars: None,
+            collection_log_v2: None,
+            last_updated: None,
+        }
+    }
+
+    #[test]
+    fn merge_group_member_updates_combines_non_overlapping_fields() {
+        let mut target = member_with_name("og joshua");
+        target.skills = Some(vec![1, 2, 3]);
+
+        let mut incoming = member_with_name("og joshua");
+        incoming.bank = Some(vec![995, 100]);
+
+        merge_group_member_updates(&mut target, incoming);
+
+        assert_eq!(target.skills, Some(vec![1, 2, 3]));
+        assert_eq!(target.bank, Some(vec![995, 100]));
+    }
+
+    #[test]
+    fn merge_group_member_updates_prefers_newer_values_per_field() {
+        let mut target = member_with_name("og joshua");
+        target.skills = Some(vec![1, 2, 3]);
+
+        let mut incoming = member_with_name("og joshua");
+        incoming.skills = Some(vec![4, 5, 6]);
+
+        merge_group_member_updates(&mut target, incoming);
+
+        assert_eq!(target.skills, Some(vec![4, 5, 6]));
     }
 }
 
@@ -128,17 +228,29 @@ fn get_update_statement(size: usize) -> String {
     let statement = format!(r#"
 UPDATE groupironman.members as a SET
   stats = COALESCE(b.stats, a.stats),
+    stats_last_update = CASE WHEN b.stats IS NOT NULL THEN NOW() ELSE a.stats_last_update END,
   coordinates = COALESCE(b.coordinates, a.coordinates),
+    coordinates_last_update = CASE WHEN b.coordinates IS NOT NULL THEN NOW() ELSE a.coordinates_last_update END,
   skills = COALESCE(b.skills, a.skills),
+    skills_last_update = CASE WHEN b.skills IS NOT NULL THEN NOW() ELSE a.skills_last_update END,
   quests = COALESCE(b.quests, a.quests),
+    quests_last_update = CASE WHEN b.quests IS NOT NULL THEN NOW() ELSE a.quests_last_update END,
   inventory = COALESCE(b.inventory, a.inventory),
+    inventory_last_update = CASE WHEN b.inventory IS NOT NULL THEN NOW() ELSE a.inventory_last_update END,
   equipment = COALESCE(b.equipment, a.equipment),
+    equipment_last_update = CASE WHEN b.equipment IS NOT NULL THEN NOW() ELSE a.equipment_last_update END,
   bank = COALESCE(b.bank, a.bank),
+    bank_last_update = CASE WHEN b.bank IS NOT NULL THEN NOW() ELSE a.bank_last_update END,
   rune_pouch = COALESCE(b.rune_pouch, a.rune_pouch),
+    rune_pouch_last_update = CASE WHEN b.rune_pouch IS NOT NULL THEN NOW() ELSE a.rune_pouch_last_update END,
   interacting = COALESCE(b.interacting, a.interacting),
+    interacting_last_update = CASE WHEN b.interacting IS NOT NULL THEN NOW() ELSE a.interacting_last_update END,
   seed_vault = COALESCE(b.seed_vault, a.seed_vault),
+    seed_vault_last_update = CASE WHEN b.seed_vault IS NOT NULL THEN NOW() ELSE a.seed_vault_last_update END,
   diary_vars = COALESCE(b.diary_vars, a.diary_vars),
-  collection_log = COALESCE(b.collection_log, a.collection_log)
+    diary_vars_last_update = CASE WHEN b.diary_vars IS NOT NULL THEN NOW() ELSE a.diary_vars_last_update END,
+    collection_log = COALESCE(b.collection_log, a.collection_log),
+    collection_log_last_update = CASE WHEN b.collection_log IS NOT NULL THEN NOW() ELSE a.collection_log_last_update END
 FROM (VALUES {}) AS b(
   group_id,
   member_name,
@@ -198,7 +310,13 @@ fn get_types(size: usize) -> Vec<Type> {
     result
 }
 
-async fn process_chunk(pool: &Pool, batch: Arc<Vec<GroupMember>>, start_index: usize, end_index: usize) {
+async fn process_chunk(
+    pool: &Pool,
+    batch: Arc<Vec<GroupMember>>,
+    start_index: usize,
+    end_index: usize,
+    notifier: Arc<GroupEventNotifier>,
+) {
     let buffer: &[GroupMember] = match batch.get(start_index..end_index) {
         Some(buffer) => buffer,
         None => {
@@ -235,6 +353,20 @@ async fn process_chunk(pool: &Pool, batch: Arc<Vec<GroupMember>>, start_index: u
         }
     };
 
+    let updated_group_ids: HashSet<i64> = buffer
+        .iter()
+        .filter_map(|member_data| member_data.group_id)
+        .collect();
+
+    for member_data in buffer.iter() {
+        log::info!(
+            "Persisting queued group update group_id={} member={} fields={:?}",
+            member_data.group_id.unwrap_or_default(),
+            member_data.name,
+            member_data.present_fields()
+        );
+    }
+
     let mut params: Vec<&(dyn tokio_postgres::types::ToSql + Sync)> = Vec::with_capacity(VALUE_CASTS.len() * buffer.len());
     let interacting_storage: Vec<Option<String>> = buffer.iter()
         .map(|member_data| {
@@ -262,7 +394,16 @@ async fn process_chunk(pool: &Pool, batch: Arc<Vec<GroupMember>>, start_index: u
     }
 
     match client.execute(&update_stmt, &params).await {
-        Ok(_) => (),
+        Ok(_) => {
+            log::info!(
+                "Persisted group update chunk members={} groups={:?}",
+                buffer.len(),
+                updated_group_ids
+            );
+            for group_id in updated_group_ids {
+                notifier.notify_group(group_id);
+            }
+        }
         Err(e) => log::error!("Error executing bulk update: {}", e),
     };
 

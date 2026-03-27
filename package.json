@@ -1,0 +1,10 @@
+{
+  "name": "group-ironmen-dev",
+  "private": true,
+  "scripts": {
+    "dev": "concurrently -n backend,frontend -c blue,green \"cd server && cargo run\" \"cd site && npm run start:local-api\""
+  },
+  "devDependencies": {
+    "concurrently": "^6.2.2"
+  }
+}

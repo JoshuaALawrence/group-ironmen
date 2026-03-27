@@ -1,0 +1,236 @@
+stash-page {
+  display: block;
+  height: 100%;
+  overflow: hidden;
+}
+
+.stash-page {
+  display: flex;
+  gap: 12px;
+  padding: 8px;
+  height: 100%;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+.stash-page__sidebar {
+  width: 260px;
+  min-width: 260px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  overflow-y: auto;
+}
+
+.stash-page__title {
+  font-size: 20px;
+  color: var(--orange);
+  margin: 0 0 4px;
+}
+
+.stash-page__section-title {
+  font-size: 14px;
+  color: var(--orange);
+  margin: 0 0 6px;
+  font-family: rsbold;
+}
+
+.stash-page__tiers {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.stash-page__tier-tab {
+  padding: 4px 10px;
+  font-family: rssmall;
+  font-size: 14px;
+  background: var(--elevated);
+  border: 1px solid var(--light-border);
+  color: var(--primary-text);
+  cursor: pointer;
+  border-radius: 3px;
+  transition: background 0.15s;
+}
+
+.stash-page__tier-tab:hover {
+  background: #444;
+}
+
+.stash-page__tier-tab.active {
+  border-color: var(--orange);
+  color: var(--orange);
+}
+
+.stash-page__summary-content {
+  font-size: 14px;
+  font-family: rssmall;
+  color: var(--primary-text);
+}
+
+.stash-page__summary-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 2px 0;
+}
+
+.stash-page__summary-label {
+  color: #ccc;
+}
+
+.stash-page__summary-value {
+  font-family: rsbold;
+}
+
+.stash-page__main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  min-height: 0;
+}
+
+.stash-page__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 4px 0 8px;
+  font-family: rssmall;
+  font-size: 14px;
+  color: #ccc;
+}
+
+.stash-page__header label {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+}
+
+.stash-page__filter {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.stash-page__search {
+  background: rgba(0, 0, 0, 0.4);
+  border: 1px solid var(--light-border);
+  border-radius: 3px;
+  color: var(--primary-text);
+  font-family: rssmall;
+  font-size: 14px;
+  padding: 4px 8px;
+  width: 220px;
+  outline: none;
+}
+
+.stash-page__search:focus {
+  border-color: var(--orange);
+}
+
+.stash-page__grid {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding-right: 4px;
+}
+
+.stash-page__stash {
+  background: var(--elevated);
+  border: 1px solid var(--light-border);
+  border-radius: 4px;
+  padding: 8px 10px;
+}
+
+.stash-page__stash.complete {
+  border-color: #2e7d32;
+}
+
+.stash-page__stash-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+}
+
+.stash-page__stash-name {
+  font-family: rsbold;
+  font-size: 15px;
+  color: var(--primary-text);
+}
+
+.stash-page__stash-status {
+  font-family: rssmall;
+  font-size: 14px;
+  padding: 1px 6px;
+  border-radius: 3px;
+}
+
+.stash-page__stash-status.complete {
+  color: #4caf50;
+}
+
+.stash-page__stash-status.incomplete {
+  color: #f44336;
+}
+
+.stash-page__clue {
+  margin-bottom: 6px;
+}
+
+.stash-page__clue:last-child {
+  margin-bottom: 0;
+}
+
+.stash-page__clue-text {
+  font-family: rssmall;
+  font-size: 14px;
+  color: #aaa;
+  margin-bottom: 4px;
+  line-height: 1.3;
+}
+
+.stash-page__items {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.stash-page__item {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: rgba(0, 0, 0, 0.25);
+  border: 1px solid var(--light-border);
+  border-radius: 3px;
+  padding: 3px 8px 3px 4px;
+  font-family: rssmall;
+  font-size: 14px;
+}
+
+.stash-page__item.has-item {
+  color: var(--green);
+  border-color: #2e7d32;
+}
+
+.stash-page__item.missing-item {
+  color: #f44336;
+  border-color: #c62828;
+}
+
+.stash-page__item-icon {
+  width: 24px;
+  height: 24px;
+  object-fit: contain;
+}
+
+.stash-page__no-stashes {
+  font-family: rssmall;
+  font-size: 14px;
+  color: #888;
+  text-align: center;
+  padding: 40px;
+}

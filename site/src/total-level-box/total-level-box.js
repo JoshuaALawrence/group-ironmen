@@ -15,11 +15,20 @@ export class TotalLevelBox extends BaseElement {
     this.playerName = this.getAttribute("player-name");
     this.render();
     this.totalLevel = this.querySelector(".total-level-box__level");
-    this.subscribe(`Overall:${this.playerName}`, this.handleUpdatedTotalXp.bind(this));
+    this.subscribe(`skills:${this.playerName}`, this.handleUpdatedSkills.bind(this));
   }
 
   disconnectedCallback() {
     super.disconnectedCallback();
+  }
+
+  handleUpdatedSkills(skills) {
+    const overallSkill = skills?.Overall;
+    if (!overallSkill) {
+      return;
+    }
+
+    this.handleUpdatedTotalXp(overallSkill);
   }
 
   handleUpdatedTotalXp(skill) {

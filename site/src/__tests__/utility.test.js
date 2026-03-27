@@ -21,19 +21,23 @@ describe("Utility", () => {
 
   describe("formatShortQuantity", () => {
     it("leaves small values unchanged", () => {
-      expect(utility.formatShortQuantity(99999)).toBe(99999);
+      expect(utility.formatShortQuantity(999)).toBe(999);
     });
 
-    it("formats hundreds of thousands as K", () => {
+    it("formats thousands as K", () => {
+      expect(utility.formatShortQuantity(1000)).toBe("1K");
       expect(utility.formatShortQuantity(100000)).toBe("100K");
     });
 
     it("formats millions as M", () => {
+      expect(utility.formatShortQuantity(1000000)).toBe("1M");
       expect(utility.formatShortQuantity(25000000)).toBe("25M");
     });
 
-    it("formats billions as B", () => {
-      expect(utility.formatShortQuantity(2500000000)).toBe("2B");
+    it("formats billions as B with 1 decimal", () => {
+      expect(utility.formatShortQuantity(1000000000)).toBe("1.0B");
+      expect(utility.formatShortQuantity(2500000000)).toBe("2.5B");
+      expect(utility.formatShortQuantity(2560000000)).toBe("2.5B");
     });
   });
 

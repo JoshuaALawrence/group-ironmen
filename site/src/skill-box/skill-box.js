@@ -20,11 +20,20 @@ export class SkillBox extends BaseElement {
     this.currentLevel = this.querySelector(".skill-box__current-level");
     this.baseLevel = this.querySelector(".skill-box__baseline-level");
     this.progressBar = this.querySelector(".skill-box__progress-bar");
-    this.subscribe(`${this.skillName}:${this.playerName}`, this.handleUpdatedSkill.bind(this));
+    this.subscribe(`skills:${this.playerName}`, this.handleUpdatedSkills.bind(this));
   }
 
   disconnectedCallback() {
     super.disconnectedCallback();
+  }
+
+  handleUpdatedSkills(skills) {
+    const skill = skills?.[this.skillName];
+    if (!skill) {
+      return;
+    }
+
+    this.handleUpdatedSkill(skill);
   }
 
   handleUpdatedSkill(skill) {

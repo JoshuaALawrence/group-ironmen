@@ -6,14 +6,17 @@ mod crypto;
 mod db;
 mod error;
 mod models;
+mod notifier;
 mod unauthed;
 mod validators;
 mod update_batcher;
 use crate::auth_middleware::AuthenticateMiddlewareFactory;
 use crate::config::Config;
+use crate::notifier::GroupEventNotifier;
 
 use actix_cors::Cors;
 use actix_web::{http::header, middleware, web, App, HttpServer};
+use std::sync::Arc;
 use tokio_postgres::NoTls;
 use tokio::sync::mpsc;
 
@@ -37,21 +40,26 @@ async fn main() -> std::io::Result<()> {
     unauthed::start_skills_aggregator(pool.clone());
 
     let update_batcher_pool = config.pg.create_pool(None, NoTls).unwrap();
+    let notifier = Arc::new(GroupEventNotifier::new());
     let (tx, rx) = mpsc::channel::<models::GroupMember>(10000);
+    let batch_notifier = notifier.clone();
     tokio::spawn(async move {
-        update_batcher::background_worker(update_batcher_pool, rx).await;
+        update_batcher::background_worker(update_batcher_pool, rx, batch_notifier).await;
     });
 
     HttpServer::new(move || {
         let unauthed_scope = web::scope("/api")
+            .wrap(middleware::Compress::default())
             .service(unauthed::create_group)
             .service(unauthed::get_ge_prices)
             .service(unauthed::captcha_enabled)
-            .service(unauthed::collection_log_info);
+            .service(unauthed::collection_log_info)
+            .service(unauthed::get_wise_old_man_player_boss_kc);
         let authed_scope = web::scope("/api/group/{group_name}")
             .wrap(AuthenticateMiddlewareFactory::new())
             .service(authed::update_group_member)
             .service(authed::get_group_data)
+            .service(authed::get_group_events)
             .service(authed::add_group_member)
             .service(authed::delete_group_member)
             .service(authed::rename_group_member)
@@ -75,17 +83,17 @@ async fn main() -> std::io::Result<()> {
             .wrap(middleware::Logger::new(
                 "\"%r\" %s %b \"%{User-Agent}i\" %D",
             ))
-            .wrap(middleware::Compress::default())
             .wrap(cors)
             .app_data(web::PayloadConfig::new(100000))
             .app_data(json_config)
             .app_data(web::Data::new(pool.clone()))
             .app_data(web::Data::new(config.clone()))
             .app_data(web::Data::new(tx.clone()))
+            .app_data(web::Data::from(notifier.clone()))
             .service(authed_scope)
             .service(unauthed_scope)
     })
-    .bind(("0.0.0.0", 8080))?
+    .bind(("0.0.0.0", 8081))?
     .run()
     .await
 }

@@ -1,0 +1,260 @@
+boss-kc-dialog {
+  display: block;
+  color: var(--orange);
+}
+
+boss-kc-dialog h2 {
+  font-size: 20px;
+  text-shadow: 1.3px 1.3px var(--black);
+}
+
+.boss-kc-dialog__container {
+  width: min(95%, 720px);
+  height: min(90%, 900px);
+  padding: 0;
+  cursor: auto;
+}
+
+.boss-kc-dialog__header {
+  display: grid;
+  grid-template-columns: 40px 1fr 40px;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 12px;
+  text-align: center;
+}
+
+.boss-kc-dialog__title-group {
+  min-width: 0;
+}
+
+.boss-kc-dialog__close {
+  justify-self: end;
+}
+
+.boss-kc-dialog__title-border {
+  background: url("/ui/173-0.png") repeat;
+  width: 100%;
+  height: 6px;
+}
+
+.boss-kc-dialog__content {
+  padding: 8px;
+  overflow: hidden;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.boss-kc-dialog__status {
+  text-align: center;
+  color: var(--yellow);
+  padding: 20px 12px;
+}
+
+.boss-kc-dialog__status.boss-kc-dialog__status-error {
+  color: var(--red);
+}
+
+.boss-kc-dialog__summary {
+  border: 1px solid hsl(40deg 15.79% 29.8%);
+  background: rgba(0, 0, 0, 0.15);
+  padding: 8px;
+}
+
+.boss-kc-dialog__summary-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 8px;
+}
+
+.boss-kc-dialog__summary-card {
+  min-width: 0;
+  display: grid;
+  gap: 4px;
+  padding: 7px 9px;
+  border-image: url(/ui/border-tiny.png) 4 4 / 4px round;
+  border-style: solid;
+  border-radius: 4px;
+  background: linear-gradient(rgba(0, 0, 0, 0.12), rgba(0, 0, 0, 0.12)), var(--rsbackground);
+  background-repeat: repeat;
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.28);
+}
+
+.boss-kc-dialog__summary-card-header {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.dark-mode .boss-kc-dialog__summary-card {
+  border-image: url(/ui/border-tiny-dark.png) 4 4 / 4px round;
+  background: linear-gradient(rgba(0, 0, 0, 0.18), rgba(0, 0, 0, 0.18)), var(--rsbackground-dark);
+}
+
+.boss-kc-dialog__summary-icon {
+  width: 18px;
+  height: 18px;
+  object-fit: contain;
+  flex-shrink: 0;
+  image-rendering: pixelated;
+}
+
+.boss-kc-dialog__summary-label {
+  min-width: 0;
+  flex: 1 1 auto;
+  color: var(--yellow);
+  font-size: 11px;
+  line-height: 1.25;
+  text-transform: uppercase;
+  letter-spacing: 0;
+}
+
+.boss-kc-dialog__summary-value {
+  min-width: 0;
+  color: var(--orange);
+  font-size: 18px;
+  line-height: 1.1;
+  text-shadow: 1.3px 1.3px var(--black);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.boss-kc-dialog__summary-value-missing {
+  color: var(--yellow);
+}
+
+.boss-kc-dialog__table {
+  flex: 1 1 0;
+  min-height: 0;
+  overflow: auto;
+  border: 1px solid hsl(40deg 15.79% 29.8%);
+  background: rgba(0, 0, 0, 0.15);
+}
+
+.boss-kc-dialog__row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(72px, auto) minmax(88px, auto) minmax(72px, auto);
+  gap: 16px;
+  align-items: center;
+  padding: 8px 12px;
+}
+
+.boss-kc-dialog__boss-cell {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.boss-kc-dialog__boss-icon {
+  width: 24px;
+  height: 24px;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+
+.boss-kc-dialog__boss-name {
+  min-width: 0;
+}
+
+.boss-kc-dialog__header-button,
+.boss-kc-dialog__numeric-cell {
+  display: block;
+}
+
+.boss-kc-dialog__header-button {
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  text-shadow: inherit;
+  cursor: pointer;
+}
+
+.boss-kc-dialog__header-button:hover,
+.boss-kc-dialog__header-button:focus-visible,
+.boss-kc-dialog__header-button[data-sort-active="true"] {
+  color: var(--orange);
+}
+
+.boss-kc-dialog__header-button:focus-visible {
+  outline: 1px solid var(--yellow);
+  outline-offset: 2px;
+}
+
+.boss-kc-dialog__header-button-numeric {
+  text-align: right;
+}
+
+.boss-kc-dialog__header-button[data-sort-direction="asc"]::after {
+  content: " ▲";
+  font-size: 11px;
+}
+
+.boss-kc-dialog__header-button[data-sort-direction="desc"]::after {
+  content: " ▼";
+  font-size: 11px;
+}
+
+.boss-kc-dialog__numeric-cell {
+  text-align: right;
+}
+
+.boss-kc-dialog__table-header {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: #3e3529;
+  color: var(--yellow);
+  text-shadow: 1.3px 1.3px var(--black);
+}
+
+.boss-kc-dialog__rows .boss-kc-dialog__row:nth-child(odd) {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.boss-kc-dialog__rows .boss-kc-dialog__row:nth-child(even) {
+  background: rgba(0, 0, 0, 0.08);
+}
+
+@media (max-width: 640px) {
+  .boss-kc-dialog__summary-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .boss-kc-dialog__summary-card {
+    padding: 8px;
+  }
+
+  .boss-kc-dialog__summary-value {
+    font-size: 16px;
+  }
+
+  .boss-kc-dialog__row {
+    grid-template-columns: minmax(0, 1fr) minmax(58px, auto) minmax(72px, auto) minmax(58px, auto);
+    gap: 10px;
+    padding: 8px;
+    font-size: 14px;
+  }
+
+  .boss-kc-dialog__header {
+    grid-template-columns: 24px 1fr 32px;
+    gap: 8px;
+  }
+
+  .boss-kc-dialog__boss-cell {
+    gap: 8px;
+  }
+
+  .boss-kc-dialog__boss-icon {
+    width: 20px;
+    height: 20px;
+  }
+}

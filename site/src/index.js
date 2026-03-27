@@ -52,3 +52,8 @@ import "./collection-log-tab/collection-log-tab.js";
 import "./collection-log-item/collection-log-item.js";
 import "./player-icon/player-icon.js";
 import "./donate-button/donate-button.js";
+import "./dps-calc/dps-calc.js";
+import "./banked-xp-page/banked-xp-page.js";
+import "./stash-page/stash-page.js";
+import "./boss-kc-dialog/boss-kc-dialog.js";
+import "./bank-dialog/bank-dialog.js";

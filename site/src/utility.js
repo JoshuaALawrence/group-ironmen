@@ -30,10 +30,11 @@ class Utility {
 
   formatShortQuantity(quantity) {
     if (quantity >= 1000000000) {
-      return Math.floor(quantity / 1000000000) + "B";
-    } else if (quantity >= 10000000) {
+      const b = quantity / 1000000000;
+      return (Math.floor(b * 10) / 10).toFixed(1) + "B";
+    } else if (quantity >= 1000000) {
       return Math.floor(quantity / 1000000) + "M";
-    } else if (quantity >= 100000) {
+    } else if (quantity >= 1000) {
       return Math.floor(quantity / 1000) + "K";
     }
     return quantity;

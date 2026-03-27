@@ -1,0 +1,31 @@
+<div class="boss-kc-dialog dialog dialog__visible">
+  <div class="boss-kc-dialog__container dialog__container metal-border rsbackground">
+    <div class="boss-kc-dialog__header">
+      <div class="boss-kc-dialog__header-spacer"></div>
+      <div class="boss-kc-dialog__title-group">
+        <h2 class="boss-kc-dialog__title">${this.playerName}'s Boss KC</h2>
+      </div>
+      <button class="boss-kc-dialog__close dialog__close">
+        <img src="/ui/1731-0.png" alt="Close dialog" title="Close dialog" />
+      </button>
+    </div>
+
+    <div class="boss-kc-dialog__title-border"></div>
+
+    <div class="boss-kc-dialog__content">
+      <div class="boss-kc-dialog__status"></div>
+      <div class="boss-kc-dialog__summary" hidden>
+        <div class="boss-kc-dialog__summary-grid"></div>
+      </div>
+      <div class="boss-kc-dialog__table" hidden>
+        <div class="boss-kc-dialog__table-header boss-kc-dialog__row">
+          <button class="boss-kc-dialog__header-button" type="button" data-sort-key="boss">Boss</button>
+          <button class="boss-kc-dialog__header-button boss-kc-dialog__header-button-numeric" type="button" data-sort-key="kills">KC</button>
+          <button class="boss-kc-dialog__header-button boss-kc-dialog__header-button-numeric" type="button" data-sort-key="log">Log</button>
+          <button class="boss-kc-dialog__header-button boss-kc-dialog__header-button-numeric" type="button" data-sort-key="rank">Rank</button>
+        </div>
+        <div class="boss-kc-dialog__rows"></div>
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,66 +1,159 @@
-# Group Ironmen Tracker Frontend and Backend
-Website: [groupiron.men](https://groupiron.men)
+# Group Ironmen Tracker
 
-Source for plugin: [https://github.com/christoabrown/group-ironmen-tracker](https://github.com/christoabrown/group-ironmen-tracker)
+> **Fork Notice:** This is a heavily modified fork of [christoabrown/group-ironmen](https://github.com/christoabrown/group-ironmen) with significant changes and improvements across the frontend, backend, cache tooling, and deployment infrastructure. While the core concept remains the same, much of the codebase has been rewritten or extended. See [What's Changed](#whats-changed) for details.
 
-This repo is for the frontend website and backend of the above plugin.
+**Website:** [groupiron.men](https://groupiron.men)  
+**RuneLite Plugin:** [group-ironmen-tracker](https://github.com/christoabrown/group-ironmen-tracker)  
+**License:** BSD 2-Clause (original copyright Christopher Brown)
 
-This plugin tracks information about your group ironman player and sends it to a server where you and your other group members can view it. Currently it tracks:
+A real-time group tracking system for Old School RuneScape Group Ironman teams. A companion RuneLite plugin sends player data to a backend server, allowing all group members to view each other's stats, gear, bank, position, and more through an interactive web dashboard.
 
-* Inventory, equipment, bank, rune pouch, and shared bank
-* Skill XP
-* World position, viewable in an interactive map
-* HP, prayer, energy, and world as well as showing inactivity
-* Quest state - completed, finished, in progress
+## Features
 
-# Self-hosting
+### Player Tracking
+- **Containers** — Inventory, equipment, bank, rune pouch, seed vault, stash units, and shared bank
+- **Skills** — Real-time XP with historical graphing and trend visualization
+- **Live Status** — HP, prayer, energy, current world, and inactivity detection
+- **World Map** — Interactive canvas-based map with player positions, zoom/pan, location labels, and player following
+- **Quests & Diaries** — Quest state and achievement diary progress tracking
+- **Collection Log** — Full collection log browsing with completion percentages and duplicate counts
+- **Boss Kill Counts** — Via Wise Old Man API integration
 
-It is possible to self-host the frontend and backend rather than use [groupiron.men](https://groupiron.men).
+### Tools & Utilities
+- **Banked XP Calculator** — Estimate XP stored across all containers in the group
+- **DPS Calculator** — Integrated calculator with equipment loadouts, prayers, potions, and combat styles
+- **Grand Exchange Prices** — Background-cached GE price data
 
-In the plugin settings, put the URL that you are hosting the website on. Leaving it blank will default to https://groupiron.men.
+### Technical Highlights
+- **Rust backend** (Actix-web) with batched update processing and real-time event broadcasting
+- **PostgreSQL** persistence with historical skill data aggregation
+- **Web Components** frontend with responsive multi-panel dashboard
+- **OSRS cache pipeline** — Automated extraction of item data, sprites, map tiles, NPC icons, and collection log structure
+- **Docker Compose** deployment with health checks, resource limits, and schema auto-initialization
+- **Makefile & PowerShell** tooling for development, testing, linting, cache updates, and image publishing
 
-![](https://i.imgur.com/0JFD7D5.png)
+## What's Changed
 
+Key improvements over the upstream repository:
 
-## With Docker
+- Expanded tracking: collection log, achievement diaries, seed vault, stash units, boss KC
+- Integrated DPS calculator with full equipment and prayer support
+- Historical skill XP graphing with configurable time periods
+- Banked XP estimation across group containers
+- Comprehensive OSRS cache update pipeline (`update-cache.ps1`) with automated item data, sprite, map tile, and equipment stat extraction
+- Hardened Docker Compose stack with health checks, resource limits, and structured logging
+- Makefile with targets for dev, lint, test, coverage, build, cache update, and publishing
+- Wise Old Man API integration for boss kill counts and activity data
 
-Prerequisites
+---
 
-* Docker
-* docker-compose
+## Self-Hosting
 
-### With docker-compose
+You can self-host the frontend and backend instead of using [groupiron.men](https://groupiron.men). In the RuneLite plugin settings, set the URL to your hosted instance. Leaving it blank defaults to `https://groupiron.men`.
 
-Copy the `docker-compose.yml`, `.env.example`, and `schema.sql` (exists in `server/src/sql`) files onto your server.
+![Plugin settings](https://i.imgur.com/0JFD7D5.png)
 
-Copy the contents of `.env.example` into a new file named `.env` in the same directory and fill it with your secrets.
+### Prerequisites
 
-The `.env` file explains what should go into each secret.
+- [Docker](https://docs.docker.com/get-docker/)
+- [Docker Compose](https://docs.docker.com/compose/install/)
 
-The `docker-compose.yml` has a line that takes the path to the `schema.sql`. Make sure to update this to the relative or absolute path of the file on your server.
+### Quick Start (Docker Compose)
 
-After you have set up the `.env` file and `schema.sql` path, you can run `docker-compose up -d` and this will spin up both the frontend and backend. The backend should be available on port 5000 and the frontend on port 4000, although these can be changed in the docker-compose file.
+1. Copy `docker-compose.yml`, `.env.example`, and `server/src/sql/schema.sql` to your server.
 
-### Without docker-compose (untested)
+2. Create a `.env` file from the example and fill in your secrets:
+   ```sh
+   cp .env.example .env
+   ```
+   See the comments in `.env.example` for an explanation of each variable.
 
-If you are not using the docker-compose, then you will have to set up the Postgres database and pass secrets in using Docker environment variables. See below in the [Without Docker](#without-docker) section for how to set up the database.
+3. Verify the `schema.sql` path in `docker-compose.yml` points to your copy of the file.
 
-You can then run the following to run the image for the frontend, adding the values of the environment variables:
+4. Start the stack:
+   ```sh
+   docker compose up -d
+   ```
+
+The frontend will be available on port **4000** and the backend on port **5000** (configurable in the compose file).
+
+### Without Docker Compose
+
+If you prefer to manage containers individually, set up a PostgreSQL database manually, then run each image with the required environment variables:
 
 ```sh
-docker run -d -e HOST_URL= chrisleeeee/group-ironmen-tracker-frontend
+docker run -d -e HOST_URL=<your-url> <frontend-image>
 ```
-
-Same thing for the backend:
 
 ```sh
-docker run -d -e PG_USER= -e PG_PASSWORD= -e PG_HOST= -e PG_PORT=  -e PG_DB= -e BACKEND_SECRET= chrisleeeee/group-ironmen-tracker-backend
+docker run -d \
+  -e PG_USER=<user> \
+  -e PG_PASSWORD=<password> \
+  -e PG_HOST=<host> \
+  -e PG_PORT=<port> \
+  -e PG_DB=<database> \
+  -e BACKEND_SECRET=<secret> \
+  <backend-image>
 ```
 
-Check `.env.example` for an explanation on what the value of each environment variable should be.
+The backend listens on port **8081** and the frontend on port **4000**.
 
-Once it's running, the backend should be available on port 8080 and the frontend on port 4000.
+### Publishing Custom Docker Images
 
-## Without Docker
+Build and publish your own images using the helper script:
 
-To be filled...
+```powershell
+./scripts/publish-docker.ps1 -ImagePrefix your-dockerhub-user -Tag latest -Push
+```
+
+Or via Make:
+
+```sh
+make docker-publish IMAGE_PREFIX=your-dockerhub-user TAG=latest PUSH=1
+```
+
+For registries that require a hostname prefix:
+
+```powershell
+./scripts/publish-docker.ps1 -ImagePrefix ghcr.io/your-org -Tag latest -Push
+```
+
+Images are tagged as:
+
+```
+<image-prefix>/group-ironmen-tracker-frontend:<tag>
+<image-prefix>/group-ironmen-tracker-backend:<tag>
+```
+
+Linux `amd64` is the default platform. Override with `-Platform linux/arm64` if needed.
+
+After publishing, set `FRONTEND_IMAGE`, `BACKEND_IMAGE`, and `IMAGE_TAG` in your `.env` to use your custom images with `docker compose up -d`.
+
+---
+
+## Development
+
+```sh
+make dev       # Start local dev stack (Docker DB + Cargo server + npm frontend)
+make lint      # Run all linters
+make test      # Run all tests
+make clean     # Remove build artifacts
+```
+
+### Cache Updates
+
+The OSRS cache pipeline downloads the game cache, extracts item data, sprites, map tiles, and equipment stats, then syncs everything to the frontend:
+
+```sh
+make update-cache         # Full cache update
+make update-cache-push    # Full cache update with git commit & push
+make update-equipment     # Re-import equipment.json from existing cache dump
+```
+
+See `scripts/update-cache.ps1` for detailed options and flags.
+
+---
+
+## License
+
+BSD 2-Clause — see [LICENSE](LICENSE). Original work copyright (c) 2022, Christopher Brown.

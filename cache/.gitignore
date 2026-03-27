@@ -2,6 +2,7 @@ runelite
 node_modules
 item-data
 item-images
+dumps
 .#*
 items_need_images.csv
 item_data.json

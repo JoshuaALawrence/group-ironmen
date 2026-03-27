@@ -1,4 +1,4 @@
-.PHONY: help dev stop lint test test-coverage build clean
+.PHONY: help dev stop lint test test-coverage build clean docker-publish update-cache update-cache-push update-equipment
 
 help: ## Show this help
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-20s\033[0m %s\n", $$1, $$2}'
@@ -37,6 +37,10 @@ build-frontend: ## Build just the frontend image
 build-backend: ## Build just the backend image
 	docker build -t group-ironmen-backend ./server
 
+docker-publish: ## Build frontend/backend images for your registry. Example: make docker-publish IMAGE_PREFIX=myuser TAG=latest PUSH=1
+	@test -n "$(IMAGE_PREFIX)" || (echo "IMAGE_PREFIX is required. Example: make docker-publish IMAGE_PREFIX=myuser TAG=latest PUSH=1" && exit 1)
+	pwsh -File ./scripts/publish-docker.ps1 -ImagePrefix $(IMAGE_PREFIX) -Tag $(if $(TAG),$(TAG),latest) $(if $(PLATFORM),-Platform $(PLATFORM),) $(if $(PUSH),-Push,) $(if $(NO_CACHE),-NoCache,)
+
 # ── Production ───────────────────────────────────────────────
 
 up: ## Start production stack
@@ -54,3 +58,14 @@ clean: ## Remove build artifacts
 	cd site && npm run clean
 	cd server && cargo clean
 	docker compose down -v --remove-orphans 2>/dev/null || true
+
+# ── Cache Update ─────────────────────────────────────────────
+
+update-cache: ## Full OSRS cache update: download, dump, sync site, update equipment, build
+	pwsh -File ./scripts/update-cache.ps1
+
+update-cache-push: ## Full cache update then git commit + push
+	pwsh -File ./scripts/update-cache.ps1 -Push
+
+update-equipment: ## Re-import equipment.json from latest cache dump (no re-download)
+	pwsh -File ./scripts/update-cache.ps1 -SkipCacheDump -SkipBuild
