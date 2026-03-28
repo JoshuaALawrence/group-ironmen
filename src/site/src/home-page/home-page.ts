@@ -386,11 +386,13 @@ export class HomePage extends BaseElement {
   }
 
   getDiaryTasksCompleted(member: MemberData): { done: number; total: number } {
-    if (!member.diaries) return { done: 0, total: 0 };
+    if (!member.diaries || typeof member.diaries !== "object") return { done: 0, total: 0 };
     let done = 0;
     let total = 0;
     for (const region of Object.values(member.diaries)) {
+      if (!region || typeof region !== "object") continue;
       for (const tasks of Object.values(region)) {
+        if (!Array.isArray(tasks)) continue;
         for (const completed of tasks) {
           total++;
           if (completed) done++;
@@ -476,15 +478,16 @@ export class HomePage extends BaseElement {
 
     for (const c of candidates) {
       if (claimed.size >= members.length) break;
-      const eligible = members.filter((m) => !claimed.has(m.name));
-      if (eligible.length === 0) break;
-      const sorted = [...eligible].sort((a, b) =>
+      // Find the TRUE best among ALL members
+      const allSorted = [...members].sort((a, b) =>
         c.higher ? c.score(b) - c.score(a) : c.score(a) - c.score(b)
       );
-      const winner = sorted[0];
-      if (c.score(winner) > 0 || !c.higher) {
-        titles.set(winner.name, { title: c.title, color: c.color, desc: c.desc });
-        claimed.add(winner.name);
+      const trueBest = allSorted[0];
+      // Only assign if the true best hasn't been claimed yet
+      if (claimed.has(trueBest.name)) continue;
+      if (c.score(trueBest) > 0 || !c.higher) {
+        titles.set(trueBest.name, { title: c.title, color: c.color, desc: c.desc });
+        claimed.add(trueBest.name);
       }
     }
 

@@ -162,7 +162,8 @@ home-page {
 
 .home-page__members {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  max-width: calc(5 * 280px + 4 * 10px);
   gap: 10px;
   min-height: 0;
   overflow: hidden;
@@ -234,6 +235,8 @@ home-page {
 
 .home-page__combat-icon {
   height: 16px;
+  width: auto;
+  object-fit: contain;
   image-rendering: pixelated;
 }
 
@@ -281,7 +284,8 @@ home-page {
 
 .home-page__skill-pill img {
   height: 18px;
-  width: 18px;
+  width: auto;
+  object-fit: contain;
   image-rendering: pixelated;
 }
 
