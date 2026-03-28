@@ -50,7 +50,7 @@ unauthedRouter.post('/create-group', async (req: Request, res: Response) => {
     );
     for (const mn of filteredMembers) {
       if (!validName(mn)) {
-        res.status(400).send(`Member name ${mn} is not valid`);
+        res.status(400).send('Provided member name is not valid');
         return;
       }
     }
@@ -102,13 +102,15 @@ let cachedNews: string | null = null;
 let newsRefreshInterval: ReturnType<typeof setInterval> | undefined;
 
 function decodeXmlEntities(str: string): string {
-  return str
-    .replace(/&lt;/g, '<')
-    .replace(/&gt;/g, '>')
-    .replace(/&apos;/g, "'")
-    .replace(/&quot;/g, '"')
-    .replace(/&#39;/g, "'")
-    .replace(/&amp;/g, '&');
+  const entities: Record<string, string> = {
+    '&lt;': '<',
+    '&gt;': '>',
+    '&apos;': "'",
+    '&quot;': '"',
+    '&#39;': "'",
+    '&amp;': '&',
+  };
+  return str.replace(/&(?:lt|gt|apos|quot|amp|#39);/g, (m) => entities[m] ?? m);
 }
 
 async function refreshOsrsNews(): Promise<void> {
@@ -307,7 +309,7 @@ authedRouter.post('/add-group-member', async (req: Request, res: Response) => {
       return;
     }
     if (!validName(memberName)) {
-      res.status(400).send(`Member name ${memberName} is not valid`);
+      res.status(400).send('Provided member name is not valid');
       return;
     }
     await db.addGroupMember((req as any).groupId, memberName);
@@ -315,7 +317,7 @@ authedRouter.post('/add-group-member', async (req: Request, res: Response) => {
     res.status(201).end();
   } catch (err) {
     if ((err as any).statusCode) {
-      res.status((err as any).statusCode).send((err as Error).message);
+      res.type('text/plain').status((err as any).statusCode).send((err as Error).message);
       return;
     }
     logger.error('Error adding group member: ' + (err as Error).message);
@@ -347,7 +349,7 @@ authedRouter.put('/rename-group-member', async (req: Request, res: Response) => 
       return;
     }
     if (!validName(new_name)) {
-      res.status(400).send(`Member name ${new_name} is not valid`);
+      res.status(400).send('Provided member name is not valid');
       return;
     }
     await db.renameGroupMember((req as any).groupId, original_name, new_name);
@@ -390,7 +392,7 @@ authedRouter.post('/update-group-member', async (req: Request, res: Response) =>
     res.status(200).end();
   } catch (err) {
     if ((err as any).statusCode) {
-      res.status((err as any).statusCode).send((err as Error).message);
+      res.type('text/plain').status((err as any).statusCode).send((err as Error).message);
       return;
     }
     logger.error('Error updating group member: ' + (err as Error).message);
@@ -538,7 +540,7 @@ authedRouter.post('/events', async (req: Request, res: Response) => {
     res.status(201).json(event);
   } catch (err) {
     if ((err as any).statusCode) {
-      res.status((err as any).statusCode).send((err as Error).message);
+      res.type('text/plain').status((err as any).statusCode).send((err as Error).message);
       return;
     }
     logger.error('Error creating group event: ' + (err as Error).message);
@@ -611,7 +613,7 @@ authedRouter.put('/discord-settings', async (req: Request, res: Response) => {
         if (typeof m.discord_id === 'string' && m.discord_id.trim().length > 0) {
           const id = m.discord_id.trim();
           if (!/^\d{1,20}$/.test(id)) {
-            res.status(400).send(`Invalid Discord ID for ${m.name}`);
+            res.status(400).send('Invalid Discord ID provided');
             return;
           }
           memberDiscordIds.push({ name: m.name, discord_id: id });

@@ -2,6 +2,7 @@ import fs from 'fs';
 import path from 'path';
 import express from 'express';
 import compression from 'compression';
+import rateLimit from 'express-rate-limit';
 import expressWinston from 'express-winston';
 import winston from 'winston';
 
@@ -32,6 +33,15 @@ app.use(
 // ── Middleware ──
 app.use(compression());
 app.use(express.json({ limit: 100000 }));
+
+// ── Rate limiting ──
+const apiLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 300,
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+app.use('/api', apiLimiter);
 
 // ── Shared state ──
 const notifier = new GroupEventNotifier();

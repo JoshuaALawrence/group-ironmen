@@ -17279,7 +17279,7 @@ var InventoryPager = class extends BaseElement {
   render() {
     super.render();
     if (this.numberOfItems !== void 0 && this.itemCount) {
-      this.itemCount.innerHTML = this.numberOfItems.toLocaleString();
+      this.itemCount.textContent = this.numberOfItems.toLocaleString();
     }
   }
   handlePlayerFilterChange() {
@@ -17405,22 +17405,22 @@ var InventoryPager = class extends BaseElement {
     return pageItems;
   }
   renderPage(page) {
-    let items = "";
+    if (!this.pageTarget) return;
+    this.pageTarget.textContent = "";
     for (const item of page) {
-      const groupedAttr = item.isGrouped ? `grouped-ids="${(item.variantIds ?? []).join(",")}"` : "";
-      items += `
-<inventory-item item-id="${item.id}"
-                ${groupedAttr}
-                class="rsborder rsbackground"
-                ${this.showIndividualPrices ? "individual-prices" : ""}
-                ${!this.showGePrice ? "hide-ge-price" : ""}
-                ${!this.showAlchPrice ? "hide-alch-price" : ""}
-                ${groupData.playerFilter !== "@ALL" ? `player-filter="${groupData.playerFilter}"` : ""}>
-</inventory-item>
-`;
-    }
-    if (this.pageTarget) {
-      this.pageTarget.innerHTML = items;
+      const el = document.createElement("inventory-item");
+      el.setAttribute("item-id", String(item.id));
+      if (item.isGrouped) {
+        el.setAttribute("grouped-ids", (item.variantIds ?? []).join(","));
+      }
+      el.classList.add("rsborder", "rsbackground");
+      if (this.showIndividualPrices) el.setAttribute("individual-prices", "");
+      if (!this.showGePrice) el.setAttribute("hide-ge-price", "");
+      if (!this.showAlchPrice) el.setAttribute("hide-alch-price", "");
+      if (groupData.playerFilter !== "@ALL") {
+        el.setAttribute("player-filter", groupData.playerFilter);
+      }
+      this.pageTarget.appendChild(el);
     }
   }
   updateItemValues() {
@@ -17434,10 +17434,10 @@ var InventoryPager = class extends BaseElement {
       }
     }
     if (this.totalGeValue) {
-      this.totalGeValue.innerHTML = totalGeValue.toLocaleString();
+      this.totalGeValue.textContent = totalGeValue.toLocaleString();
     }
     if (this.totalHaValue) {
-      this.totalHaValue.innerHTML = totalHaValue.toLocaleString();
+      this.totalHaValue.textContent = totalHaValue.toLocaleString();
     }
   }
   itemQuantity(item) {
@@ -18770,7 +18770,10 @@ var PlayerPanel = class extends BaseElement {
     const component = target instanceof Element ? target.getAttribute("data-component") : null;
     if (component && this.activeComponent !== component) {
       if (this.contentArea) {
-        this.contentArea.innerHTML = `<${component} player-name="${this.playerName ?? ""}"></${component}>`;
+        this.contentArea.textContent = "";
+        const el = document.createElement(component);
+        el.setAttribute("player-name", this.playerName ?? "");
+        this.contentArea.appendChild(el);
       }
       if (this.activeComponent) {
         this.querySelector(`button[data-component="${this.activeComponent}"]`)?.classList.remove(
@@ -20467,7 +20470,7 @@ var LoginPage = class extends BaseElement {
       return;
     }
     try {
-      this.error.innerHTML = "";
+      this.error.textContent = "";
       this.loginButton.disabled = true;
       const name = this.name.value ?? "";
       const token = this.token.value ?? "";
@@ -20477,13 +20480,13 @@ var LoginPage = class extends BaseElement {
         storage.storeGroup(name, token);
         window.history.pushState("", "", "/group");
       } else if (response.status === 401) {
-        this.error.innerHTML = "Group name or token is incorrect";
+        this.error.textContent = "Group name or token is incorrect";
       } else {
         const body = await response.text();
-        this.error.innerHTML = `Unable to login ${body}`;
+        this.error.textContent = `Unable to login ${body}`;
       }
     } catch (error48) {
-      this.error.innerHTML = `Unable to login ${error48}`;
+      this.error.textContent = `Unable to login ${error48}`;
     } finally {
       this.loginButton.disabled = false;
     }
@@ -20863,7 +20866,7 @@ var SkillsGraphs = class _SkillsGraphs extends BaseElement {
       this.chartContainer.appendChild(skillGraph);
     } catch (err) {
       console.error(err);
-      this.chartContainer.innerHTML = `Failed to load ${err}`;
+      this.chartContainer.textContent = `Failed to load ${err}`;
     }
   }
   async waitForChartjs() {

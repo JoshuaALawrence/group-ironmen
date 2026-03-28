@@ -30,24 +30,45 @@ const log = winston.createLogger({
   )
 });
 
-function exec(command) {
-  log.info(`Running command: ${command}`);
+function assertSafeShellValue(value, name) {
+  if (typeof value !== 'string' || !value) {
+    throw new Error(`Config value for '${name}' is missing or empty`);
+  }
+  if (/[;&|`$(){}[\]!#~<>\\*?"'\n\r\t]/.test(value)) {
+    throw new Error(`Config value for '${name}' contains unsafe shell characters`);
+  }
+}
+
+function execFile(command, args) {
+  const displayCommand = command + ' ' + args.join(' ');
+  log.info(`Running command: ${displayCommand}`);
 
   try {
-    child_process.execSync(command, { stdio: 'inherit' });
+    child_process.execFileSync(command, args, { stdio: 'inherit' });
   } catch (err) {
     log.error(err);
     throw err;
   }
 }
 
+assertSafeShellValue(config.hostUser, 'hostUser');
+assertSafeShellValue(config.hostIp, 'hostIp');
+assertSafeShellValue(config.dbName, 'dbName');
+assertSafeShellValue(config.dumpDirectory, 'dumpDirectory');
+
 let dateString = (new Date()).toISOString();
 dateString = dateString.split('.')[0];
 dateString = dateString.replaceAll(':', '-');
 const filename = `${dateString}.sql.gz`;
 
-exec(`ssh ${config.hostUser}@${config.hostIp} 'pg_dump --compress=6 ${config.dbName} > ${config.dumpDirectory}/backup.sql.gz'`);
-exec(`scp ${config.hostUser}@${config.hostIp}:${config.dumpDirectory}/backup.sql.gz ${backupDirectory}/${filename}`);
+execFile('ssh', [
+  `${config.hostUser}@${config.hostIp}`,
+  `pg_dump --compress=6 ${config.dbName} > ${config.dumpDirectory}/backup.sql.gz`
+]);
+execFile('scp', [
+  `${config.hostUser}@${config.hostIp}:${config.dumpDirectory}/backup.sql.gz`,
+  `${backupDirectory}/${filename}`
+]);
 
 function keepMostRecentBackups() {
   const backupsToKeep = parseInt(config.backupsToKeep, 10);

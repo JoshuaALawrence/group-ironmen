@@ -129,7 +129,10 @@ export class PlayerPanel extends BaseElement {
     const component = target instanceof Element ? target.getAttribute("data-component") : null;
     if (component && this.activeComponent !== component) {
       if (this.contentArea) {
-        this.contentArea.innerHTML = `<${component} player-name="${this.playerName ?? ""}"></${component}>`;
+        this.contentArea.textContent = '';
+        const el = document.createElement(component);
+        el.setAttribute('player-name', this.playerName ?? '');
+        this.contentArea.appendChild(el);
       }
 
       if (this.activeComponent) {

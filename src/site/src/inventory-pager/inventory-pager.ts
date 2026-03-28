@@ -137,7 +137,7 @@ export class InventoryPager extends BaseElement {
   render(): void {
     super.render();
     if (this.numberOfItems !== undefined && this.itemCount) {
-      this.itemCount.innerHTML = this.numberOfItems.toLocaleString();
+      this.itemCount.textContent = this.numberOfItems.toLocaleString();
     }
   }
 
@@ -290,23 +290,22 @@ export class InventoryPager extends BaseElement {
   }
 
   renderPage(page: DisplayItem[]): void {
-    let items = "";
+    if (!this.pageTarget) return;
+    this.pageTarget.textContent = '';
     for (const item of page) {
-      const groupedAttr = item.isGrouped ? `grouped-ids="${(item.variantIds ?? []).join(",")}"` : "";
-      items += `
-<inventory-item item-id="${item.id}"
-                ${groupedAttr}
-                class="rsborder rsbackground"
-                ${this.showIndividualPrices ? "individual-prices" : ""}
-                ${!this.showGePrice ? "hide-ge-price" : ""}
-                ${!this.showAlchPrice ? "hide-alch-price" : ""}
-                ${groupData.playerFilter !== "@ALL" ? `player-filter="${groupData.playerFilter}"` : ""}>
-</inventory-item>
-`;
-    }
-
-    if (this.pageTarget) {
-      this.pageTarget.innerHTML = items;
+      const el = document.createElement('inventory-item');
+      el.setAttribute('item-id', String(item.id));
+      if (item.isGrouped) {
+        el.setAttribute('grouped-ids', (item.variantIds ?? []).join(','));
+      }
+      el.classList.add('rsborder', 'rsbackground');
+      if (this.showIndividualPrices) el.setAttribute('individual-prices', '');
+      if (!this.showGePrice) el.setAttribute('hide-ge-price', '');
+      if (!this.showAlchPrice) el.setAttribute('hide-alch-price', '');
+      if (groupData.playerFilter !== '@ALL') {
+        el.setAttribute('player-filter', groupData.playerFilter);
+      }
+      this.pageTarget.appendChild(el);
     }
   }
 
@@ -322,10 +321,10 @@ export class InventoryPager extends BaseElement {
     }
 
     if (this.totalGeValue) {
-      this.totalGeValue.innerHTML = totalGeValue.toLocaleString();
+      this.totalGeValue.textContent = totalGeValue.toLocaleString();
     }
     if (this.totalHaValue) {
-      this.totalHaValue.innerHTML = totalHaValue.toLocaleString();
+      this.totalHaValue.textContent = totalHaValue.toLocaleString();
     }
   }
 

@@ -323,7 +323,7 @@ export async function handleGetWiseOldManPlayerBossKc(req: Request, res: Respons
 
   const result = await fetchJagexHiscoreResponse(playerName);
   if (!result) {
-    res.status(404).send(`${playerName} was not found on the OSRS hiscores.`);
+    res.status(404).send('Player was not found on the OSRS hiscores.');
     return;
   }
   const [player, endpointUrl] = result;

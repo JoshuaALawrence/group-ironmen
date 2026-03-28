@@ -146,7 +146,7 @@ export class SkillsGraphs extends BaseElement {
       this.chartContainer.appendChild(skillGraph);
     } catch (err) {
       console.error(err);
-      this.chartContainer.innerHTML = `Failed to load ${err}`;
+      this.chartContainer.textContent = `Failed to load ${err}`;
     }
   }
 

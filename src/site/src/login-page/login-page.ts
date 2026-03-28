@@ -46,7 +46,7 @@ export class LoginPage extends BaseElement {
     }
 
     try {
-      this.error.innerHTML = "";
+      this.error.textContent = "";
       this.loginButton.disabled = true;
       const name = this.name.value ?? "";
       const token = this.token.value ?? "";
@@ -56,13 +56,13 @@ export class LoginPage extends BaseElement {
         storage.storeGroup(name, token);
         window.history.pushState("", "", "/group");
       } else if (response.status === 401) {
-        this.error.innerHTML = "Group name or token is incorrect";
+        this.error.textContent = "Group name or token is incorrect";
       } else {
         const body = await response.text();
-        this.error.innerHTML = `Unable to login ${body}`;
+        this.error.textContent = `Unable to login ${body}`;
       }
     } catch (error) {
-      this.error.innerHTML = `Unable to login ${error}`;
+      this.error.textContent = `Unable to login ${error}`;
     } finally {
       this.loginButton.disabled = false;
     }

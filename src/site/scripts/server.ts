@@ -1,4 +1,5 @@
 import express from "express";
+import rateLimit from "express-rate-limit";
 import winston from "winston";
 import expressWinston from "express-winston";
 import path from "path";
@@ -37,8 +38,16 @@ app.use(
   })
 );
 app.use(compression());
+
+const apiLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 300,
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+app.use("/api", apiLimiter);
+
 app.use(express.static("public"));
-app.use(express.static("."));
 
 if (backend) {
   console.log(`Backend for api calls: ${backend}`);
