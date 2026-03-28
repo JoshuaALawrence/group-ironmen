@@ -15,3 +15,67 @@ group-settings {
 .group-settings__members edit-member {
   margin-bottom: 1em;
 }
+
+/* Discord settings */
+.group-settings__discord-field {
+  margin-bottom: 12px;
+}
+
+.group-settings__discord-label {
+  display: block;
+  font-family: rsbold;
+  font-size: 13px;
+  color: var(--orange);
+  margin-bottom: 3px;
+}
+
+.group-settings__discord-input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 5px 8px;
+  background: #372e22;
+  border: none;
+  color: var(--orange);
+  font-family: rssmall;
+  font-size: 14px;
+  border-radius: 3px;
+}
+
+.group-settings__discord-input::placeholder {
+  color: #777;
+}
+
+.group-settings__discord-member {
+  margin-top: 6px;
+}
+
+.group-settings__discord-member .group-settings__discord-label {
+  font-size: 12px;
+  color: var(--primary-text);
+}
+
+.group-settings__discord-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.group-settings__discord-status {
+  font-family: rssmall;
+  font-size: 13px;
+}
+
+.group-settings__discord-status--ok {
+  color: var(--green);
+}
+
+.group-settings__discord-status--err {
+  color: var(--red);
+}
+
+.group-settings__discord-set {
+  font-family: rssmall;
+  font-size: 11px;
+  color: var(--green);
+}

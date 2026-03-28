@@ -1,5 +1,5 @@
 // Auto-generated from emote-clue-items plugin Java sources
-// Do not edit manually - run scripts/convert-stash-data.js to regenerate
+// Do not edit manually - run scripts/convert-stash-data.ts to regenerate
 
 export const DIFFICULTIES = ["Beginner", "Easy", "Medium", "Hard", "Elite", "Master"];
 

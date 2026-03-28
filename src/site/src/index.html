@@ -128,6 +128,12 @@
       route-outlet=".authed-section__outlet"
       route-wrapper=".authed-section"
     ></app-route>
+    <app-route
+      route-path="/events"
+      route-component="events-page"
+      route-outlet=".authed-section__outlet"
+      route-wrapper=".authed-section"
+    ></app-route>
 
     <canvas-map id="background-worldmap"></canvas-map>
     <wrap-routes class="unauthed-section" route-path="">
@@ -139,16 +145,22 @@
     <wrap-routes class="authed-section" route-path="/group">
       <template>
         <app-initializer></app-initializer>
-        <div class="authed-section__main-content">
-          <app-navigation class="rsborder-tiny rsbackground"></app-navigation>
-          <div class="authed-section__outlet"></div>
+        <event-banner></event-banner>
+        <div class="authed-section__row">
+          <div class="authed-section__main-content">
+            <app-navigation class="rsborder-tiny rsbackground"></app-navigation>
+            <div class="authed-section__outlet"></div>
+          </div>
+          <side-panel></side-panel>
         </div>
-        <side-panel></side-panel>
       </template>
     </wrap-routes>
 
     <rs-tooltip></rs-tooltip>
     <confirm-dialog class="dialog"></confirm-dialog>
+    <member-select-dialog></member-select-dialog>
+    <rs-context-menu></rs-context-menu>
+    <request-dialog></request-dialog>
     <script>{{js}}</script>
     <app-route route-path="*" route-redirect="/"></app-route>
   </body>

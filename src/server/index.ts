@@ -12,6 +12,7 @@ import { GroupEventNotifier } from './notifier';
 import { UpdateBatcher } from './update-batcher';
 import { unauthedRouter, authedRouter } from './routes';
 import * as externalServices from './external-services';
+import { startEventScheduler } from './event-scheduler';
 
 const app = express();
 
@@ -93,6 +94,7 @@ async function start(): Promise<void> {
 
   externalServices.startGeUpdater();
   externalServices.startSkillsAggregator();
+  startEventScheduler();
 
   app.listen(config.port, '0.0.0.0', () => {
     logger.info(`Unified server listening on http://0.0.0.0:${config.port}`);

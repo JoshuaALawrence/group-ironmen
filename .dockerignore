@@ -15,5 +15,5 @@ LICENSE
 Makefile
 docker-compose.yml
 src/site/public/*.map
-src/site/vitest.config.js
+src/site/vitest.config.ts
 src/site/src/__tests__

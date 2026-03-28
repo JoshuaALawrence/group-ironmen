@@ -5,11 +5,11 @@
   "scripts": {
     "start": "node dist/server/index.js",
     "build:server": "tsc",
-    "build:site": "cd src/site && node build.js --prod",
+    "build:site": "cd src/site && tsx build.ts --prod",
     "typecheck:site": "tsc -p src/site/tsconfig.json",
-    "build": "tsc && cd src/site && node build.js --prod",
-    "clean": "cd src/site && node scripts/clean.js",
-    "dev": "node scripts/dev.js"
+    "build": "tsc && cd src/site && tsx build.ts --prod",
+    "clean": "cd src/site && tsx scripts/clean.ts",
+    "dev": "tsx scripts/dev.ts"
   },
   "dependencies": {
     "axios": "^1.7.0",
@@ -30,15 +30,16 @@
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
     "@types/uuid": "^10.0.0",
-    "react": "^19.2.4",
-    "react-dom": "^19.2.4",
     "@vitest/coverage-v8": "^4.1.2",
     "chokidar": "^3.5.3",
     "clean-css": "^5.3.2",
     "esbuild": "^0.27.4",
     "glob": "^7.2.0",
     "jsdom": "^28.1.0",
+    "react": "^19.2.4",
+    "react-dom": "^19.2.4",
     "terser": "^5.16.5",
+    "tsx": "^4.21.0",
     "typescript": "^6.0.2",
     "vitest": "^4.1.2",
     "zod": "^4.3.6"

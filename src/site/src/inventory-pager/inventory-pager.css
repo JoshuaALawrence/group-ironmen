@@ -16,3 +16,8 @@ inventory-pager {
 .inventory-pager__buttons button {
   padding: 4px 8px;
 }
+
+.inventory-pager__buttons button.active {
+  outline: none;
+  background-color: rgba(255, 255, 255, 0.2);
+}

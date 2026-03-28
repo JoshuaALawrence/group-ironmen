@@ -64,12 +64,30 @@ h3 {
   src: url("/fonts/runescape-tiny.ttf");
 }
 
+wrap-routes.authed-section {
+  flex-direction: column;
+}
+
+.authed-section__row {
+  display: flex;
+  flex-direction: row-reverse;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.authed-section[data-dock="right"] .authed-section__row {
+  flex-direction: row;
+}
+
 .authed-section__main-content {
-  width: 100%;
   padding: 20px 8px;
   overflow-y: auto;
   z-index: 1;
   box-sizing: border-box;
+  flex: 1;
+  min-height: 0;
+  min-width: 0;
 }
 
 .authed-section__outlet {

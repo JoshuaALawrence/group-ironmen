@@ -29,7 +29,7 @@
   },
   "overrides": [
     {
-      "files": ["build.js", "scripts/**/*.js"],
+      "files": ["build.ts", "scripts/**/*.ts"],
       "env": { "node": true },
       "rules": { "no-console": "off" }
     },

@@ -7,6 +7,8 @@ import { pubsub } from "../data/pubsub";
 import { loadingScreenManager } from "../loading-screen/loading-screen-manager";
 import { exampleData } from "../data/example-data";
 import { AchievementDiary } from "../data/diaries";
+import { groupData } from "../data/group-data";
+import { memberSelectDialogManager } from "../member-select-dialog/member-select-dialog-manager";
 
 export class AppInitializer extends BaseElement {
   constructor() {
@@ -57,6 +59,11 @@ export class AppInitializer extends BaseElement {
         await this.loadGroup(group);
       }
 
+      // Ask the user to identify themselves if not already set
+      if (this.isConnected && group.groupName !== "@EXAMPLE") {
+        await this.ensureActiveMember(group.groupName);
+      }
+
       loadingScreenManager.hideLoadingScreen();
     }
   }
@@ -71,6 +78,26 @@ export class AppInitializer extends BaseElement {
     const firstDataEvent = pubsub.waitUntilNextEvent("get-group-data", false);
     await api.enable(group.groupName, group.groupToken);
     await firstDataEvent;
+  }
+
+  async ensureActiveMember(groupName: string): Promise<void> {
+    const members = [...groupData.members.values()]
+      .map((m) => m.name)
+      .filter((n) => n !== "@SHARED");
+
+    if (members.length === 0) return;
+
+    const saved = storage.getActiveMember();
+    if (saved && members.includes(saved)) {
+      pubsub.publish("active-member-changed", saved);
+      return;
+    }
+
+    // Need to ask the user
+    loadingScreenManager.hideLoadingScreen();
+    const selected = await memberSelectDialogManager.selectMember(members);
+    storage.setActiveMember(selected);
+    pubsub.publish("active-member-changed", selected);
   }
 }
 

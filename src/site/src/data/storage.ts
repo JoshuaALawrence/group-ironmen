@@ -19,6 +19,19 @@ class Storage {
   clearGroup(): void {
     localStorage.removeItem("groupName");
     localStorage.removeItem("groupToken");
+    localStorage.removeItem("activeMember");
+  }
+
+  getActiveMember(): string | null {
+    return localStorage.getItem("activeMember");
+  }
+
+  setActiveMember(name: string): void {
+    localStorage.setItem("activeMember", name);
+  }
+
+  clearActiveMember(): void {
+    localStorage.removeItem("activeMember");
   }
 }
 

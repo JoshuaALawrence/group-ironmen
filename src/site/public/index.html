@@ -71,12 +71,30 @@ h3 {
   src: url("/fonts/runescape-tiny.ttf");
 }
 
+wrap-routes.authed-section {
+  flex-direction: column;
+}
+
+.authed-section__row {
+  display: flex;
+  flex-direction: row-reverse;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.authed-section[data-dock="right"] .authed-section__row {
+  flex-direction: row;
+}
+
 .authed-section__main-content {
-  width: 100%;
   padding: 20px 8px;
   overflow-y: auto;
   z-index: 1;
   box-sizing: border-box;
+  flex: 1;
+  min-height: 0;
+  min-width: 0;
 }
 
 .authed-section__outlet {
@@ -538,6 +556,11 @@ inventory-pager {
 
 .inventory-pager__buttons button {
   padding: 4px 8px;
+}
+
+.inventory-pager__buttons button.active {
+  outline: none;
+  background-color: rgba(255, 255, 255, 0.2);
 }
 app-navigation {
   display: flex;
@@ -1422,6 +1445,70 @@ group-settings {
 .group-settings__members edit-member {
   margin-bottom: 1em;
 }
+
+/* Discord settings */
+.group-settings__discord-field {
+  margin-bottom: 12px;
+}
+
+.group-settings__discord-label {
+  display: block;
+  font-family: rsbold;
+  font-size: 13px;
+  color: var(--orange);
+  margin-bottom: 3px;
+}
+
+.group-settings__discord-input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 5px 8px;
+  background: #372e22;
+  border: none;
+  color: var(--orange);
+  font-family: rssmall;
+  font-size: 14px;
+  border-radius: 3px;
+}
+
+.group-settings__discord-input::placeholder {
+  color: #777;
+}
+
+.group-settings__discord-member {
+  margin-top: 6px;
+}
+
+.group-settings__discord-member .group-settings__discord-label {
+  font-size: 12px;
+  color: var(--primary-text);
+}
+
+.group-settings__discord-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.group-settings__discord-status {
+  font-family: rssmall;
+  font-size: 13px;
+}
+
+.group-settings__discord-status--ok {
+  color: var(--green);
+}
+
+.group-settings__discord-status--err {
+  color: var(--red);
+}
+
+.group-settings__discord-set {
+  font-family: rssmall;
+  font-size: 11px;
+  color: var(--green);
+}
 men-input,
 member-name-input {
   display: block;
@@ -1799,7 +1886,14 @@ skill-graph {
   margin-left: 8px;
 }
 .panels-page .authed-section {
-  display: block !important;
+  display: flex !important;
+  flex-direction: column !important;
+  overflow-y: auto;
+}
+
+.panels-page .authed-section__row {
+  display: block;
+  flex: 1;
   overflow-y: auto;
 }
 
@@ -4579,6 +4673,626 @@ stash-page {
   text-align: center;
   padding: 40px;
 }
+events-page {
+  display: block;
+  height: 100%;
+  overflow-y: auto;
+}
+
+.events-page {
+  padding: 12px;
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.events-page__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.events-page__title {
+  font-size: 22px;
+  color: var(--orange);
+  margin: 0;
+}
+
+.events-page__new-btn {
+  font-size: 16px;
+}
+
+/* Filter tabs */
+.events-page__filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-bottom: 12px;
+}
+
+.events-page__filter-tab {
+  padding: 4px 10px;
+  font-family: rssmall;
+  font-size: 14px;
+  background: var(--elevated);
+  border: 1px solid var(--light-border);
+  color: var(--primary-text);
+  cursor: pointer;
+  border-radius: 3px;
+  transition: background 0.15s;
+}
+
+.events-page__filter-tab:hover {
+  background: #444;
+}
+
+.events-page__filter-tab.active {
+  border-color: var(--orange);
+  color: var(--orange);
+}
+
+/* Content */
+.events-page__content {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.events-page__section-subtitle {
+  font-family: rsbold;
+  font-size: 15px;
+  color: var(--orange);
+  margin: 0 0 8px;
+}
+
+.events-page__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 10px;
+}
+
+.events-page__empty {
+  grid-column: 1 / -1;
+  text-align: center;
+  color: #999;
+  font-family: rssmall;
+  font-size: 15px;
+  padding: 30px 0;
+}
+
+/* Event card */
+.events-page__card {
+  background: var(--elevated);
+  border: 1px solid var(--light-border);
+  border-radius: 4px;
+  padding: 10px 12px;
+  transition: border-color 0.15s;
+}
+
+.events-page__card:hover {
+  border-color: var(--orange);
+}
+
+.events-page__card--past {
+  opacity: 0.55;
+}
+
+.events-page__card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 4px;
+  font-size: 12px;
+  font-family: rssmall;
+}
+
+.events-page__card-type {
+  font-family: rsbold;
+  text-transform: uppercase;
+  font-size: 11px;
+}
+
+.events-page__card-time {
+  color: #ccc;
+}
+
+.events-page__card-title-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.events-page__card-icon {
+  width: 20px;
+  height: 20px;
+  image-rendering: pixelated;
+  flex-shrink: 0;
+}
+
+.events-page__card-title {
+  font-family: rsbold;
+  font-size: 16px;
+  color: var(--primary-text);
+  margin: 2px 0 4px;
+}
+
+.events-page__card-desc {
+  font-family: rssmall;
+  font-size: 13px;
+  color: #bbb;
+  margin: 0 0 6px;
+  line-height: 1.3;
+  word-break: break-word;
+}
+
+.events-page__card-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 12px;
+  font-family: rssmall;
+  color: #999;
+  gap: 6px;
+}
+
+.events-page__card-relative {
+  color: var(--green);
+  font-family: rsbold;
+}
+
+.events-page__card--past .events-page__card-relative {
+  color: #888;
+}
+
+.events-page__card-author {
+  flex: 1;
+  text-align: right;
+}
+
+.events-page__delete-btn {
+  background: none;
+  border: none;
+  color: var(--red);
+  font-size: 18px;
+  cursor: pointer;
+  padding: 0 4px;
+  font-family: rsbold;
+  line-height: 1;
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+
+.events-page__card:hover .events-page__delete-btn {
+  opacity: 1;
+}
+
+.events-page__delete-btn:hover {
+  color: #ff6666;
+}
+
+/* Past section */
+.events-page__past-section {
+  margin-top: 8px;
+}
+
+.events-page__past-section .events-page__grid {
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+}
+
+/* Form */
+.events-page__form {
+  padding: 14px;
+  margin-bottom: 14px;
+  border-radius: 4px;
+}
+
+.events-page__form-title {
+  font-size: 18px;
+  color: var(--yellow);
+  margin: 0 0 12px;
+}
+
+.events-page__form-row {
+  margin-bottom: 10px;
+}
+
+.events-page__label {
+  display: block;
+  font-family: rsbold;
+  font-size: 13px;
+  color: var(--orange);
+  margin-bottom: 3px;
+}
+
+.events-page__label-hint {
+  font-family: rssmall;
+  font-size: 11px;
+  color: #999;
+}
+
+.events-page__input,
+.events-page__select,
+.events-page__textarea {
+  width: 100%;
+  box-sizing: border-box;
+  color: var(--orange);
+  padding: 6px 8px;
+  background: #372e22;
+  border: none;
+  box-shadow: inset 3px 3px 3px #261d11;
+  border-radius: 4px;
+  font-family: rssmall;
+  font-size: 14px;
+}
+
+.dark-mode .events-page__input,
+.dark-mode .events-page__select,
+.dark-mode .events-page__textarea {
+  background: #282828;
+  box-shadow: inset 3px 3px 3px #161616;
+}
+
+.events-page__textarea {
+  resize: vertical;
+  min-height: 50px;
+}
+
+.events-page__select {
+  cursor: pointer;
+}
+
+/* Icon picker */
+.events-page__icon-picker {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-height: 200px;
+  overflow-y: auto;
+  padding: 4px;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 4px;
+}
+
+.events-page__icon-category-label {
+  font-family: rssmall;
+  font-size: 11px;
+  color: var(--orange);
+  display: block;
+  margin-bottom: 2px;
+}
+
+.events-page__icon-category-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.events-page__icon-option {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--elevated);
+  border: 2px solid transparent;
+  border-radius: 3px;
+  cursor: pointer;
+  padding: 2px;
+  font-family: rssmall;
+  font-size: 10px;
+  color: #999;
+}
+
+.events-page__icon-option img {
+  max-width: 20px;
+  max-height: 20px;
+  object-fit: contain;
+  image-rendering: pixelated;
+}
+
+.events-page__icon-option:hover {
+  border-color: var(--light-border);
+}
+
+.events-page__icon-option.selected {
+  border-color: var(--orange);
+  background: rgba(255, 152, 31, 0.15);
+}
+
+.events-page__form-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.events-page__submit-btn {
+  font-size: 15px;
+}
+
+.events-page__cancel-btn {
+  font-size: 15px;
+}
+
+/* Mobile */
+@media only screen and (max-width: 600px) {
+  .events-page {
+    padding: 8px;
+  }
+
+  .events-page__grid {
+    grid-template-columns: 1fr;
+  }
+
+  .events-page__header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .events-page__delete-btn {
+    opacity: 1;
+  }
+}
+event-banner {
+  display: block;
+  width: 100%;
+  z-index: 2;
+  flex-shrink: 0;
+}
+
+event-banner:empty {
+  display: none;
+}
+
+.event-banner__item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  background: rgba(0, 0, 0, 0.65);
+  border-left: 3px solid var(--orange);
+  font-family: rssmall;
+  font-size: 14px;
+  color: var(--primary-text);
+  text-shadow: 1px 1px var(--black);
+  animation: event-banner-pulse 2s ease-in-out infinite;
+}
+
+.event-banner__item + .event-banner__item {
+  border-top: 1px solid var(--light-border);
+}
+
+.event-banner__icon {
+  width: 18px;
+  height: 18px;
+  image-rendering: pixelated;
+  flex-shrink: 0;
+}
+
+.event-banner__title {
+  font-family: rsbold;
+  color: var(--orange);
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.event-banner__time {
+  font-family: rsbold;
+  color: var(--green);
+  flex-shrink: 0;
+  font-size: 13px;
+}
+
+@keyframes event-banner-pulse {
+  0%, 100% { background: rgba(0, 0, 0, 0.65); }
+  50% { background: rgba(40, 30, 10, 0.75); }
+}
+
+@media only screen and (max-width: 600px) {
+  .event-banner__item {
+    padding: 4px 8px;
+    font-size: 12px;
+  }
+
+  .event-banner__time {
+    font-size: 11px;
+  }
+}
+member-select-dialog {
+  display: none;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  height: 100%;
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 1001;
+  backdrop-filter: blur(3px);
+  background: rgba(0, 0, 0, 0.6);
+  padding: 32px 0;
+  box-sizing: border-box;
+}
+
+member-select-dialog.dialog__visible {
+  display: flex;
+}
+
+.member-select__container {
+  width: min(95%, 400px);
+  padding: 24px 32px;
+  text-align: center;
+}
+
+.member-select__title {
+  font-family: rsbold;
+  font-size: 2em;
+  color: var(--yellow);
+  margin: 0 0 4px 0;
+  text-shadow: 2px 2px var(--black);
+}
+
+.member-select__subtitle {
+  font-family: rssmall;
+  font-size: 15px;
+  color: var(--primary-text);
+  margin: 0 0 16px 0;
+}
+
+.member-select__list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.member-select__btn {
+  font-size: 20px;
+  width: 100%;
+  padding: 8px 16px;
+  justify-content: center;
+}
+
+.member-select__btn:hover {
+  color: var(--yellow);
+}
+rs-context-menu {
+  display: none;
+  position: fixed;
+  z-index: 2000;
+}
+
+rs-context-menu.context-menu--visible {
+  display: block;
+}
+
+.context-menu__container {
+  min-width: 150px;
+  padding: 2px;
+  font-family: "rssmall";
+  font-size: 16px;
+}
+
+.context-menu__title {
+  color: var(--orange);
+  text-align: center;
+  padding: 4px 10px;
+  margin: 0;
+  font-size: 14px;
+  font-family: "rsbold";
+  border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 220px;
+}
+
+.context-menu__option {
+  display: block;
+  width: 100%;
+  padding: 4px 10px;
+  margin: 0;
+  border: none;
+  background: none;
+  color: var(--primary-text);
+  font-family: "rssmall";
+  font-size: 16px;
+  text-shadow: 1px 1px var(--black);
+  text-align: left;
+  cursor: pointer;
+  white-space: nowrap;
+  box-sizing: border-box;
+}
+
+.context-menu__option:hover {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.context-menu__option--disabled {
+  color: #6a6a6a;
+  cursor: not-allowed;
+  text-shadow: 1px 1px rgba(0, 0, 0, 0.4);
+}
+
+.context-menu__option--disabled:hover {
+  background: none;
+}
+
+.context-menu__option--disabled span {
+  color: #6a6a6a;
+}
+
+.context-menu__option span {
+  color: var(--yellow);
+}
+request-dialog {
+  display: none;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  height: 100%;
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 1001;
+  backdrop-filter: blur(3px);
+  background: rgba(0, 0, 0, 0.6);
+  padding: 32px 0;
+  box-sizing: border-box;
+}
+
+request-dialog.dialog__visible {
+  display: flex;
+}
+
+.request-dialog__container {
+  width: min(95%, 360px);
+  padding: 20px 28px;
+  text-align: center;
+}
+
+.request-dialog__container h2 {
+  color: var(--yellow);
+  margin: 0 0 8px 0;
+  font-family: "rsbold";
+  font-size: 1.3em;
+  word-break: break-word;
+}
+
+.request-dialog__container p {
+  margin: 0 0 12px 0;
+  font-size: 15px;
+}
+
+.request-dialog__input-row {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 14px;
+}
+
+.request-dialog__quantity {
+  width: 120px;
+  text-align: center;
+  font-size: 18px;
+  padding: 4px 8px;
+  font-family: "rssmall";
+  color: var(--orange);
+  background: rgba(0, 0, 0, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 4px;
+}
+
+.request-dialog__buttons {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+}
+
+.request-dialog__buttons button {
+  min-width: 90px;
+}
 
     </style>
     <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
@@ -4702,6 +5416,12 @@ stash-page {
       route-outlet=".authed-section__outlet"
       route-wrapper=".authed-section"
     ></app-route>
+    <app-route
+      route-path="/events"
+      route-component="events-page"
+      route-outlet=".authed-section__outlet"
+      route-wrapper=".authed-section"
+    ></app-route>
 
     <canvas-map id="background-worldmap"></canvas-map>
     <wrap-routes class="unauthed-section" route-path="">
@@ -4713,16 +5433,22 @@ stash-page {
     <wrap-routes class="authed-section" route-path="/group">
       <template>
         <app-initializer></app-initializer>
-        <div class="authed-section__main-content">
-          <app-navigation class="rsborder-tiny rsbackground"></app-navigation>
-          <div class="authed-section__outlet"></div>
+        <event-banner></event-banner>
+        <div class="authed-section__row">
+          <div class="authed-section__main-content">
+            <app-navigation class="rsborder-tiny rsbackground"></app-navigation>
+            <div class="authed-section__outlet"></div>
+          </div>
+          <side-panel></side-panel>
         </div>
-        <side-panel></side-panel>
       </template>
     </wrap-routes>
 
     <rs-tooltip></rs-tooltip>
     <confirm-dialog class="dialog"></confirm-dialog>
+    <member-select-dialog></member-select-dialog>
+    <rs-context-menu></rs-context-menu>
+    <request-dialog></request-dialog>
     <script>var __defProp = Object.defineProperty;
 var __export = (target, all) => {
   for (var name in all)
@@ -4763,7 +5489,7 @@ var Appearance = class {
       return;
     }
     const layoutDirection = this.getLayout();
-    authedSection.style.flexDirection = layoutDirection === "row-reverse" ? "row" : "row-reverse";
+    authedSection.setAttribute("data-dock", layoutDirection === "row-reverse" ? "right" : "left");
   }
   setTheme(theme) {
     localStorage.setItem("theme", theme);
@@ -18784,6 +19510,16 @@ var Storage = class {
   clearGroup() {
     localStorage.removeItem("groupName");
     localStorage.removeItem("groupToken");
+    localStorage.removeItem("activeMember");
+  }
+  getActiveMember() {
+    return localStorage.getItem("activeMember");
+  }
+  setActiveMember(name) {
+    localStorage.setItem("activeMember", name);
+  }
+  clearActiveMember() {
+    localStorage.removeItem("activeMember");
   }
 };
 var storage = new Storage();
@@ -21450,6 +22186,174 @@ var SearchElement = class extends BaseElement {
 };
 customElements.define("search-element", SearchElement);
 
+// src/rs-context-menu/context-menu-manager.ts
+var ContextMenuManager = class {
+  _menu;
+  get menu() {
+    if (this._menu) return this._menu;
+    this._menu = document.querySelector("rs-context-menu");
+    return this._menu;
+  }
+  show(x, y, title, options) {
+    this.menu?.show(x, y, title, options);
+  }
+  hide() {
+    this.menu?.hide();
+  }
+};
+var contextMenuManager = new ContextMenuManager();
+
+// src/request-dialog/request-dialog-manager.ts
+var RequestDialogManager = class {
+  _dialog;
+  get dialog() {
+    if (this._dialog) return this._dialog;
+    this._dialog = document.querySelector("request-dialog");
+    return this._dialog;
+  }
+  requestQuantity(itemName) {
+    const d = this.dialog;
+    if (!d) return Promise.resolve(null);
+    return d.show(itemName);
+  }
+};
+var requestDialogManager = new RequestDialogManager();
+
+// src/request-dialog/request-dialog.ts
+var RequestDialog = class _RequestDialog extends BaseElement {
+  itemName = "";
+  resolveRequest;
+  html() {
+    return `<div class="dialog__container request-dialog__container rsborder rsbackground">
+  <h2>Request ${this.itemName}</h2>
+  <p>How many do you want to request?</p>
+  <div class="request-dialog__input-row">
+    <input class="request-dialog__quantity" type="text" inputmode="decimal" value="1" placeholder="e.g. 10k, 5m, 1b" />
+  </div>
+  <div class="request-dialog__buttons">
+    <button class="request-dialog__confirm men-button">Confirm</button>
+    <button class="request-dialog__cancel men-button">Cancel</button>
+  </div>
+</div>
+`;
+  }
+  show(itemName) {
+    this.itemName = itemName;
+    this.render();
+    this.classList.add("dialog__visible");
+    const quantityInput = this.querySelector(".request-dialog__quantity");
+    const confirmBtn = this.querySelector(".request-dialog__confirm");
+    const cancelBtn = this.querySelector(".request-dialog__cancel");
+    if (quantityInput) {
+      quantityInput.focus();
+      quantityInput.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") {
+          e.preventDefault();
+          this.confirm(quantityInput);
+        }
+      });
+    }
+    if (confirmBtn) {
+      this.eventListener(confirmBtn, "click", () => this.confirm(quantityInput));
+    }
+    if (cancelBtn) {
+      this.eventListener(cancelBtn, "click", () => {
+        this.hide();
+        this.resolveRequest?.(null);
+      });
+    }
+    return new Promise((resolve) => {
+      this.resolveRequest = resolve;
+    });
+  }
+  static parseOsrsQuantity(text) {
+    const cleaned = text.trim().toLowerCase().replace(/,/g, "");
+    const match = cleaned.match(/^([\d.]+)\s*([kmb])?$/);
+    if (!match) return NaN;
+    let num = parseFloat(match[1]);
+    if (match[2] === "k") num *= 1e3;
+    else if (match[2] === "m") num *= 1e6;
+    else if (match[2] === "b") num *= 1e9;
+    return Math.floor(num);
+  }
+  confirm(input) {
+    const value = _RequestDialog.parseOsrsQuantity(input?.value ?? "1");
+    if (isNaN(value) || value < 1) return;
+    this.hide();
+    this.resolveRequest?.(value);
+  }
+  hide() {
+    this.unbindEvents();
+    this.classList.remove("dialog__visible");
+  }
+  static getApiBase() {
+    const group = storage.getGroup();
+    return `/api/group/${group?.groupName}`;
+  }
+  static getAuthHeaders() {
+    const group = storage.getGroup();
+    const headers = { "Content-Type": "application/json" };
+    if (group?.groupToken) {
+      headers["Authorization"] = group.groupToken;
+    }
+    return headers;
+  }
+  static async sendItemRequest(itemName, quantity, requestedBy, quantities) {
+    try {
+      const res = await fetch(`${_RequestDialog.getApiBase()}/request-item`, {
+        method: "POST",
+        headers: _RequestDialog.getAuthHeaders(),
+        body: JSON.stringify({
+          item_name: itemName,
+          quantity,
+          requested_by: requestedBy,
+          member_quantities: quantities
+        })
+      });
+      return res.ok;
+    } catch {
+      return false;
+    }
+  }
+};
+customElements.define("request-dialog", RequestDialog);
+
+// src/data/webhook-status.ts
+var WebhookStatus = class {
+  hasWebhook = false;
+  fetched = false;
+  fetching = false;
+  async fetch() {
+    if (this.fetching) return;
+    this.fetching = true;
+    try {
+      const group = storage.getGroup();
+      if (!group || group.groupName === "@EXAMPLE") {
+        this.hasWebhook = false;
+        this.fetched = true;
+        return;
+      }
+      const headers = {};
+      if (group.groupToken) {
+        headers["Authorization"] = group.groupToken;
+      }
+      const res = await fetch(`/api/group/${group.groupName}/discord-settings`, { headers });
+      if (res.ok) {
+        const data = await res.json();
+        this.hasWebhook = !!data.has_webhook;
+      }
+      this.fetched = true;
+    } catch {
+    } finally {
+      this.fetching = false;
+    }
+  }
+  async ensure() {
+    if (!this.fetched) await this.fetch();
+  }
+};
+var webhookStatus = new WebhookStatus();
+
 // src/inventory-item/inventory-item.ts
 var InventoryItem = class extends BaseElement {
   showIndividualItemPrices;
@@ -21501,12 +22405,47 @@ var InventoryItem = class extends BaseElement {
       }, {});
       this.intersectionObserver.observe(this);
     }
+    this.eventListener(this, "contextmenu", ((e) => this.handleContextMenu(e)), { passive: false });
   }
   disconnectedCallback() {
     super.disconnectedCallback();
     if (this.intersectionObserver) {
       this.intersectionObserver.disconnect();
     }
+  }
+  handleContextMenu(e) {
+    if (!this.item) return;
+    if (!this.closest("items-page")) return;
+    e.preventDefault();
+    const item = this.item;
+    webhookStatus.ensure().then(() => {
+      const hasWebhook = webhookStatus.hasWebhook;
+      contextMenuManager.show(e.clientX, e.clientY, item.name, [
+        {
+          label: hasWebhook ? "Request" : "Request (no webhook)",
+          highlightedText: hasWebhook ? item.name : void 0,
+          disabled: !hasWebhook,
+          callback: async () => {
+            const quantity = await requestDialogManager.requestQuantity(item.name);
+            if (quantity === null || quantity < 1) return;
+            const activeMember = storage.getActiveMember();
+            if (!activeMember) {
+              alert("Please set your identity in Group Settings first.");
+              return;
+            }
+            const success2 = await RequestDialog.sendItemRequest(
+              item.name,
+              quantity,
+              activeMember,
+              item.quantities
+            );
+            if (!success2) {
+              alert("Failed to send request. Make sure a Discord webhook is configured in Group Settings.");
+            }
+          }
+        }
+      ]);
+    });
   }
   /* eslint-disable no-unused-vars */
   html() {
@@ -22007,6 +22946,12 @@ var AppNavigation = class extends BaseElement {
     <button class="men-button" type="button" route-component="stash-page">
       <span class="desktop">Clues</span>
       <span class="mobile"><img loading="lazy" src="/ui/952-0.png" /></span>
+    </button>
+  </men-link>
+  <men-link link-href="/group/events">
+    <button class="men-button" type="button" route-component="events-page">
+      <span class="desktop">Events</span>
+      <span class="mobile"><img loading="lazy" src="/ui/776-0.png" /></span>
     </button>
   </men-link>
   <men-link link-href="/group/settings">
@@ -23626,6 +24571,22 @@ var SetupInstructions = class extends BaseElement {
 };
 customElements.define("setup-instructions", SetupInstructions);
 
+// src/member-select-dialog/member-select-dialog-manager.ts
+var MemberSelectDialogManager = class {
+  _dialog;
+  get dialog() {
+    if (this._dialog) return this._dialog;
+    this._dialog = document.querySelector("member-select-dialog");
+    return this._dialog;
+  }
+  selectMember(members) {
+    const d = this.dialog;
+    if (!d) return Promise.resolve(members[0] || "");
+    return d.show(members);
+  }
+};
+var memberSelectDialogManager = new MemberSelectDialogManager();
+
 // src/app-initializer/app-initializer.ts
 var AppInitializer = class extends BaseElement {
   constructor() {
@@ -23665,6 +24626,9 @@ var AppInitializer = class extends BaseElement {
       } else {
         await this.loadGroup(group);
       }
+      if (this.isConnected && group.groupName !== "@EXAMPLE") {
+        await this.ensureActiveMember(group.groupName);
+      }
       loadingScreenManager.hideLoadingScreen();
     }
   }
@@ -23678,14 +24642,33 @@ var AppInitializer = class extends BaseElement {
     await api.enable(group.groupName, group.groupToken);
     await firstDataEvent;
   }
+  async ensureActiveMember(groupName) {
+    const members = [...groupData.members.values()].map((m) => m.name).filter((n) => n !== "@SHARED");
+    if (members.length === 0) return;
+    const saved = storage.getActiveMember();
+    if (saved && members.includes(saved)) {
+      pubsub.publish("active-member-changed", saved);
+      return;
+    }
+    loadingScreenManager.hideLoadingScreen();
+    const selected = await memberSelectDialogManager.selectMember(members);
+    storage.setActiveMember(selected);
+    pubsub.publish("active-member-changed", selected);
+  }
 };
 customElements.define("app-initializer", AppInitializer);
 
 // src/group-settings/group-settings.ts
+function escapeHtml(str) {
+  const div = document.createElement("div");
+  div.textContent = str;
+  return div.innerHTML;
+}
 var GroupSettings = class extends BaseElement {
   memberSection = null;
   panelDockSide = null;
   appearanceStyle = null;
+  discordSettings = null;
   html() {
     const selectedPanelDockSide = appearance.getLayout();
     const style = appearance.getTheme();
@@ -23718,6 +24701,16 @@ var GroupSettings = class extends BaseElement {
       <label for="style__dark">Dark</label>
     </div>
   </fieldset>
+
+  <h3>Identity</h3>
+  <p>Playing as: <span class="group-settings__identity-name emphasize"></span></p>
+  <div class="group-settings__section-content">
+    <button class="men-button small" id="change-identity-btn">Change character</button>
+  </div>
+
+  <h3>Discord settings</h3>
+  <p>Optional \u2014 link your group's Discord for notifications.</p>
+  <div class="group-settings__section-content group-settings__discord-content"></div>
 </div>
 `;
   }
@@ -23734,6 +24727,13 @@ var GroupSettings = class extends BaseElement {
     if (this.appearanceStyle) {
       this.eventListener(this.appearanceStyle, "change", this.handleStyleChange.bind(this));
     }
+    const changeIdentityBtn = this.querySelector("#change-identity-btn");
+    if (changeIdentityBtn) {
+      this.eventListener(changeIdentityBtn, "click", this.handleChangeIdentity.bind(this));
+    }
+    this.updateIdentityDisplay();
+    this.subscribe("active-member-changed", () => this.updateIdentityDisplay());
+    this.fetchDiscordSettings();
   }
   handleStyleChange() {
     const styleInput = this.querySelector('input[name="appearance-style"]:checked');
@@ -23775,6 +24775,123 @@ var GroupSettings = class extends BaseElement {
     }
     this.memberSection.innerHTML = "";
     this.memberSection.appendChild(memberEdits);
+  }
+  updateIdentityDisplay() {
+    const el = this.querySelector(".group-settings__identity-name");
+    if (el) {
+      const name = storage.getActiveMember();
+      el.textContent = name || "Not set";
+    }
+  }
+  async handleChangeIdentity() {
+    if (this.isDemo) return;
+    const memberEls = this.memberSection?.querySelectorAll("edit-member");
+    if (!memberEls) return;
+    const names = [];
+    for (const el of Array.from(memberEls)) {
+      const member = el.member;
+      if (member) names.push(member.name);
+    }
+    if (names.length === 0) return;
+    const selected = await memberSelectDialogManager.selectMember(names);
+    storage.setActiveMember(selected);
+    pubsub.publish("active-member-changed", selected);
+    this.updateIdentityDisplay();
+  }
+  get isDemo() {
+    const group = storage.getGroup();
+    return group?.groupName === "@EXAMPLE";
+  }
+  getApiBase() {
+    const group = storage.getGroup();
+    return `/api/group/${group?.groupName}`;
+  }
+  getAuthHeaders() {
+    const group = storage.getGroup();
+    const headers = { "Content-Type": "application/json" };
+    if (group?.groupToken) {
+      headers["Authorization"] = group.groupToken;
+    }
+    return headers;
+  }
+  async fetchDiscordSettings() {
+    if (this.isDemo) return;
+    try {
+      const res = await fetch(`${this.getApiBase()}/discord-settings`, {
+        headers: this.getAuthHeaders()
+      });
+      if (res.ok) {
+        this.discordSettings = await res.json();
+        this.renderDiscordSection();
+      }
+    } catch {
+    }
+  }
+  renderDiscordSection() {
+    const container = this.querySelector(".group-settings__discord-content");
+    if (!container || !this.discordSettings) return;
+    const memberRows = this.discordSettings.members.map(
+      (m) => `
+        <div class="group-settings__discord-member">
+          <label class="group-settings__discord-label">${escapeHtml(m.name)}${m.has_discord_id ? ' <span class="group-settings__discord-set">Set \u2713</span>' : ""}</label>
+          <input type="text" class="group-settings__discord-input" data-member-name="${escapeHtml(m.name)}" value="" placeholder="${m.has_discord_id ? "Enter new ID to update" : "Discord User ID"}" />
+        </div>`
+    ).join("");
+    container.innerHTML = `
+      <div class="group-settings__discord-field">
+        <label class="group-settings__discord-label">Webhook URL${this.discordSettings.has_webhook ? ' <span class="group-settings__discord-set">Set \u2713</span>' : ""}</label>
+        <input type="text" class="group-settings__discord-input" id="discord-webhook-url" value="" placeholder="${this.discordSettings.has_webhook ? "Enter new URL to update" : "https://discord.com/api/webhooks/..."}" />
+      </div>
+      <div class="group-settings__discord-field">
+        <label class="group-settings__discord-label">Member Discord IDs</label>
+        ${memberRows}
+      </div>
+      <div class="group-settings__discord-actions">
+        <button class="men-button small" id="discord-save-btn">Save</button>
+        <span class="group-settings__discord-status" id="discord-status"></span>
+      </div>
+    `;
+    const saveBtn = container.querySelector("#discord-save-btn");
+    if (saveBtn) {
+      this.eventListener(saveBtn, "click", () => this.saveDiscordSettings());
+    }
+  }
+  async saveDiscordSettings() {
+    const statusEl = this.querySelector("#discord-status");
+    const webhookInput = this.querySelector("#discord-webhook-url");
+    const memberInputs = this.querySelectorAll(".group-settings__discord-member input");
+    const webhook_url = webhookInput?.value?.trim() || "";
+    const members = [];
+    for (const input of Array.from(memberInputs)) {
+      const name = input.getAttribute("data-member-name") || "";
+      members.push({ name, discord_id: input.value.trim() });
+    }
+    try {
+      if (statusEl) statusEl.textContent = "Saving...";
+      const res = await fetch(`${this.getApiBase()}/discord-settings`, {
+        method: "PUT",
+        headers: this.getAuthHeaders(),
+        body: JSON.stringify({ webhook_url, members })
+      });
+      if (res.ok) {
+        if (statusEl) {
+          statusEl.textContent = "Saved!";
+          statusEl.className = "group-settings__discord-status group-settings__discord-status--ok";
+        }
+        await this.fetchDiscordSettings();
+      } else {
+        const msg = await res.text();
+        if (statusEl) {
+          statusEl.textContent = msg || "Error saving";
+          statusEl.className = "group-settings__discord-status group-settings__discord-status--err";
+        }
+      }
+    } catch {
+      if (statusEl) {
+        statusEl.textContent = "Error saving";
+        statusEl.className = "group-settings__discord-status group-settings__discord-status--err";
+      }
+    }
   }
 };
 customElements.define("group-settings", GroupSettings);
@@ -54538,6 +55655,622 @@ var StashPage = class extends BaseElement {
 };
 customElements.define("stash-page", StashPage);
 
+// src/data/event-icons.ts
+var EVENT_ICON_CATEGORIES = [
+  {
+    category: "Bosses",
+    icons: [
+      "general_graardor",
+      "commander_zilyana",
+      "kreearra",
+      "kril_tsutsaroth",
+      "corporeal_beast",
+      "chambers_of_xeric",
+      "theatre_of_blood",
+      "tombs_of_amascut",
+      "tombs_of_amascut_expert",
+      "the_gauntlet",
+      "the_corrupted_gauntlet",
+      "nex",
+      "nightmare",
+      "vorkath",
+      "zulrah",
+      "cerberus",
+      "alchemical_hydra",
+      "king_black_dragon",
+      "kalphite_queen",
+      "giant_mole",
+      "dagannoth_kings",
+      "kraken",
+      "thermonuclear_smoke_devil",
+      "grotesque_guardians",
+      "phantom_muspah",
+      "duke_sucellus",
+      "the_leviathan",
+      "the_whisperer",
+      "vardorvis",
+      "araxxor",
+      "the_hueycoatl",
+      "sol_heredit",
+      "barrows_chests",
+      "sarachnis",
+      "scorpia",
+      "chaos_elemental",
+      "wintertodt",
+      "tempoross",
+      "zalcano",
+      "tzkal_zuk",
+      "tztok_jad",
+      "skotizo"
+    ].map((n) => ({ id: `boss:${n}`, src: `/images/boss-icons/${n}_icon.png` }))
+  },
+  {
+    category: "Skills",
+    icons: [
+      "Strength",
+      "Defence",
+      "Ranged",
+      "Prayer",
+      "Magic",
+      "Hitpoints",
+      "Runecraft",
+      "Crafting",
+      "Mining",
+      "Smithing",
+      "Fishing",
+      "Cooking",
+      "Firemaking",
+      "Woodcutting",
+      "Agility",
+      "Herblore",
+      "Thieving",
+      "Fletching",
+      "Slayer",
+      "Farming",
+      "Hunter"
+    ].map((n) => ({ id: `skill:${n}`, src: `/images/skills/${n}_icon_(detail).png` })).concat([
+      { id: "skill:Attack", src: "/images/skills/24px-Attack_icon_(detail).png" },
+      { id: "skill:Construction", src: "/images/skills/24px-Construction_icon_(detail).png" }
+    ])
+  },
+  {
+    category: "Activities",
+    icons: [
+      { id: "misc:diary", src: "/images/misc/diary.png" },
+      { id: "misc:slayer", src: "/images/misc/slayer.webp" },
+      { id: "misc:skull", src: "/images/misc/skull.webp" },
+      { id: "misc:chinchompa", src: "/images/misc/chinchompa.png" },
+      { id: "summary:clue_scrolls_all", src: "/images/summary-icons/clue_scrolls_all.png" },
+      { id: "summary:colosseum_glory", src: "/images/summary-icons/colosseum_glory.png" },
+      { id: "summary:soul_wars_zeal", src: "/images/summary-icons/soul_wars_zeal.png" },
+      { id: "summary:last_man_standing", src: "/images/summary-icons/last_man_standing.png" },
+      { id: "tab:combat", src: "/images/tabs/combat.png" },
+      { id: "tab:prayer", src: "/images/tabs/prayer.png" },
+      { id: "tab:equipment", src: "/images/tabs/equipment.png" },
+      { id: "img:raids", src: "/images/raids_icon.webp" }
+    ]
+  }
+];
+var ICON_SRC_MAP = {};
+for (const cat of EVENT_ICON_CATEGORIES) {
+  for (const ic of cat.icons) {
+    ICON_SRC_MAP[ic.id] = ic.src;
+  }
+}
+function iconSrc(iconId) {
+  return ICON_SRC_MAP[iconId] || "";
+}
+
+// src/events-page/events-page.ts
+var EVENT_TYPE_INFO = {
+  boss: { label: "Boss", color: "#ff981f" },
+  skilling: { label: "Skilling", color: "#0dc10d" },
+  minigame: { label: "Minigame", color: "#00c8ff" },
+  quest: { label: "Quest", color: "#ffff00" },
+  raid: { label: "Raid", color: "#ff4444" },
+  pking: { label: "PK Trip", color: "#ff00ff" },
+  other: { label: "Other", color: "#cccccc" }
+};
+function escapeHtml2(str) {
+  const div = document.createElement("div");
+  div.textContent = str;
+  return div.innerHTML;
+}
+var EventsPage = class extends BaseElement {
+  events;
+  showForm;
+  filterType;
+  selectedIcon;
+  constructor() {
+    super();
+    this.events = [];
+    this.showForm = false;
+    this.filterType = "all";
+    this.selectedIcon = "";
+  }
+  html() {
+    return `<div class="events-page">
+  <div class="events-page__header">
+    <h2 class="events-page__title rstext">Adventure Board</h2>
+    ${this.isDemo ? "" : '<button class="men-button events-page__new-btn" id="events-new-btn">+ New Event</button>'}
+  </div>
+
+  ${this.renderForm()}
+
+  <div class="events-page__filters">
+    ${this.renderFilterTabs()}
+  </div>
+
+  <div class="events-page__content">
+    <div class="events-page__section">
+      <h3 class="events-page__section-subtitle">Upcoming Adventures</h3>
+      <div class="events-page__grid">
+        ${this.renderUpcoming()}
+      </div>
+    </div>
+    ${this.renderPast()}
+  </div>
+</div>
+`;
+  }
+  connectedCallback() {
+    super.connectedCallback();
+    this.events = [];
+    this.showForm = false;
+    this.filterType = "all";
+    this.selectedIcon = "";
+    this.fetchEvents();
+  }
+  disconnectedCallback() {
+    super.disconnectedCallback();
+  }
+  get isDemo() {
+    const group = storage.getGroup();
+    return group?.groupName === "@EXAMPLE";
+  }
+  getApiBase() {
+    const group = storage.getGroup();
+    return `/api/group/${group?.groupName}`;
+  }
+  getAuthHeaders() {
+    const group = storage.getGroup();
+    const headers = { "Content-Type": "application/json" };
+    if (group?.groupToken) {
+      headers["Authorization"] = group.groupToken;
+    }
+    return headers;
+  }
+  async fetchEvents() {
+    if (!this.isDemo) {
+      try {
+        const res = await fetch(`${this.getApiBase()}/events`, {
+          headers: this.getAuthHeaders()
+        });
+        if (res.ok) {
+          this.events = await res.json();
+        }
+      } catch {
+      }
+    }
+    this.render();
+    this.bindEvents();
+  }
+  getFilteredEvents() {
+    let filtered = this.events;
+    if (this.filterType !== "all") {
+      filtered = filtered.filter((e) => e.event_type === this.filterType);
+    }
+    return filtered;
+  }
+  getUpcomingEvents() {
+    const now = (/* @__PURE__ */ new Date()).toISOString();
+    return this.getFilteredEvents().filter((e) => {
+      const end = e.event_end_time || e.event_time;
+      return end >= now;
+    });
+  }
+  getPastEvents() {
+    const now = (/* @__PURE__ */ new Date()).toISOString();
+    return this.getFilteredEvents().filter((e) => {
+      const end = e.event_end_time || e.event_time;
+      return end < now;
+    }).reverse();
+  }
+  formatEventTime(isoString) {
+    const d = new Date(isoString);
+    const options = {
+      weekday: "short",
+      month: "short",
+      day: "numeric",
+      hour: "numeric",
+      minute: "2-digit"
+    };
+    return d.toLocaleDateString(void 0, options);
+  }
+  getRelativeTime(isoString) {
+    const now = Date.now();
+    const target = new Date(isoString).getTime();
+    const diff = target - now;
+    const absDiff = Math.abs(diff);
+    if (absDiff < 6e4) return diff > 0 ? "Starting now" : "Just ended";
+    if (absDiff < 36e5) {
+      const mins = Math.floor(absDiff / 6e4);
+      return diff > 0 ? `In ${mins}m` : `${mins}m ago`;
+    }
+    if (absDiff < 864e5) {
+      const hours = Math.floor(absDiff / 36e5);
+      return diff > 0 ? `In ${hours}h` : `${hours}h ago`;
+    }
+    const days = Math.floor(absDiff / 864e5);
+    return diff > 0 ? `In ${days}d` : `${days}d ago`;
+  }
+  renderEventCard(event) {
+    const info = EVENT_TYPE_INFO[event.event_type] || EVENT_TYPE_INFO.other;
+    const endRef = event.event_end_time ? new Date(event.event_end_time) : new Date(event.event_time);
+    const isPast = endRef < /* @__PURE__ */ new Date();
+    const pastClass = isPast ? " events-page__card--past" : "";
+    const iconHtml = event.icon ? `<img class="events-page__card-icon" src="${iconSrc(event.icon)}" alt="" />` : "";
+    return `
+      <div class="events-page__card${pastClass}" data-event-id="${event.event_id}">
+        <div class="events-page__card-header">
+          <span class="events-page__card-type" style="color: ${info.color}">${info.label}</span>
+          <span class="events-page__card-time">${escapeHtml2(this.formatEventTime(event.event_time))}${event.event_end_time ? ` \u2014 ${escapeHtml2(this.formatEventTime(event.event_end_time))}` : ""}</span>
+        </div>
+        <div class="events-page__card-title-row">
+          ${iconHtml}
+          <h3 class="events-page__card-title">${escapeHtml2(event.title)}</h3>
+        </div>
+        ${event.description ? `<p class="events-page__card-desc">${escapeHtml2(event.description)}</p>` : ""}
+        <div class="events-page__card-footer">
+          <span class="events-page__card-relative">${escapeHtml2(this.getRelativeTime(event.event_time))}</span>
+          <span class="events-page__card-author">Posted by ${escapeHtml2(event.created_by)}</span>
+          ${this.isDemo ? "" : `<button class="events-page__delete-btn" data-delete-id="${event.event_id}" title="Cancel event">\xD7</button>`}
+        </div>
+      </div>`;
+  }
+  renderUpcoming() {
+    const upcoming = this.getUpcomingEvents();
+    if (upcoming.length === 0) {
+      return `<div class="events-page__empty">No upcoming adventures on the board. Rally your group!</div>`;
+    }
+    return upcoming.map((e) => this.renderEventCard(e)).join("");
+  }
+  renderPast() {
+    const past = this.getPastEvents();
+    if (past.length === 0) return "";
+    return `
+      <div class="events-page__past-section">
+        <h3 class="events-page__section-subtitle">Past Adventures</h3>
+        ${past.map((e) => this.renderEventCard(e)).join("")}
+      </div>`;
+  }
+  renderFilterTabs() {
+    const types = [{ key: "all", label: "All" }, ...Object.entries(EVENT_TYPE_INFO).map(([key, v]) => ({ key, label: v.label }))];
+    return types.map(
+      (t) => `<button class="events-page__filter-tab${this.filterType === t.key ? " active" : ""}" data-filter="${t.key}">${t.label}</button>`
+    ).join("");
+  }
+  renderForm() {
+    if (!this.showForm) return "";
+    const members = [...groupData.members.values()].filter((m) => m.name !== "@SHARED").map((m) => m.name);
+    const typeOptions = Object.entries(EVENT_TYPE_INFO).map(([key, v]) => `<option value="${key}">${v.label}</option>`).join("");
+    const activeMember = storage.getActiveMember();
+    const memberOptions = members.map((n) => `<option value="${escapeHtml2(n)}"${n === activeMember ? " selected" : ""}>${escapeHtml2(n)}</option>`).join("");
+    return `
+      <div class="events-page__form rsborder rsbackground">
+        <h3 class="events-page__form-title rstext">Post a New Adventure</h3>
+        <div class="events-page__form-row">
+          <label class="events-page__label">Title</label>
+          <input type="text" id="event-title" class="events-page__input" placeholder="e.g. Corp Beast mass, GWD trip..." maxlength="100" />
+        </div>
+        <div class="events-page__form-row">
+          <label class="events-page__label">Type</label>
+          <select id="event-type" class="events-page__select">${typeOptions}</select>
+        </div>
+        <div class="events-page__form-row">
+          <label class="events-page__label">Date &amp; Time</label>
+          <input type="datetime-local" id="event-time" class="events-page__input" />
+        </div>
+        <div class="events-page__form-row">
+          <label class="events-page__label">End Time <span class="events-page__label-hint">(optional)</span></label>
+          <input type="datetime-local" id="event-end-time" class="events-page__input" />
+        </div>
+        <div class="events-page__form-row">
+          <label class="events-page__label">Description</label>
+          <textarea id="event-desc" class="events-page__textarea" placeholder="Gear requirements, world, location..." maxlength="500" rows="3"></textarea>
+        </div>
+        <div class="events-page__form-row">
+          <label class="events-page__label">Icon</label>
+          <div class="events-page__icon-picker" id="event-icon-picker">
+            <button type="button" class="events-page__icon-option${this.selectedIcon === "" ? " selected" : ""}" data-icon="">None</button>
+            ${EVENT_ICON_CATEGORIES.map((cat) => `<div class="events-page__icon-category"><span class="events-page__icon-category-label">${cat.category}</span><div class="events-page__icon-category-grid">${cat.icons.map((ic) => `<button type="button" class="events-page__icon-option${this.selectedIcon === ic.id ? " selected" : ""}" data-icon="${ic.id}"><img src="${ic.src}" alt="${ic.id}" /></button>`).join("")}</div></div>`).join("")}
+          </div>
+        </div>
+        <div class="events-page__form-row">
+          <label class="events-page__label">Posted by</label>
+          <select id="event-author" class="events-page__select">${memberOptions}</select>
+        </div>
+        <div class="events-page__form-actions">
+          <button class="men-button events-page__submit-btn" id="event-submit">Post to Board</button>
+          <button class="men-button events-page__cancel-btn" id="event-cancel">Cancel</button>
+        </div>
+      </div>`;
+  }
+  bindEvents() {
+    const newBtn = this.querySelector("#events-new-btn");
+    if (newBtn) {
+      this.eventListener(newBtn, "click", () => {
+        this.showForm = true;
+        this.render();
+        this.bindEvents();
+      });
+    }
+    const cancelBtn = this.querySelector("#event-cancel");
+    if (cancelBtn) {
+      this.eventListener(cancelBtn, "click", () => {
+        this.showForm = false;
+        this.selectedIcon = "";
+        this.render();
+        this.bindEvents();
+      });
+    }
+    const submitBtn = this.querySelector("#event-submit");
+    if (submitBtn) {
+      this.eventListener(submitBtn, "click", () => this.handleSubmit());
+    }
+    const filterTabs = this.querySelectorAll(".events-page__filter-tab");
+    for (const tab of Array.from(filterTabs)) {
+      this.eventListener(tab, "click", () => {
+        this.filterType = tab.getAttribute("data-filter") || "all";
+        this.render();
+        this.bindEvents();
+      });
+    }
+    const deleteBtns = this.querySelectorAll(".events-page__delete-btn");
+    for (const btn of Array.from(deleteBtns)) {
+      this.eventListener(btn, "click", (e) => {
+        e.stopPropagation();
+        const eventId = btn.getAttribute("data-delete-id");
+        if (eventId) this.handleDelete(parseInt(eventId, 10));
+      });
+    }
+    const iconBtns = this.querySelectorAll(".events-page__icon-option");
+    for (const btn of Array.from(iconBtns)) {
+      this.eventListener(btn, "click", () => {
+        this.selectedIcon = btn.getAttribute("data-icon") || "";
+        for (const ib of Array.from(iconBtns)) {
+          ib.classList.toggle("selected", ib === btn);
+        }
+      });
+    }
+  }
+  async handleSubmit() {
+    const titleEl = this.querySelector("#event-title");
+    const typeEl = this.querySelector("#event-type");
+    const timeEl = this.querySelector("#event-time");
+    const endTimeEl = this.querySelector("#event-end-time");
+    const descEl = this.querySelector("#event-desc");
+    const authorEl = this.querySelector("#event-author");
+    const title = titleEl?.value?.trim() || "";
+    const eventType = typeEl?.value || "boss";
+    const eventTime = timeEl?.value || "";
+    const eventEndTime = endTimeEl?.value || "";
+    const description = descEl?.value?.trim() || "";
+    const createdBy = authorEl?.value || "";
+    if (!title) {
+      titleEl?.focus();
+      return;
+    }
+    if (!eventTime) {
+      timeEl?.focus();
+      return;
+    }
+    try {
+      const res = await fetch(`${this.getApiBase()}/events`, {
+        method: "POST",
+        headers: this.getAuthHeaders(),
+        body: JSON.stringify({
+          title,
+          event_type: eventType,
+          event_time: new Date(eventTime).toISOString(),
+          event_end_time: eventEndTime ? new Date(eventEndTime).toISOString() : void 0,
+          description,
+          created_by: createdBy,
+          icon: this.selectedIcon
+        })
+      });
+      if (res.ok) {
+        this.showForm = false;
+        this.selectedIcon = "";
+        await this.fetchEvents();
+      }
+    } catch {
+    }
+  }
+  async handleDelete(eventId) {
+    try {
+      const res = await fetch(`${this.getApiBase()}/events/${eventId}`, {
+        method: "DELETE",
+        headers: this.getAuthHeaders()
+      });
+      if (res.ok) {
+        this.events = this.events.filter((e) => e.event_id !== eventId);
+        this.render();
+        this.bindEvents();
+      }
+    } catch {
+    }
+  }
+};
+customElements.define("events-page", EventsPage);
+
+// src/event-banner/event-banner.ts
+var EVENT_TYPE_COLORS = {
+  boss: "#ff981f",
+  skilling: "#0dc10d",
+  minigame: "#00c8ff",
+  quest: "#ffff00",
+  raid: "#ff4444",
+  pking: "#ff00ff",
+  other: "#cccccc"
+};
+function escapeHtml3(str) {
+  const div = document.createElement("div");
+  div.textContent = str;
+  return div.innerHTML;
+}
+var EventBanner = class extends BaseElement {
+  activeEvents;
+  pollTimer;
+  constructor() {
+    super();
+    this.activeEvents = [];
+  }
+  html() {
+    return `${this.renderBanners()}
+`;
+  }
+  connectedCallback() {
+    super.connectedCallback();
+    this.activeEvents = [];
+    this.subscribe("get-group-data", () => {
+      this.fetchAndRender();
+      this.startPolling();
+    });
+  }
+  disconnectedCallback() {
+    super.disconnectedCallback();
+    this.stopPolling();
+  }
+  startPolling() {
+    this.stopPolling();
+    this.pollTimer = window.setInterval(() => this.fetchAndRender(), 6e4);
+  }
+  stopPolling() {
+    if (this.pollTimer !== void 0) {
+      clearInterval(this.pollTimer);
+      this.pollTimer = void 0;
+    }
+  }
+  get isDemo() {
+    const group = storage.getGroup();
+    return group?.groupName === "@EXAMPLE";
+  }
+  async fetchAndRender() {
+    if (this.isDemo) {
+      this.activeEvents = [];
+      this.render();
+      return;
+    }
+    const group = storage.getGroup();
+    if (!group) return;
+    try {
+      const headers = {};
+      if (group.groupToken) {
+        headers["Authorization"] = group.groupToken;
+      }
+      const res = await fetch(`/api/group/${group.groupName}/events`, { headers });
+      if (res.ok) {
+        const allEvents = await res.json();
+        const now = Date.now();
+        this.activeEvents = allEvents.filter((e) => {
+          const start = new Date(e.event_time).getTime();
+          const end = e.event_end_time ? new Date(e.event_end_time).getTime() : null;
+          if (start > now) return start <= now + 30 * 6e4;
+          if (end !== null) return end > now;
+          return now - start <= 30 * 6e4;
+        });
+      }
+    } catch {
+    }
+    this.render();
+  }
+  getTimeLabel(event) {
+    const now = Date.now();
+    const start = new Date(event.event_time).getTime();
+    const diffToStart = start - now;
+    if (diffToStart > 0) {
+      const mins = Math.ceil(diffToStart / 6e4);
+      return mins <= 1 ? "Starting now!" : `Starts in ${mins}m`;
+    }
+    if (event.event_end_time) {
+      const end = new Date(event.event_end_time).getTime();
+      const diffToEnd = end - now;
+      if (diffToEnd > 0) {
+        const mins = Math.ceil(diffToEnd / 6e4);
+        if (mins <= 1) return "Ending soon!";
+        if (mins < 60) return `Ends in ${mins}m`;
+        const hours = Math.floor(mins / 60);
+        const remainMins = mins % 60;
+        return remainMins > 0 ? `Ends in ${hours}h ${remainMins}m` : `Ends in ${hours}h`;
+      }
+      return "Ended";
+    }
+    const ago = Math.floor(Math.abs(diffToStart) / 6e4);
+    return ago < 1 ? "Happening now!" : "Happening now!";
+  }
+  renderBanners() {
+    if (this.activeEvents.length === 0) return "";
+    return this.activeEvents.map((e) => {
+      const color = EVENT_TYPE_COLORS[e.event_type] || EVENT_TYPE_COLORS.other;
+      const iconHtml = e.icon ? `<img class="event-banner__icon" src="${iconSrc(e.icon)}" alt="" />` : "";
+      return `<div class="event-banner__item" style="border-left-color: ${color}">
+          ${iconHtml}
+          <span class="event-banner__title">${escapeHtml3(e.title)}</span>
+          <span class="event-banner__time">${escapeHtml3(this.getTimeLabel(e))}</span>
+        </div>`;
+    }).join("");
+  }
+};
+customElements.define("event-banner", EventBanner);
+
+// src/member-select-dialog/member-select-dialog.ts
+function escapeHtml4(str) {
+  const div = document.createElement("div");
+  div.textContent = str;
+  return div.innerHTML;
+}
+var MemberSelectDialog = class extends BaseElement {
+  members = [];
+  resolveSelection;
+  html() {
+    return `<div class="dialog__container member-select__container rsborder rsbackground">
+  <h2 class="member-select__title">Who are you?</h2>
+  <p class="member-select__subtitle">Select your character</p>
+  <div class="member-select__list">
+    ${this.renderMembers()}
+  </div>
+</div>
+`;
+  }
+  show(members) {
+    this.members = members;
+    this.render();
+    this.classList.add("dialog__visible");
+    const buttons = this.querySelectorAll(".member-select__btn");
+    for (const btn of Array.from(buttons)) {
+      this.eventListener(btn, "click", () => {
+        const name = btn.getAttribute("data-name") || "";
+        this.hide();
+        this.resolveSelection?.(name);
+      });
+    }
+    return new Promise((resolve) => {
+      this.resolveSelection = resolve;
+    });
+  }
+  hide() {
+    this.unbindEvents();
+    this.classList.remove("dialog__visible");
+  }
+  renderMembers() {
+    return this.members.map(
+      (name) => `<button class="member-select__btn men-button" data-name="${escapeHtml4(name)}">${escapeHtml4(name)}</button>`
+    ).join("");
+  }
+};
+customElements.define("member-select-dialog", MemberSelectDialog);
+
 // src/data/wise-old-man.ts
 var WISE_OLD_MAN_API_BASE_URL = "/api/wise-old-man";
 var JAGEX_HISCORE_PLAYER_BASE_URL = "https://secure.runescape.com/m=hiscore_oldschool/index_lite.json";
@@ -55238,6 +56971,80 @@ var BankDialog = class extends BaseElement {
   }
 };
 customElements.define("bank-dialog", BankDialog);
+
+// src/rs-context-menu/rs-context-menu.ts
+var RsContextMenu = class extends BaseElement {
+  title = "";
+  options = [];
+  closeHandler;
+  scrollHandler;
+  html() {
+    return `<div class="context-menu__container rsborder rsbackground">
+  <div class="context-menu__title">${this.title}</div>
+  ${this.renderOptions()}
+</div>
+`;
+  }
+  renderOptions() {
+    return this.options.map(
+      (opt, i) => `<button class="context-menu__option${opt.disabled ? " context-menu__option--disabled" : ""}" data-index="${i}"${opt.disabled ? " disabled" : ""}>${opt.label}${opt.highlightedText ? ` <span>${opt.highlightedText}</span>` : ""}</button>`
+    ).join("");
+  }
+  show(x, y, title, options) {
+    this.removeCloseListeners();
+    this.title = title;
+    this.options = options;
+    this.render();
+    this.classList.add("context-menu--visible");
+    const rect = this.firstElementChild?.getBoundingClientRect();
+    const menuWidth = rect?.width ?? 150;
+    const menuHeight = rect?.height ?? 100;
+    const clampedX = Math.min(x, window.innerWidth - menuWidth - 4);
+    const clampedY = Math.min(y, window.innerHeight - menuHeight - 4);
+    this.style.left = `${Math.max(0, clampedX)}px`;
+    this.style.top = `${Math.max(0, clampedY)}px`;
+    const buttons = this.querySelectorAll(".context-menu__option");
+    for (const btn of Array.from(buttons)) {
+      btn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        const index = Number(btn.getAttribute("data-index"));
+        this.hide();
+        this.options[index]?.callback();
+      });
+    }
+    this.closeHandler = (e) => {
+      if (!this.contains(e.target)) {
+        this.hide();
+      }
+    };
+    this.scrollHandler = () => this.hide();
+    setTimeout(() => {
+      if (this.closeHandler) {
+        document.addEventListener("click", this.closeHandler);
+        document.addEventListener("contextmenu", this.closeHandler);
+      }
+      if (this.scrollHandler) {
+        document.addEventListener("scroll", this.scrollHandler, true);
+      }
+    }, 0);
+  }
+  removeCloseListeners() {
+    if (this.closeHandler) {
+      document.removeEventListener("click", this.closeHandler);
+      document.removeEventListener("contextmenu", this.closeHandler);
+      this.closeHandler = void 0;
+    }
+    if (this.scrollHandler) {
+      document.removeEventListener("scroll", this.scrollHandler, true);
+      this.scrollHandler = void 0;
+    }
+  }
+  hide() {
+    this.removeCloseListeners();
+    this.classList.remove("context-menu--visible");
+  }
+};
+customElements.define("rs-context-menu", RsContextMenu);
 //# sourceMappingURL=app.js.map
 </script>
     <app-route route-path="*" route-redirect="/"></app-route>

@@ -1,6 +1,11 @@
 import { BaseElement } from "../base-element/base-element";
 import { groupData } from "../data/group-data";
 import { GroupData } from "../data/group-data";
+import { contextMenuManager } from "../rs-context-menu/context-menu-manager";
+import { requestDialogManager } from "../request-dialog/request-dialog-manager";
+import { RequestDialog } from "../request-dialog/request-dialog";
+import { storage } from "../data/storage";
+import { webhookStatus } from "../data/webhook-status";
 
 type DisplayItem = {
   id: number;
@@ -69,6 +74,8 @@ export class InventoryItem extends BaseElement {
       }, {});
       this.intersectionObserver.observe(this);
     }
+
+    this.eventListener(this, "contextmenu", ((e: MouseEvent) => this.handleContextMenu(e)) as EventListener, { passive: false });
   }
 
   disconnectedCallback(): void {
@@ -76,6 +83,50 @@ export class InventoryItem extends BaseElement {
     if (this.intersectionObserver) {
       this.intersectionObserver.disconnect();
     }
+  }
+
+  handleContextMenu(e: MouseEvent): void {
+    if (!this.item) return;
+
+    // Only show context menu if inside the items-page
+    if (!this.closest("items-page")) return;
+
+    e.preventDefault();
+
+    const item = this.item;
+
+    // Fetch webhook status then show menu
+    webhookStatus.ensure().then(() => {
+      const hasWebhook = webhookStatus.hasWebhook;
+      contextMenuManager.show(e.clientX, e.clientY, item.name, [
+        {
+          label: hasWebhook ? "Request" : "Request (no webhook)",
+          highlightedText: hasWebhook ? item.name : undefined,
+          disabled: !hasWebhook,
+          callback: async () => {
+          const quantity = await requestDialogManager.requestQuantity(item.name);
+          if (quantity === null || quantity < 1) return;
+
+          const activeMember = storage.getActiveMember();
+          if (!activeMember) {
+            alert("Please set your identity in Group Settings first.");
+            return;
+          }
+
+          const success = await RequestDialog.sendItemRequest(
+            item.name,
+            quantity,
+            activeMember,
+            item.quantities
+          );
+
+          if (!success) {
+            alert("Failed to send request. Make sure a Discord webhook is configured in Group Settings.");
+          }
+        },
+      },
+    ]);
+    });
   }
 
   /* eslint-disable no-unused-vars */

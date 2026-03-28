@@ -45,7 +45,7 @@ class Appearance {
     }
 
     const layoutDirection = this.getLayout();
-    authedSection.style.flexDirection = layoutDirection === "row-reverse" ? "row" : "row-reverse";
+    authedSection.setAttribute("data-dock", layoutDirection === "row-reverse" ? "right" : "left");
   }
 
   setTheme(theme: string): void {

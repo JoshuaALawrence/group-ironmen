@@ -3,7 +3,7 @@ WORKDIR /app
 COPY package*.json tsconfig.json ./
 RUN npm ci --ignore-scripts
 COPY src/ ./src/
-RUN npx tsc && cd src/site && node build.js --prod
+RUN npx tsc && cd src/site && npx tsx build.ts --prod
 
 # Prune source maps and build artifacts not needed at runtime
 RUN rm -f src/site/public/app.js.map

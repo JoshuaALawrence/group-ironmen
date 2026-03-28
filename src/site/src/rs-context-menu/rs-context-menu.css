@@ -1,0 +1,69 @@
+rs-context-menu {
+  display: none;
+  position: fixed;
+  z-index: 2000;
+}
+
+rs-context-menu.context-menu--visible {
+  display: block;
+}
+
+.context-menu__container {
+  min-width: 150px;
+  padding: 2px;
+  font-family: "rssmall";
+  font-size: 16px;
+}
+
+.context-menu__title {
+  color: var(--orange);
+  text-align: center;
+  padding: 4px 10px;
+  margin: 0;
+  font-size: 14px;
+  font-family: "rsbold";
+  border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 220px;
+}
+
+.context-menu__option {
+  display: block;
+  width: 100%;
+  padding: 4px 10px;
+  margin: 0;
+  border: none;
+  background: none;
+  color: var(--primary-text);
+  font-family: "rssmall";
+  font-size: 16px;
+  text-shadow: 1px 1px var(--black);
+  text-align: left;
+  cursor: pointer;
+  white-space: nowrap;
+  box-sizing: border-box;
+}
+
+.context-menu__option:hover {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.context-menu__option--disabled {
+  color: #6a6a6a;
+  cursor: not-allowed;
+  text-shadow: 1px 1px rgba(0, 0, 0, 0.4);
+}
+
+.context-menu__option--disabled:hover {
+  background: none;
+}
+
+.context-menu__option--disabled span {
+  color: #6a6a6a;
+}
+
+.context-menu__option span {
+  color: var(--yellow);
+}

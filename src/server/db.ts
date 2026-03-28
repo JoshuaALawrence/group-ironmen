@@ -307,6 +307,64 @@ END;$$
       await commitMigration(client, 'update_timestamp_triggers');
       await client.query('COMMIT');
     }
+
+    // migration: create_group_events_table
+    if (!(await hasMigrationRun(client, 'create_group_events_table'))) {
+      await client.query('BEGIN');
+      await client.query(`
+CREATE TABLE IF NOT EXISTS groupironman.group_events (
+  event_id BIGSERIAL PRIMARY KEY,
+  group_id BIGSERIAL REFERENCES groupironman.groups(group_id),
+  title TEXT NOT NULL,
+  description TEXT NOT NULL DEFAULT '',
+  event_type TEXT NOT NULL DEFAULT 'boss',
+  event_time TIMESTAMPTZ NOT NULL,
+  created_by TEXT NOT NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+)`);
+      await client.query(`
+CREATE INDEX IF NOT EXISTS group_events_group_id_idx ON groupironman.group_events (group_id)
+`);
+      await commitMigration(client, 'create_group_events_table');
+      await client.query('COMMIT');
+    }
+
+    // migration: add_group_events_icon
+    if (!(await hasMigrationRun(client, 'add_group_events_icon'))) {
+      await client.query('BEGIN');
+      await client.query(`
+ALTER TABLE groupironman.group_events
+ADD COLUMN IF NOT EXISTS icon TEXT NOT NULL DEFAULT ''
+`);
+      await commitMigration(client, 'add_group_events_icon');
+      await client.query('COMMIT');
+    }
+
+    // migration: add_group_events_end_time
+    if (!(await hasMigrationRun(client, 'add_group_events_end_time'))) {
+      await client.query('BEGIN');
+      await client.query(`
+ALTER TABLE groupironman.group_events
+ADD COLUMN IF NOT EXISTS event_end_time TIMESTAMPTZ
+`);
+      await commitMigration(client, 'add_group_events_end_time');
+      await client.query('COMMIT');
+    }
+
+    // migration: add_discord_settings
+    if (!(await hasMigrationRun(client, 'add_discord_settings'))) {
+      await client.query('BEGIN');
+      await client.query(`
+ALTER TABLE groupironman.groups
+ADD COLUMN IF NOT EXISTS discord_webhook_url TEXT NOT NULL DEFAULT ''
+`);
+      await client.query(`
+ALTER TABLE groupironman.members
+ADD COLUMN IF NOT EXISTS discord_id TEXT NOT NULL DEFAULT ''
+`);
+      await commitMigration(client, 'add_discord_settings');
+      await client.query('COMMIT');
+    }
   } finally {
     client.release();
   }
@@ -821,4 +879,173 @@ export async function updateSharedBank(
     'UPDATE groupironman.members SET bank=$1, bank_last_update=NOW() WHERE group_id=$2 AND member_name=$3',
     [sharedBank, groupId, SHARED_MEMBER]
   );
+}
+
+// ── Group events ──
+
+export interface GroupEvent {
+  event_id: number;
+  group_id: number;
+  title: string;
+  description: string;
+  event_type: string;
+  event_time: string;
+  event_end_time: string | null;
+  created_by: string;
+  created_at: string;
+  icon: string;
+}
+
+const VALID_EVENT_TYPES = ['boss', 'skilling', 'minigame', 'quest', 'raid', 'pking', 'other'];
+
+export async function getGroupEvents(groupId: number): Promise<GroupEvent[]> {
+  const client = await getClient();
+  try {
+    const res = await client.query(
+      'SELECT * FROM groupironman.group_events WHERE group_id=$1 ORDER BY event_time ASC',
+      [groupId]
+    );
+    return res.rows;
+  } finally {
+    client.release();
+  }
+}
+
+export async function createGroupEvent(
+  groupId: number,
+  title: string,
+  description: string,
+  eventType: string,
+  eventTime: string,
+  eventEndTime: string | null,
+  createdBy: string,
+  icon: string
+): Promise<GroupEvent> {
+  if (!VALID_EVENT_TYPES.includes(eventType)) {
+    const err = Object.assign(new Error('Invalid event type'), { statusCode: 400 });
+    throw err;
+  }
+  const client = await getClient();
+  try {
+    const res = await client.query(
+      `INSERT INTO groupironman.group_events (group_id, title, description, event_type, event_time, event_end_time, created_by, icon)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *`,
+      [groupId, title, description, eventType, eventTime, eventEndTime, createdBy, icon]
+    );
+    return res.rows[0];
+  } finally {
+    client.release();
+  }
+}
+
+export async function deleteGroupEvent(groupId: number, eventId: number): Promise<boolean> {
+  const client = await getClient();
+  try {
+    const res = await client.query(
+      'DELETE FROM groupironman.group_events WHERE group_id=$1 AND event_id=$2',
+      [groupId, eventId]
+    );
+    return (res.rowCount ?? 0) > 0;
+  } finally {
+    client.release();
+  }
+}
+
+// ── Discord settings ──
+
+export interface DiscordSettings {
+  webhook_url: string;
+  members: { name: string; discord_id: string }[];
+}
+
+export async function getDiscordSettings(groupId: number): Promise<DiscordSettings> {
+  const client = await getClient();
+  try {
+    const groupRes = await client.query(
+      'SELECT discord_webhook_url FROM groupironman.groups WHERE group_id=$1',
+      [groupId]
+    );
+    const webhookUrl = groupRes.rows.length > 0 ? groupRes.rows[0].discord_webhook_url : '';
+
+    const membersRes = await client.query(
+      'SELECT member_name, discord_id FROM groupironman.members WHERE group_id=$1 AND member_name!=$2 ORDER BY member_name',
+      [groupId, SHARED_MEMBER]
+    );
+
+    return {
+      webhook_url: webhookUrl,
+      members: membersRes.rows.map((r) => ({ name: r.member_name, discord_id: r.discord_id })),
+    };
+  } finally {
+    client.release();
+  }
+}
+
+export async function updateDiscordSettings(
+  groupId: number,
+  webhookUrl: string | null,
+  memberDiscordIds: { name: string; discord_id: string }[]
+): Promise<void> {
+  const client = await getClient();
+  try {
+    await client.query('BEGIN');
+    // Only update webhook if a new value was provided
+    if (webhookUrl !== null) {
+      await client.query(
+        'UPDATE groupironman.groups SET discord_webhook_url=$1 WHERE group_id=$2',
+        [webhookUrl, groupId]
+      );
+    }
+    // Only update members that had a new discord_id provided
+    for (const m of memberDiscordIds) {
+      await client.query(
+        'UPDATE groupironman.members SET discord_id=$1 WHERE group_id=$2 AND member_name=$3',
+        [m.discord_id, groupId, m.name]
+      );
+    }
+    await client.query('COMMIT');
+  } catch (err) {
+    await client.query('ROLLBACK').catch(() => {});
+    throw err;
+  } finally {
+    client.release();
+  }
+}
+
+// ── Upcoming events with webhooks (for Discord notifications) ──
+
+export interface UpcomingEventWithWebhook {
+  event_id: number;
+  group_id: number;
+  title: string;
+  description: string;
+  event_type: string;
+  event_time: string;
+  event_end_time: string | null;
+  created_by: string;
+  icon: string;
+  group_name: string;
+  discord_webhook_url: string;
+}
+
+export async function getUpcomingEventsWithWebhooks(
+  fromTime: string,
+  toTime: string
+): Promise<UpcomingEventWithWebhook[]> {
+  const client = await getClient();
+  try {
+    const res = await client.query(
+      `SELECT e.event_id, e.group_id, e.title, e.description, e.event_type,
+              e.event_time, e.event_end_time, e.created_by, e.icon,
+              g.group_name, g.discord_webhook_url
+       FROM groupironman.group_events e
+       JOIN groupironman.groups g ON g.group_id = e.group_id
+       WHERE e.event_time >= $1 AND e.event_time < $2
+         AND g.discord_webhook_url != ''`,
+      [fromTime, toTime]
+    );
+    return res.rows;
+  } finally {
+    client.release();
+  }
 }

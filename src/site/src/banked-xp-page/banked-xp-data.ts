@@ -1,5 +1,5 @@
 // Auto-generated from banked-experience plugin Java sources
-// Do not edit manually - run scripts/convert-banked-xp.js to regenerate
+// Do not edit manually - run scripts/convert-banked-xp.ts to regenerate
 
 type SecondaryItem = {
   id: number;

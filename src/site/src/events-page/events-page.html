@@ -1,0 +1,22 @@
+<div class="events-page">
+  <div class="events-page__header">
+    <h2 class="events-page__title rstext">Adventure Board</h2>
+    ${this.isDemo ? '' : '<button class="men-button events-page__new-btn" id="events-new-btn">+ New Event</button>'}
+  </div>
+
+  ${this.renderForm()}
+
+  <div class="events-page__filters">
+    ${this.renderFilterTabs()}
+  </div>
+
+  <div class="events-page__content">
+    <div class="events-page__section">
+      <h3 class="events-page__section-subtitle">Upcoming Adventures</h3>
+      <div class="events-page__grid">
+        ${this.renderUpcoming()}
+      </div>
+    </div>
+    ${this.renderPast()}
+  </div>
+</div>

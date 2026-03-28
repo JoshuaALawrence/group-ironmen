@@ -1,5 +1,12 @@
 .panels-page .authed-section {
-  display: block !important;
+  display: flex !important;
+  flex-direction: column !important;
+  overflow-y: auto;
+}
+
+.panels-page .authed-section__row {
+  display: block;
+  flex: 1;
   overflow-y: auto;
 }
 

@@ -1,10 +1,13 @@
-#!/usr/bin/env node
+#!/usr/bin/env tsx
 /**
  * Parses the emote-clue-items plugin Java sources + RuneLite's ItemID.java
  * and generates a JS data module for the web stash/clue tracker.
  */
-const fs = require("fs");
-const path = require("path");
+import fs from "fs";
+import path from "path";
+import { fileURLToPath } from "url";
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 const PLUGIN_DATA = path.resolve(
   __dirname,
@@ -14,13 +17,55 @@ const ITEM_ID_FILE = path.resolve(
   __dirname,
   "../../cache/runelite/runelite-api/src/main/java/net/runelite/api/gameval/ItemID.java"
 );
-const OUTPUT_FILE = path.resolve(__dirname, "../src/stash-page/stash-data.js");
+const OUTPUT_FILE = path.resolve(__dirname, "../src/stash-page/stash-data.ts");
 const CACHE_ITEM_DATA = path.resolve(__dirname, "../../cache/dumps/2026-03-26T20-13-14-790Z/item_data.json");
 const WEB_ITEM_DATA = path.resolve(__dirname, "../public/data/item_data.json");
 
+interface EmoteClueItem {
+  name: string;
+  displayName: string;
+  itemId: number | null;
+  children: string[] | null;
+  isAll: boolean;
+}
+
+interface StashUnit {
+  enumName: string;
+  name: string;
+  type: string;
+}
+
+interface EmoteClue {
+  difficulty: string;
+  text: string;
+  locationName: string;
+  stashUnit: string | null;
+  items: string[];
+}
+
+interface ClueRequirement {
+  name: string;
+  itemIds: number[];
+  isAll: boolean;
+  iconId: number | null;
+}
+
+interface ClueEntry {
+  text: string;
+  items: ClueRequirement[];
+}
+
+interface StashEntry {
+  enumName: string;
+  name: string;
+  type: string;
+  difficulty: string;
+  clues: ClueEntry[];
+}
+
 // ──────────── 1. Parse ItemID.java ────────────
-function parseItemIdFile(filePath) {
-  const map = {};
+function parseItemIdFile(filePath: string): Record<string, number> {
+  const map: Record<string, number> = {};
   const content = fs.readFileSync(filePath, "utf8");
   const re = /public\s+static\s+final\s+int\s+(\w+)\s*=\s*(\d+)\s*;/g;
   let m;
@@ -30,7 +75,7 @@ function parseItemIdFile(filePath) {
   return map;
 }
 
-function resolveItemId(token, itemIdMap) {
+function resolveItemId(token: string, itemIdMap: Record<string, number>): number {
   token = token.trim();
   if (/^\d+$/.test(token)) return parseInt(token);
   const name = token.replace("ItemID.", "");
@@ -40,10 +85,9 @@ function resolveItemId(token, itemIdMap) {
 }
 
 // ──────────── 2. Parse StashUnit.java ────────────
-function parseStashUnits(filePath) {
+function parseStashUnits(filePath: string): Record<string, StashUnit> {
   const content = fs.readFileSync(filePath, "utf8");
-  const units = {};
-  // Match: NAME("Display Name", STASHUnit.X, Type.Y) or NAME("Display Name", "Watson", STASHUnit.X, Type.Y)
+  const units: Record<string, StashUnit> = {};
   const re = /(\w+)\s*\(\s*"([^"]+)"(?:\s*,\s*"([^"]+)")?\s*,\s*STASHUnit\.\w+\s*,\s*Type\.(\w+)\s*\)/g;
   let m;
   while ((m = re.exec(content)) !== null) {
@@ -57,21 +101,18 @@ function parseStashUnits(filePath) {
 }
 
 // ──────────── 3. Parse EmoteClueItem.java ────────────
-function parseEmoteClueItems(filePath, itemIdMap) {
+function parseEmoteClueItems(filePath: string, itemIdMap: Record<string, number>): Record<string, EmoteClueItem> {
   let content = fs.readFileSync(filePath, "utf8");
-  // Strip comments
   content = content.replace(/\/\*[\s\S]*?\*\//g, "");
   content = content.replace(/\/\/[^\n]*/g, "");
 
-  // Extract enum body
   const enumBodyMatch = content.match(
     /public\s+enum\s+EmoteClueItem\s+implements\s+ItemRequirement\s*\{([\s\S]*?);\s*\n\s*private\s+final/
   );
   if (!enumBodyMatch) throw new Error("Could not find EmoteClueItem enum body");
   const enumBody = enumBodyMatch[1];
 
-  const items = {};
-  // Leaf items: NAME("display name", ItemID.X)
+  const items: Record<string, EmoteClueItem> = {};
   const leafRe = /(\w+)\s*\(\s*"([^"]+)"\s*,\s*(ItemID\.\w+|\d+)\s*\)/g;
   let match;
   while ((match = leafRe.exec(enumBody)) !== null) {
@@ -81,16 +122,14 @@ function parseEmoteClueItems(filePath, itemIdMap) {
     items[name] = { name, displayName, itemId, children: null, isAll: false };
   }
 
-  // Aggregate items: NAME("display name", true/false, EmoteClueItem.X, EmoteClueItem.Y, ...)
-  // These span multiple lines, so we need a more careful parser
   const aggRe = /(\w+)\s*\(\s*"([^"]+)"\s*,\s*\n?\s*(true|false)\s*,\s*([\s\S]*?)\)/g;
   while ((match = aggRe.exec(enumBody)) !== null) {
     const name = match[1];
-    if (items[name]) continue; // already parsed as leaf
+    if (items[name]) continue;
     const displayName = match[2];
     const isAll = match[3] === "true";
     const childrenStr = match[4];
-    const children = [];
+    const children: string[] = [];
     const childRe = /(?:EmoteClueItem\.)?(\w+)/g;
     let cm;
     while ((cm = childRe.exec(childrenStr)) !== null) {
@@ -103,23 +142,49 @@ function parseEmoteClueItems(filePath, itemIdMap) {
 }
 
 // ──────────── 4. Parse EmoteClue.java ────────────
-function parseEmoteClues(filePath) {
+function parseClueArgs(argsStr: string): EmoteClue | null {
+  const diffMatch = argsStr.match(/^\s*(Beginner|Easy|Medium|Hard|Elite|Master)\s*,/);
+  if (!diffMatch) return null;
+  const difficulty = diffMatch[1];
+
+  const textMatch = argsStr.match(/,\s*"((?:[^"\\]|\\.)*)"\s*,/);
+  const text = textMatch ? textMatch[1] : "";
+
+  const allStrings = [...argsStr.matchAll(/"((?:[^"\\]|\\.)*)"/g)];
+  const locationName = allStrings.length >= 2 ? allStrings[1][1] : "";
+
+  const stashMatch = argsStr.match(/"\s*,\s*\n?\s*(\w+)\s*,\s*\n?\s*new\s+WorldPoint/);
+  let stashUnit: string | null = null;
+  if (stashMatch) {
+    const val = stashMatch[1].trim();
+    if (val !== "null") {
+      stashUnit = val;
+    }
+  }
+
+  const itemRefs: string[] = [];
+  const itemRefRe = /EmoteClueItem\.(\w+)/g;
+  let im;
+  while ((im = itemRefRe.exec(argsStr)) !== null) {
+    itemRefs.push(im[1]);
+  }
+
+  return { difficulty, text, locationName, stashUnit, items: itemRefs };
+}
+
+function parseEmoteClues(filePath: string): EmoteClue[] {
   let content = fs.readFileSync(filePath, "utf8");
-  // Strip comments
   content = content.replace(/\/\*[\s\S]*?\*\//g, "");
   content = content.replace(/\/\/[^\n]*/g, "");
 
-  // Extract the CLUES set
   const cluesMatch = content.match(/CLUES\s*=\s*ImmutableSet\.of\(([\s\S]*?)\)\s*;/);
   if (!cluesMatch) throw new Error("Could not find CLUES set");
   const cluesBody = cluesMatch[1];
 
-  // Split into individual EmoteClue constructors using proper paren matching
-  const clues = [];
+  const clues: EmoteClue[] = [];
   const startRe = /new\s+EmoteClue\s*\(/g;
   let m;
   while ((m = startRe.exec(cluesBody)) !== null) {
-    // Find matching closing paren
     let depth = 1;
     let i = m.index + m[0].length;
     let inStr = false;
@@ -139,44 +204,12 @@ function parseEmoteClues(filePath) {
   return clues;
 }
 
-function parseClueArgs(argsStr) {
-  // Extract difficulty
-  const diffMatch = argsStr.match(/^\s*(Beginner|Easy|Medium|Hard|Elite|Master)\s*,/);
-  if (!diffMatch) return null;
-  const difficulty = diffMatch[1];
-
-  // Extract text (first quoted string after difficulty)
-  const textMatch = argsStr.match(/,\s*"((?:[^"\\]|\\.)*)"\s*,/);
-  const text = textMatch ? textMatch[1] : "";
-
-  // Extract location name (second quoted string)
-  const allStrings = [...argsStr.matchAll(/"((?:[^"\\]|\\.)*)"/g)];
-  const locationName = allStrings.length >= 2 ? allStrings[1][1] : "";
-
-  // Extract stash unit - look for a bare identifier that matches a StashUnit enum name
-  // It comes after the location string and before WorldPoint
-  const stashMatch = argsStr.match(/"\s*,\s*\n?\s*(\w+)\s*,\s*\n?\s*new\s+WorldPoint/);
-  let stashUnit = null;
-  if (stashMatch) {
-    const val = stashMatch[1].trim();
-    if (val !== "null") {
-      stashUnit = val;
-    }
-  }
-
-  // Extract EmoteClueItem references
-  const itemRefs = [];
-  const itemRefRe = /EmoteClueItem\.(\w+)/g;
-  let im;
-  while ((im = itemRefRe.exec(argsStr)) !== null) {
-    itemRefs.push(im[1]);
-  }
-
-  return { difficulty, text, locationName, stashUnit, items: itemRefs };
-}
-
 // ──────────── 5. Resolve leaf item IDs for aggregate items ────────────
-function resolveLeafItemIds(item, allItems, visited) {
+function resolveLeafItemIds(
+  item: EmoteClueItem,
+  allItems: Record<string, EmoteClueItem>,
+  visited?: Set<string>
+): number[] {
   if (!visited) visited = new Set();
   if (visited.has(item.name)) return [];
   visited.add(item.name);
@@ -184,7 +217,7 @@ function resolveLeafItemIds(item, allItems, visited) {
   if (item.itemId !== null) return [item.itemId];
   if (!item.children) return [];
 
-  const ids = [];
+  const ids: number[] = [];
   for (const childName of item.children) {
     const child = allItems[childName];
     if (child) {
@@ -216,8 +249,8 @@ console.log("Remapping gameval IDs to real game IDs...");
 const cacheItemData = JSON.parse(fs.readFileSync(CACHE_ITEM_DATA, "utf8"));
 const webItemData = JSON.parse(fs.readFileSync(WEB_ITEM_DATA, "utf8"));
 
-const nameToRealId = {};
-for (const [id, info] of Object.entries(webItemData)) {
+const nameToRealId: Record<string, number> = {};
+for (const [id, info] of Object.entries(webItemData) as [string, { name: string }][]) {
   const lower = info.name.toLowerCase();
   const realId = parseInt(id);
   if (!nameToRealId[lower] || realId < nameToRealId[lower]) {
@@ -225,8 +258,8 @@ for (const [id, info] of Object.entries(webItemData)) {
   }
 }
 
-const gamevalToReal = {};
-for (const [gvId, info] of Object.entries(cacheItemData)) {
+const gamevalToReal: Record<number, number> = {};
+for (const [gvId, info] of Object.entries(cacheItemData) as [string, { name: string }][]) {
   const lower = info.name.toLowerCase();
   const realId = nameToRealId[lower];
   if (realId !== undefined) {
@@ -234,7 +267,7 @@ for (const [gvId, info] of Object.entries(cacheItemData)) {
   }
 }
 
-function remapId(gvId) {
+function remapId(gvId: number): number {
   if (gvId === null || gvId === -1) return gvId;
   if (webItemData[gvId]) return gvId;
   const mapped = gamevalToReal[gvId];
@@ -247,7 +280,6 @@ function remapId(gvId) {
   return gvId;
 }
 
-// Remap all leaf item IDs
 let remapped = 0;
 for (const item of Object.values(emoteClueItems)) {
   if (item.itemId !== null) {
@@ -261,17 +293,14 @@ console.log(
 );
 
 // ──────────── Build stash data structure ────────────
-// Group clues by stash unit
-const stashClueMap = {};
+const stashClueMap: Record<string, EmoteClue[]> = {};
 for (const clue of emoteClues) {
-  if (!clue.stashUnit) continue; // skip clues without stash
+  if (!clue.stashUnit) continue;
   if (!stashClueMap[clue.stashUnit]) stashClueMap[clue.stashUnit] = [];
   stashClueMap[clue.stashUnit].push(clue);
 }
 
-// Build final stash data: for each stash, collect all unique item requirements
-// flattened to leaf item IDs
-const stashes = [];
+const stashes: StashEntry[] = [];
 for (const [stashEnum, clues] of Object.entries(stashClueMap)) {
   const stash = stashUnits[stashEnum];
   if (!stash) {
@@ -280,10 +309,10 @@ for (const [stashEnum, clues] of Object.entries(stashClueMap)) {
   }
 
   const difficulty = clues[0].difficulty;
-  const requirements = [];
+  const requirements: ClueEntry[] = [];
 
   for (const clue of clues) {
-    const clueReqs = [];
+    const clueReqs: ClueRequirement[] = [];
     for (const itemRef of clue.items) {
       const item = emoteClueItems[itemRef];
       if (!item) {
@@ -298,7 +327,6 @@ for (const [stashEnum, clues] of Object.entries(stashClueMap)) {
         name: item.displayName,
         itemIds: validIds,
         isAll: item.isAll,
-        // For simple leaf items, just use the one ID as the icon
         iconId: item.itemId !== null ? item.itemId : validIds.length > 0 ? validIds[0] : null,
       });
     }
@@ -317,8 +345,7 @@ for (const [stashEnum, clues] of Object.entries(stashClueMap)) {
   });
 }
 
-// Sort by difficulty order, then name
-const diffOrder = { Beginner: 0, Easy: 1, Medium: 2, Hard: 3, Elite: 4, Master: 5 };
+const diffOrder: Record<string, number> = { Beginner: 0, Easy: 1, Medium: 2, Hard: 3, Elite: 4, Master: 5 };
 stashes.sort((a, b) => diffOrder[a.difficulty] - diffOrder[b.difficulty] || a.name.localeCompare(b.name));
 
 console.log(`\n  ${stashes.length} stash units with item requirements`);
@@ -330,11 +357,11 @@ console.log(
 
 // ──────────── Generate output ────────────
 const output = `// Auto-generated from emote-clue-items plugin Java sources
-// Do not edit manually - run scripts/convert-stash-data.js to regenerate
+// Do not edit manually - run scripts/convert-stash-data.ts to regenerate
 
 export const DIFFICULTIES = ["Beginner", "Easy", "Medium", "Hard", "Elite", "Master"];
 
-export const DIFFICULTY_COLORS = {
+export const DIFFICULTY_COLORS: Record<string, string> = {
   Beginner: "#9e9e9e",
   Easy: "#4caf50",
   Medium: "#00bcd4",
@@ -348,12 +375,11 @@ export const STASHES = ${JSON.stringify(stashes, null, 2)};
 /**
  * Get all stashes for a given difficulty.
  */
-export function getStashesByDifficulty(difficulty) {
+export function getStashesByDifficulty(difficulty: string) {
   return STASHES.filter(s => s.difficulty === difficulty);
 }
 `;
 
-// Ensure output directory exists
 const outDir = path.dirname(OUTPUT_FILE);
 if (!fs.existsSync(outDir)) {
   fs.mkdirSync(outDir, { recursive: true });

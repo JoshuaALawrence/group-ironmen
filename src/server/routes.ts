@@ -279,3 +279,233 @@ authedRouter.get('/am-i-in-group', async (req: Request, res: Response) => {
 authedRouter.get('/collection-log', (_req: Request, res: Response) => {
   res.json({});
 });
+
+// ── Group events (calendar) ──
+
+authedRouter.get('/events', async (req: Request, res: Response) => {
+  try {
+    const events = await db.getGroupEvents((req as any).groupId);
+    res.json(events);
+  } catch (err) {
+    logger.error('Error getting group events: ' + (err as Error).message);
+    res.status(500).send('');
+  }
+});
+
+authedRouter.post('/events', async (req: Request, res: Response) => {
+  try {
+    const { title, description, event_type, event_time, event_end_time, created_by, icon } = req.body || {};
+    if (!title || typeof title !== 'string' || title.trim().length === 0 || title.length > 100) {
+      res.status(400).send('Title is required and must be 100 characters or less');
+      return;
+    }
+    if (description && (typeof description !== 'string' || description.length > 500)) {
+      res.status(400).send('Description must be 500 characters or less');
+      return;
+    }
+    if (!event_time || typeof event_time !== 'string') {
+      res.status(400).send('Event time is required');
+      return;
+    }
+    const parsedTime = new Date(event_time);
+    if (isNaN(parsedTime.getTime())) {
+      res.status(400).send('Invalid event time');
+      return;
+    }
+    if (!created_by || typeof created_by !== 'string' || created_by.trim().length === 0) {
+      res.status(400).send('Created by is required');
+      return;
+    }
+
+    let parsedEndTime: Date | null = null;
+    if (event_end_time && typeof event_end_time === 'string') {
+      parsedEndTime = new Date(event_end_time);
+      if (isNaN(parsedEndTime.getTime())) {
+        res.status(400).send('Invalid event end time');
+        return;
+      }
+    }
+
+    const safeIcon = (typeof icon === 'string' && /^[a-z]{1,10}:[a-zA-Z0-9_().-]{1,80}$/.test(icon)) ? icon : '';
+
+    const event = await db.createGroupEvent(
+      (req as any).groupId,
+      title.trim(),
+      (description || '').trim(),
+      event_type || 'boss',
+      parsedTime.toISOString(),
+      parsedEndTime ? parsedEndTime.toISOString() : null,
+      created_by.trim(),
+      safeIcon
+    );
+    res.status(201).json(event);
+  } catch (err) {
+    if ((err as any).statusCode) {
+      res.status((err as any).statusCode).send((err as Error).message);
+      return;
+    }
+    logger.error('Error creating group event: ' + (err as Error).message);
+    res.status(500).send('');
+  }
+});
+
+authedRouter.delete('/events/:event_id', async (req: Request, res: Response) => {
+  try {
+    const eventId = parseInt(req.params.event_id as string, 10);
+    if (isNaN(eventId)) {
+      res.status(400).send('Invalid event ID');
+      return;
+    }
+    const deleted = await db.deleteGroupEvent((req as any).groupId, eventId);
+    if (!deleted) {
+      res.status(404).send('Event not found');
+      return;
+    }
+    res.status(200).end();
+  } catch (err) {
+    logger.error('Error deleting group event: ' + (err as Error).message);
+    res.status(500).send('');
+  }
+});
+
+// ── Discord settings ──
+
+authedRouter.get('/discord-settings', async (req: Request, res: Response) => {
+  try {
+    const settings = await db.getDiscordSettings((req as any).groupId);
+    // Mask sensitive values — only reveal whether they are set
+    res.json({
+      has_webhook: settings.webhook_url.length > 0,
+      members: settings.members.map((m) => ({
+        name: m.name,
+        has_discord_id: m.discord_id.length > 0,
+      })),
+    });
+  } catch (err) {
+    logger.error('Error getting discord settings: ' + (err as Error).message);
+    res.status(500).send('');
+  }
+});
+
+authedRouter.put('/discord-settings', async (req: Request, res: Response) => {
+  try {
+    const { webhook_url, members } = req.body || {};
+
+    let safeWebhookUrl: string | null = null;
+    if (typeof webhook_url === 'string' && webhook_url.trim().length > 0) {
+      const trimmed = webhook_url.trim();
+      if (trimmed.length > 200) {
+        res.status(400).send('Webhook URL must be 200 characters or less');
+        return;
+      }
+      if (!/^https:\/\/discord\.com\/api\/webhooks\//.test(trimmed) &&
+          !/^https:\/\/discordapp\.com\/api\/webhooks\//.test(trimmed)) {
+        res.status(400).send('Invalid Discord webhook URL');
+        return;
+      }
+      safeWebhookUrl = trimmed;
+    }
+
+    const memberDiscordIds: { name: string; discord_id: string }[] = [];
+    if (Array.isArray(members)) {
+      for (const m of members) {
+        if (!m || typeof m.name !== 'string') continue;
+        // Only include members where a discord_id was actually provided
+        if (typeof m.discord_id === 'string' && m.discord_id.trim().length > 0) {
+          const id = m.discord_id.trim();
+          if (!/^\d{1,20}$/.test(id)) {
+            res.status(400).send(`Invalid Discord ID for ${m.name}`);
+            return;
+          }
+          memberDiscordIds.push({ name: m.name, discord_id: id });
+        }
+      }
+    }
+
+    await db.updateDiscordSettings((req as any).groupId, safeWebhookUrl, memberDiscordIds);
+    res.status(200).end();
+  } catch (err) {
+    logger.error('Error updating discord settings: ' + (err as Error).message);
+    res.status(500).send('');
+  }
+});
+
+// ── Item request via Discord webhook ──
+
+authedRouter.post('/request-item', async (req: Request, res: Response) => {
+  try {
+    const { item_name, quantity, requested_by, member_quantities } = req.body || {};
+
+    if (typeof item_name !== 'string' || item_name.trim().length === 0 || item_name.length > 100) {
+      res.status(400).send('Invalid item name');
+      return;
+    }
+    if (typeof quantity !== 'number' || quantity < 1 || quantity > 2147483647) {
+      res.status(400).send('Invalid quantity');
+      return;
+    }
+    if (typeof requested_by !== 'string' || requested_by.trim().length === 0 || requested_by.length > 50) {
+      res.status(400).send('Invalid requester name');
+      return;
+    }
+
+    const settings = await db.getDiscordSettings((req as any).groupId);
+    if (!settings.webhook_url) {
+      res.status(400).send('No Discord webhook configured for this group');
+      return;
+    }
+
+    // Build mentions for members who have the item (excluding the requester)
+    const mentions: string[] = [];
+    const holdersInfo: string[] = [];
+    if (member_quantities && typeof member_quantities === 'object') {
+      for (const member of settings.members) {
+        if (member.name === requested_by) continue;
+        const qty = member_quantities[member.name];
+        if (typeof qty === 'number' && qty > 0 && member.discord_id) {
+          mentions.push(`<@${member.discord_id}>`);
+          holdersInfo.push(`${member.name}: ${qty.toLocaleString()}`);
+        } else if (typeof qty === 'number' && qty > 0) {
+          holdersInfo.push(`${member.name}: ${qty.toLocaleString()}`);
+        }
+      }
+    }
+
+    const mentionStr = mentions.length > 0 ? mentions.join(' ') + ' ' : '';
+
+    const embed = {
+      title: `📦 Item Request`,
+      color: 0xff981f,
+      fields: [
+        { name: 'Item', value: item_name, inline: true },
+        { name: 'Quantity', value: quantity.toLocaleString(), inline: true },
+        { name: 'Requested by', value: requested_by, inline: true },
+      ],
+      footer: {
+        text: 'Group Ironmen • Item Request',
+      },
+    };
+
+    if (holdersInfo.length > 0) {
+      embed.fields.push({
+        name: 'Current holders',
+        value: holdersInfo.join('\n'),
+        inline: false,
+      });
+    }
+
+    await axios.post(settings.webhook_url, {
+      username: 'Group Ironmen',
+      content: `${mentionStr}**${requested_by}** is requesting **${quantity.toLocaleString()}x ${item_name}**`,
+      embeds: [embed],
+    }, {
+      headers: { 'Content-Type': 'application/json' },
+      timeout: 10000,
+    });
+
+    res.status(200).end();
+  } catch (err) {
+    logger.error('Error sending item request: ' + (err as Error).message);
+    res.status(500).send('');
+  }
+});
