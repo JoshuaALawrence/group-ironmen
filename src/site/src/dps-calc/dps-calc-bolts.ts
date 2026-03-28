@@ -1,0 +1,123 @@
+/**
+ * Bolt effect transformers - 1:1 port from osrs-dps-calc bolts.ts
+ */
+import { Hitsplat, WeightedHit, HitDistribution } from "./dps-calc-hitdist";
+import { MonsterAttribute } from "./dps-calc-constants";
+
+const INFINITE_HEALTH_MONSTERS: number[] = []; // populated if needed
+
+type BoltContext = {
+  kandarinDiary?: boolean;
+  rangedLvl: number;
+  zcb?: boolean;
+  spec?: boolean;
+  maxHit: number;
+  monster: {
+    id?: number;
+    attributes?: Array<string | number>;
+    inputs?: { monsterCurrentHp?: number };
+    skills?: { hp?: number };
+  };
+};
+
+function kandarinFactor(ctx: BoltContext) {
+  return ctx.kandarinDiary ? 1.1 : 1.0;
+}
+
+function bonusDamageTransform(ctx: BoltContext, chance: number, bonusDmg: number, accurateOnly: boolean) {
+  return (h: Hitsplat) => {
+    if (h.accurate && ctx.zcb && ctx.spec) {
+      return HitDistribution.single(1.0, [new Hitsplat(h.damage + bonusDmg)]);
+    }
+    if (!h.accurate && accurateOnly) {
+      return new HitDistribution([new WeightedHit(1.0, [h])]);
+    }
+    return new HitDistribution([
+      new WeightedHit(chance, [new Hitsplat(h.damage + bonusDmg, h.accurate)]),
+      new WeightedHit(1 - chance, [new Hitsplat(h.damage, h.accurate)]),
+    ]);
+  };
+}
+
+export function opalBolts(ctx: BoltContext) {
+  const chance = 0.05 * kandarinFactor(ctx);
+  const bonusDmg = Math.trunc(ctx.rangedLvl / (ctx.zcb ? 9 : 10));
+  return bonusDamageTransform(ctx, chance, bonusDmg, false);
+}
+
+export function pearlBolts(ctx: BoltContext) {
+  const chance = 0.06 * kandarinFactor(ctx);
+  const attrs = ctx.monster.attributes || [];
+  const divisor = attrs.includes(MonsterAttribute.FIERY) ? 15 : 20;
+  const bonusDmg = Math.trunc(ctx.rangedLvl / (ctx.zcb ? divisor - 2 : divisor));
+  return bonusDamageTransform(ctx, chance, bonusDmg, false);
+}
+
+export function diamondBolts(ctx: BoltContext) {
+  const chance = 0.1 * kandarinFactor(ctx);
+  const effectMax = Math.trunc((ctx.maxHit * (ctx.zcb ? 126 : 115)) / 100);
+  const effectDist = HitDistribution.linear(1.0, 0, effectMax);
+  return (h: Hitsplat) => {
+    if (h.accurate && ctx.zcb && ctx.spec) {
+      return effectDist;
+    }
+    return new HitDistribution([
+      ...effectDist.scaleProbability(chance).hits,
+      new WeightedHit(1 - chance, [new Hitsplat(h.damage, h.accurate)]),
+    ]);
+  };
+}
+
+export function dragonstoneBolts(ctx: BoltContext) {
+  const attrs = ctx.monster.attributes || [];
+  if (attrs.includes(MonsterAttribute.FIERY) || attrs.includes(MonsterAttribute.DRAGON)) {
+    return (h: Hitsplat) => new HitDistribution([new WeightedHit(1.0, [h])]);
+  }
+  const chance = 0.06 * kandarinFactor(ctx);
+  const bonusDmg = Math.trunc((ctx.rangedLvl * 2) / (ctx.zcb ? 9 : 10));
+  return bonusDamageTransform(ctx, chance, bonusDmg, true);
+}
+
+export function onyxBolts(ctx: BoltContext) {
+  const attrs = ctx.monster.attributes || [];
+  if (attrs.includes(MonsterAttribute.UNDEAD)) {
+    return (h: Hitsplat) => new HitDistribution([new WeightedHit(1.0, [h])]);
+  }
+  const chance = 0.11 * kandarinFactor(ctx);
+  const effectMax = Math.trunc((ctx.maxHit * (ctx.zcb ? 132 : 120)) / 100);
+  const effectDist = HitDistribution.linear(1.0, 0, effectMax);
+  return (h: Hitsplat) => {
+    if (!h.accurate) {
+      return new HitDistribution([new WeightedHit(1.0, [h])]);
+    }
+    if (ctx.zcb && ctx.spec) {
+      return effectDist;
+    }
+    return new HitDistribution([
+      ...effectDist.scaleProbability(chance).hits,
+      new WeightedHit(1 - chance, [new Hitsplat(h.damage, h.accurate)]),
+    ]);
+  };
+}
+
+export function rubyBolts(ctx: BoltContext) {
+  const chance = 0.06 * kandarinFactor(ctx);
+  let cap;
+  if (INFINITE_HEALTH_MONSTERS.includes(ctx.monster.id)) {
+    cap = ctx.zcb ? 66 : 60;
+  } else {
+    cap = ctx.zcb ? 110 : 100;
+  }
+  const monHp = ctx.monster.inputs?.monsterCurrentHp || ctx.monster.skills?.hp || 1;
+  const effectDmg = Math.trunc((monHp * (ctx.zcb ? 22 : 20)) / 100);
+  const effectHit = HitDistribution.single(1.0, [new Hitsplat(Math.min(cap, effectDmg))]);
+  return (h: Hitsplat) => {
+    if (h.accurate && ctx.zcb && ctx.spec) {
+      return effectHit;
+    }
+    return new HitDistribution([
+      ...effectHit.scaleProbability(chance).hits,
+      new WeightedHit(1 - chance, [new Hitsplat(h.damage, h.accurate)]),
+    ]);
+  };
+}

@@ -1,48 +1,27 @@
 version: "3.8"
 services:
-  group-ironmen-tracker-frontend:
-    image: ${FRONTEND_IMAGE:-joshuaalawrence/osrs-group-ironman-tracker-frontend}:${IMAGE_TAG:-latest}
-    environment:
-      - HOST_URL=${HOST_URL}
-    restart: always
-    container_name: group-ironmen-tracker-frontend
-    ports:
-      - 4000:4000
-    healthcheck:
-      test: ["CMD", "wget", "--spider", "-q", "http://localhost:4000"]
-      interval: 30s
-      timeout: 5s
-      retries: 3
-      start_period: 10s
-    deploy:
-      resources:
-        limits:
-          memory: 256M
-    logging:
-      driver: json-file
-      options:
-        max-size: "10m"
-        max-file: "3"
-
-  group-ironmen-tracker-backend:
-    image: ${BACKEND_IMAGE:-joshuaalawrence/osrs-group-ironman-tracker-backend}:${IMAGE_TAG:-latest}
+  app:
+    image: joshuaalawrence/osrs-group-ironman-tracker:latest
     environment:
       - PG_USER=${PG_USER}
       - PG_PASSWORD=${PG_PASSWORD}
-      - PG_HOST=${PG_HOST}
-      - PG_PORT=${PG_PORT}
+      - PG_HOST=db
+      - PG_PORT=5432
       - PG_DB=${PG_DB}
       - BACKEND_SECRET=${BACKEND_SECRET}
       - HCAPTCHA_SECRET=${HCAPTCHA_SECRET:-}
+      - HCAPTCHA_SITEKEY=${HCAPTCHA_SITEKEY:-}
     restart: always
-    container_name: group-ironmen-tracker-backend
+    container_name: group-ironmen-app
+    dns:
+      - 8.8.8.8
     ports:
-      - 5000:8081
+      - 4000:4000
     depends_on:
-      group-ironmen-tracker-db:
+      db:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8081/api/captcha-enabled"]
+      test: ["CMD", "wget", "--spider", "-q", "http://127.0.0.1:4000/api/captcha-enabled"]
       interval: 30s
       timeout: 5s
       retries: 3
@@ -57,7 +36,7 @@ services:
         max-size: "10m"
         max-file: "3"
 
-  group-ironmen-tracker-db:
+  db:
     image: postgres:18-alpine
     environment:
       - POSTGRES_USER=${PG_USER}
@@ -65,10 +44,9 @@ services:
       - POSTGRES_DB=${PG_DB}
       - PGDATA=/var/lib/postgresql/data
     restart: always
-    container_name: group-ironmen-tracker-db
+    container_name: group-ironmen-db
     volumes:
       - pgdata:/var/lib/postgresql/data
-      - ./server/src/sql/schema.sql:/docker-entrypoint-initdb.d/schema.sql
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${PG_USER} -d ${PG_DB}"]
       interval: 10s

@@ -3,7 +3,7 @@
 > **Fork Notice:** This is a heavily modified fork of [christoabrown/group-ironmen](https://github.com/christoabrown/group-ironmen) with significant changes and improvements across the frontend, backend, cache tooling, and deployment infrastructure. While the core concept remains the same, much of the codebase has been rewritten or extended. See [What's Changed](#whats-changed) for details.
 
 **Website:** [groupiron.men](https://groupiron.men)  
-**RuneLite Plugin:** [group-ironmen-tracker](https://github.com/christoabrown/group-ironmen-tracker)  
+**RuneLite Plugin:** [group-ironmen-tracker](https://github.com/JoshuaALawrence/group-ironmen)  
 **License:** BSD 2-Clause (original copyright Christopher Brown)
 
 A real-time group tracking system for Old School RuneScape Group Ironman teams. A companion RuneLite plugin sends player data to a backend server, allowing all group members to view each other's stats, gear, bank, position, and more through an interactive web dashboard.

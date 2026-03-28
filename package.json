@@ -1,10 +1,46 @@
 {
-  "name": "group-ironmen-dev",
-  "private": true,
+  "name": "group-ironmen-unified",
+  "version": "1.0.0",
+  "description": "Group Ironmen Tracker - Unified Node.js App",
   "scripts": {
-    "dev": "concurrently -n backend,frontend -c blue,green \"cd server && cargo run\" \"cd site && npm run start:local-api\""
+    "start": "node dist/server/index.js",
+    "build:server": "tsc",
+    "build:site": "cd src/site && node build.js --prod",
+    "typecheck:site": "tsc -p src/site/tsconfig.json",
+    "build": "tsc && cd src/site && node build.js --prod",
+    "clean": "cd src/site && node scripts/clean.js",
+    "dev": "node scripts/dev.js"
+  },
+  "dependencies": {
+    "axios": "^1.7.0",
+    "compression": "^1.7.4",
+    "dotenv": "^17.3.1",
+    "express": "^4.21.0",
+    "express-winston": "^4.2.0",
+    "pg": "^8.13.0",
+    "react": "^19.2.4",
+    "react-dom": "^19.2.4",
+    "uuid": "^10.0.0",
+    "winston": "^3.14.0"
   },
   "devDependencies": {
-    "concurrently": "^6.2.2"
+    "@types/compression": "^1.8.1",
+    "@types/express": "^5.0.6",
+    "@types/express-winston": "^3.0.4",
+    "@types/node": "^25.5.0",
+    "@types/pg": "^8.20.0",
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
+    "@types/uuid": "^10.0.0",
+    "@vitest/coverage-v8": "^4.1.2",
+    "chokidar": "^3.5.3",
+    "clean-css": "^5.3.2",
+    "esbuild": "^0.17.10",
+    "glob": "^7.2.0",
+    "jsdom": "^28.1.0",
+    "terser": "^5.16.5",
+    "typescript": "^6.0.2",
+    "vitest": "^4.1.2",
+    "zod": "^4.3.6"
   }
 }

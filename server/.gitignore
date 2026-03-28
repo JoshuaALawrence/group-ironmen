@@ -1,6 +1,0 @@
-config.toml
-target
-secret
-node_modules
-flamegraph*.svg
-test

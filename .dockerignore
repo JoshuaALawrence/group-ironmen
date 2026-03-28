@@ -1,0 +1,10 @@
+**/node_modules
+**/.husky
+**/.eslint*
+**/prettier*
+.git
+coverage
+dist
+src/site/public/*.js
+src/site/public/*.html
+src/site/public/*.map

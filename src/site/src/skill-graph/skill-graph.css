@@ -1,0 +1,152 @@
+skill-graph {
+  display: block;
+  max-width: 100%;
+  overflow: hidden;
+  position: relative;
+}
+
+.skill-graph__skill-image {
+  position: absolute;
+  height: 50%;
+  top: 50%;
+  left: 0;
+  right: 0;
+  margin: auto;
+  transform: translateY(-50%);
+  image-rendering: crisp-edges;
+  image-rendering: pixelated;
+  opacity: 0.2;
+  z-index: 0;
+}
+
+.skill-graph__top {
+  position: relative;
+}
+
+.skill-graph__container {
+  position: relative;
+  height: max(40vh, 300px);
+  z-index: 1;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.skill-graph__table-container {
+  padding: 1em 2em 0 2em;
+}
+
+.skill-graph__table-container table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 20px;
+}
+
+.skill-graph__table-container tr {
+  border-bottom: 1px solid var(--graph-grid-border);
+}
+
+.skill-graph__table-container tr:hover {
+  border-bottom: 1px solid white;
+}
+
+.skill-graph__table-container td {
+  padding: 4px;
+}
+
+.skill-graph__overall-skill-change {
+  font-size: 18px;
+}
+
+.skill-graph__overall-skill-change > td:first-child {
+  display: flex;
+  align-items: center;
+}
+
+.skill-graph__overall-skill-change img {
+  margin-right: 0.5em;
+  width: 1.25em;
+}
+
+.skill-graph__overall-groups {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.skill-graph__overall-player {
+  border: 1px solid var(--graph-grid-border);
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.skill-graph__overall-player[open] {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.skill-graph__overall-summary {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 6px 12px;
+  align-items: center;
+  padding: 10px 12px;
+  cursor: pointer;
+  list-style: none;
+}
+
+.skill-graph__overall-summary::-webkit-details-marker {
+  display: none;
+}
+
+.skill-graph__overall-summary::marker {
+  content: "";
+}
+
+.skill-graph__overall-summary-name {
+  font-size: 20px;
+  min-width: 0;
+}
+
+.skill-graph__overall-summary-total {
+  font-family: rsbold;
+  font-size: 18px;
+  white-space: nowrap;
+}
+
+.skill-graph__overall-summary-top {
+  grid-column: 1 / -1;
+  color: #cfcfcf;
+  font-size: 15px;
+  line-height: 1.35;
+}
+
+.skill-graph__overall-details {
+  padding: 0 12px 12px;
+}
+
+.skill-graph__overall-details table {
+  font-size: 18px;
+}
+
+@media (max-width: 720px) {
+  .skill-graph__table-container {
+    padding: 0.75em 0.75em 0;
+  }
+
+  .skill-graph__table-container table {
+    font-size: 17px;
+  }
+
+  .skill-graph__overall-summary {
+    grid-template-columns: 1fr;
+  }
+
+  .skill-graph__overall-summary-name {
+    font-size: 18px;
+  }
+
+  .skill-graph__overall-summary-total {
+    font-size: 16px;
+  }
+
+  .skill-graph__overall-details table {
+    font-size: 16px;
+  }
+}
