@@ -97,6 +97,203 @@ unauthedRouter.get(
   }
 );
 
+const OSRS_NEWS_RSS_URL = 'https://secure.runescape.com/m=news/latest_news.rss?oldschool=true';
+let cachedNews: string | null = null;
+let newsRefreshInterval: ReturnType<typeof setInterval> | undefined;
+
+function decodeXmlEntities(str: string): string {
+  return str
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&apos;/g, "'")
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'");
+}
+
+async function refreshOsrsNews(): Promise<void> {
+  try {
+    const rssRes = await axios.get(OSRS_NEWS_RSS_URL, { timeout: 10000, responseType: 'text' });
+    const xml = rssRes.data as string;
+    const items: Array<{
+      title: string;
+      description: string;
+      link: string;
+      category: string;
+      pubDate: string;
+      imageUrl: string;
+    }> = [];
+
+    const itemRegex = /<item>([\s\S]*?)<\/item>/g;
+    let match;
+    while ((match = itemRegex.exec(xml)) !== null) {
+      const block = match[1];
+      const tag = (name: string) => {
+        const m = block.match(new RegExp(`<${name}>([\\s\\S]*?)<\\/${name}>`));
+        return m ? decodeXmlEntities(m[1].trim()) : '';
+      };
+      const encMatch = block.match(/enclosure[^>]+url="([^"]+)"/);
+      items.push({
+        title: tag('title'),
+        description: tag('description'),
+        link: tag('link'),
+        category: tag('category'),
+        pubDate: tag('pubDate'),
+        imageUrl: encMatch ? encMatch[1] : '',
+      });
+    }
+
+    cachedNews = JSON.stringify(items);
+    logger.info('OSRS news cache refreshed');
+  } catch (err) {
+    logger.error('Error refreshing OSRS news: ' + (err as Error).message);
+  }
+}
+
+export function startOsrsNewsRefresher(): void {
+  logger.info('Starting OSRS news refresher (1h interval)');
+  refreshOsrsNews();
+  if (newsRefreshInterval) clearInterval(newsRefreshInterval);
+  newsRefreshInterval = setInterval(refreshOsrsNews, 60 * 60 * 1000);
+}
+
+unauthedRouter.get('/osrs-news', (_req: Request, res: Response) => {
+  if (!cachedNews) {
+    res.status(503).send('News not yet available');
+    return;
+  }
+  res.set('Content-Type', 'application/json');
+  res.set('Cache-Control', 'public, max-age=3600');
+  res.send(cachedNews);
+});
+
+// ── OSRS YouTube videos ──
+
+const OSRS_YT_RSS_URL = 'https://www.youtube.com/feeds/videos.xml?channel_id=UC0j1MpbiTFHYrUjOTwifW_w';
+let cachedYtVideos: string | null = null;
+let ytRefreshInterval: ReturnType<typeof setInterval> | undefined;
+
+async function refreshOsrsYtVideos(): Promise<void> {
+  try {
+    const rssRes = await axios.get(OSRS_YT_RSS_URL, { timeout: 10000, responseType: 'text' });
+    const xml = rssRes.data as string;
+    const videos: Array<{ videoId: string; title: string; thumbnail: string; published: string }> = [];
+
+    const entryRegex = /<entry>([\s\S]*?)<\/entry>/g;
+    let match;
+    while ((match = entryRegex.exec(xml)) !== null && videos.length < 3) {
+      const block = match[1];
+      const vidIdMatch = block.match(/<yt:videoId>([^<]+)<\/yt:videoId>/);
+      const titleMatch = block.match(/<title>([^<]+)<\/title>/);
+      const pubMatch = block.match(/<published>([^<]+)<\/published>/);
+      if (vidIdMatch && titleMatch) {
+        const title = decodeXmlEntities(titleMatch[1].trim());
+        if (title.toLowerCase().includes('livestream')) continue;
+        const videoId = vidIdMatch[1].trim();
+        videos.push({
+          videoId,
+          title,
+          thumbnail: `https://i.ytimg.com/vi/${videoId}/mqdefault.jpg`,
+          published: pubMatch ? pubMatch[1].trim() : '',
+        });
+      }
+    }
+
+    cachedYtVideos = JSON.stringify(videos);
+    logger.info('OSRS YouTube cache refreshed');
+  } catch (err) {
+    logger.error('Error refreshing OSRS YouTube feed: ' + (err as Error).message);
+  }
+}
+
+export function startOsrsYtRefresher(): void {
+  logger.info('Starting OSRS YouTube refresher (1h interval)');
+  refreshOsrsYtVideos();
+  if (ytRefreshInterval) clearInterval(ytRefreshInterval);
+  ytRefreshInterval = setInterval(refreshOsrsYtVideos, 60 * 60 * 1000);
+}
+
+unauthedRouter.get('/osrs-youtube', (_req: Request, res: Response) => {
+  if (!cachedYtVideos) {
+    res.status(503).send('YouTube data not yet available');
+    return;
+  }
+  res.set('Content-Type', 'application/json');
+  res.set('Cache-Control', 'public, max-age=3600');
+  res.send(cachedYtVideos);
+});
+
+// ── OSRS Twitch stream status ──
+
+const TWITCH_VOD_RSS_URL = 'https://twitchrss.appspot.com/vod/oldschoolrs';
+let cachedTwitchStream: string | null = null;
+let twitchRefreshInterval: ReturnType<typeof setInterval> | undefined;
+
+async function refreshTwitchStream(): Promise<void> {
+  try {
+    // Check live status by scraping the Twitch page for "isLiveBroadcast"
+    let live = false;
+    try {
+      const pageRes = await axios.get('https://twitch.tv/oldschoolrs', { timeout: 10000, responseType: 'text' });
+      live = (pageRes.data as string).includes('isLiveBroadcast');
+    } catch { /* assume offline */ }
+
+    // Fetch recent VODs from RSS
+    const rssRes = await axios.get(TWITCH_VOD_RSS_URL, { timeout: 10000, responseType: 'text' });
+    const xml = rssRes.data as string;
+
+    let vodTitle = '';
+    let vodThumbnail = '';
+    let vodLink = '';
+
+    const itemRegex = /<item>([\s\S]*?)<\/item>/;
+    const firstItem = itemRegex.exec(xml);
+    if (firstItem) {
+      const block = firstItem[1];
+      const titleMatch = block.match(/<title>([^<]+)<\/title>/);
+      const linkMatch = block.match(/<link>([^<]+)<\/link>/);
+      const descMatch = block.match(/<description>([\s\S]*?)<\/description>/);
+
+      vodTitle = titleMatch ? decodeXmlEntities(titleMatch[1].trim()) : '';
+      vodLink = linkMatch ? linkMatch[1].trim() : '';
+
+      if (descMatch) {
+        const imgMatch = descMatch[1].match(/src=(?:"|&quot;)([^"&]+)(?:"|&quot;)/);
+        if (imgMatch) vodThumbnail = decodeXmlEntities(imgMatch[1]);
+      }
+    }
+
+    cachedTwitchStream = JSON.stringify({
+      live,
+      title: vodTitle,
+      thumbnail: live
+        ? `https://static-cdn.jtvnw.net/previews-ttv/live_user_oldschoolrs-440x248.jpg?_=${Date.now()}`
+        : vodThumbnail,
+      link: live ? 'https://www.twitch.tv/oldschoolrs' : vodLink,
+    });
+    logger.info('Twitch stream cache refreshed');
+  } catch (err) {
+    logger.error('Error refreshing Twitch stream: ' + (err as Error).message);
+  }
+}
+
+export function startTwitchRefresher(): void {
+  logger.info('Starting Twitch stream refresher (2m interval)');
+  refreshTwitchStream();
+  if (twitchRefreshInterval) clearInterval(twitchRefreshInterval);
+  twitchRefreshInterval = setInterval(refreshTwitchStream, 2 * 60 * 1000);
+}
+
+unauthedRouter.get('/osrs-twitch', (_req: Request, res: Response) => {
+  if (!cachedTwitchStream) {
+    res.status(503).send('Twitch data not yet available');
+    return;
+  }
+  res.set('Content-Type', 'application/json');
+  res.set('Cache-Control', 'public, max-age=60');
+  res.send(cachedTwitchStream);
+});
+
 // ── Authed router (/api/group/:group_name) ──
 
 export const authedRouter = express.Router({ mergeParams: true });

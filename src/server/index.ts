@@ -10,7 +10,7 @@ import logger from './logger';
 import * as db from './db';
 import { GroupEventNotifier } from './notifier';
 import { UpdateBatcher } from './update-batcher';
-import { unauthedRouter, authedRouter } from './routes';
+import { unauthedRouter, authedRouter, startOsrsNewsRefresher, startOsrsYtRefresher, startTwitchRefresher } from './routes';
 import * as externalServices from './external-services';
 import { startEventScheduler } from './event-scheduler';
 
@@ -95,6 +95,9 @@ async function start(): Promise<void> {
   externalServices.startGeUpdater();
   externalServices.startSkillsAggregator();
   startEventScheduler();
+  startOsrsNewsRefresher();
+  startOsrsYtRefresher();
+  startTwitchRefresher();
 
   app.listen(config.port, '0.0.0.0', () => {
     logger.info(`Unified server listening on http://0.0.0.0:${config.port}`);

@@ -1,40 +1,49 @@
 <div class="rsborder rsbackground group-settings__container">
-  <h3>Member settings</h3>
-  <p>These <span class="emphasize">do</span> need to match the in-game names.</p>
-  <div class="group-settings__section-content group-settings__members"></div>
+  <div class="group-settings__tabs">
+    <button class="group-settings__tab group-settings__tab--active" data-tab="members">Members</button>
+    <button class="group-settings__tab" data-tab="appearance">Appearance</button>
+    <button class="group-settings__tab" data-tab="identity">Identity</button>
+    <button class="group-settings__tab" data-tab="discord">Discord</button>
+  </div>
 
-  <h3>Appearance settings</h3>
-  <fieldset class="group-settings__panels">
-    <legend>Player panels</legend>
-    <div>
-      <input id="panel-dock__left" type="radio" value="left" name="panel-dock-side" ${selectedPanelDockSide !== 'row-reverse' ? 'checked' : ''} />
-      <label for="panel-dock__left">Dock panels to left</label>
-    </div>
-    <div>
-      <input id="panel-dock__right" type="radio" value="right" name="panel-dock-side" ${selectedPanelDockSide === 'row-reverse' ? 'checked' : ''}/>
-      <label for="panel-dock__right">Dock panels to right</label>
-    </div>
-  </fieldset>
+  <div class="group-settings__panel group-settings__panel--active" data-panel="members">
+    <p>These <span class="emphasize">do</span> need to match the in-game names.</p>
+    <div class="group-settings__members"></div>
+  </div>
 
-  <fieldset class="group-settings__style">
-    <legend>Style</legend>
-    <div>
-      <input id="style__light" type="radio" value="light" name="appearance-style" ${style !== 'dark' ? 'checked' : ''} />
-      <label for="style__light">Light</label>
-    </div>
-    <div>
-      <input id="style__dark" type="radio" value="dark" name="appearance-style" ${style === 'dark' ? 'checked' : ''}/>
-      <label for="style__dark">Dark</label>
-    </div>
-  </fieldset>
+  <div class="group-settings__panel" data-panel="appearance">
+    <fieldset class="group-settings__panels">
+      <legend>Player panels</legend>
+      <div>
+        <input id="panel-dock__left" type="radio" value="left" name="panel-dock-side" ${selectedPanelDockSide !== 'row-reverse' ? 'checked' : ''} />
+        <label for="panel-dock__left">Dock panels to left</label>
+      </div>
+      <div>
+        <input id="panel-dock__right" type="radio" value="right" name="panel-dock-side" ${selectedPanelDockSide === 'row-reverse' ? 'checked' : ''}/>
+        <label for="panel-dock__right">Dock panels to right</label>
+      </div>
+    </fieldset>
 
-  <h3>Identity</h3>
-  <p>Playing as: <span class="group-settings__identity-name emphasize"></span></p>
-  <div class="group-settings__section-content">
+    <fieldset class="group-settings__style">
+      <legend>Style</legend>
+      <div>
+        <input id="style__light" type="radio" value="light" name="appearance-style" ${style !== 'dark' ? 'checked' : ''} />
+        <label for="style__light">Light</label>
+      </div>
+      <div>
+        <input id="style__dark" type="radio" value="dark" name="appearance-style" ${style === 'dark' ? 'checked' : ''}/>
+        <label for="style__dark">Dark</label>
+      </div>
+    </fieldset>
+  </div>
+
+  <div class="group-settings__panel" data-panel="identity">
+    <p>Playing as: <span class="group-settings__identity-name emphasize"></span></p>
     <button class="men-button small" id="change-identity-btn">Change character</button>
   </div>
 
-  <h3>Discord settings</h3>
-  <p>Optional — link your group's Discord for notifications.</p>
-  <div class="group-settings__section-content group-settings__discord-content"></div>
+  <div class="group-settings__panel" data-panel="discord">
+    <p>Optional — link your group's Discord for notifications.</p>
+    <div class="group-settings__discord-content"></div>
+  </div>
 </div>

@@ -88,10 +88,16 @@ wrap-routes.authed-section {
   flex: 1;
   min-height: 0;
   min-width: 0;
+  display: flex;
+  flex-direction: column;
 }
 
 .authed-section__outlet {
   pointer-events: auto;
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
 }
 
 button {

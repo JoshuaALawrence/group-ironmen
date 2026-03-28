@@ -1,5 +1,11 @@
 <h4 class="app-navigation__group-name">${group.groupName}</h4>
 <nav class="app-navigation__nav">
+  <men-link link-href="/group/home">
+    <button class="men-button" type="button" route-component="home-page">
+      <span class="desktop">Home</span>
+      <span class="mobile"><img loading="lazy" src="/images/home_teleport.png" /></span>
+    </button>
+  </men-link>
   <men-link link-href="/group/items">
     <button class="men-button" type="button" route-component="items-page">
       <span class="desktop">Items</span>
@@ -39,13 +45,19 @@
   <men-link link-href="/group/clues">
     <button class="men-button" type="button" route-component="stash-page">
       <span class="desktop">Clues</span>
-      <span class="mobile"><img loading="lazy" src="/ui/952-0.png" /></span>
+      <span class="mobile"><img loading="lazy" src="/images/summary-icons/clue_scrolls_all.png" /></span>
     </button>
   </men-link>
   <men-link link-href="/group/events">
     <button class="men-button" type="button" route-component="events-page">
       <span class="desktop">Events</span>
       <span class="mobile"><img loading="lazy" src="/ui/776-0.png" /></span>
+    </button>
+  </men-link>
+  <men-link link-href="/group/blog">
+    <button class="men-button" type="button" route-component="blog-page">
+      <span class="desktop">Blog</span>
+      <span class="mobile"><img loading="lazy" src="/ui/1298-0.png" /></span>
     </button>
   </men-link>
   <men-link link-href="/group/settings">

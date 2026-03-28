@@ -81,11 +81,17 @@
 
     <app-route
       route-path="/"
+      route-component="home-page"
+      route-outlet=".authed-section__outlet"
+      route-wrapper=".authed-section"
+    ></app-route>
+    <app-route route-path="/home" alias-for="/" route-wrapper=".authed-section"></app-route>
+    <app-route
+      route-path="/items"
       route-component="items-page"
       route-outlet=".authed-section__outlet"
       route-wrapper=".authed-section"
     ></app-route>
-    <app-route route-path="/items" alias-for="/" route-wrapper=".authed-section"></app-route>
     <app-route
       route-path="/map"
       route-component="map-page"
@@ -131,6 +137,12 @@
     <app-route
       route-path="/events"
       route-component="events-page"
+      route-outlet=".authed-section__outlet"
+      route-wrapper=".authed-section"
+    ></app-route>
+    <app-route
+      route-path="/blog"
+      route-component="blog-page"
       route-outlet=".authed-section__outlet"
       route-wrapper=".authed-section"
     ></app-route>

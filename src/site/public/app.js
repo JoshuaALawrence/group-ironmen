@@ -17455,6 +17455,12 @@ var AppNavigation = class extends BaseElement {
     const group = storage.getGroup();
     return `<h4 class="app-navigation__group-name">${group.groupName}</h4>
 <nav class="app-navigation__nav">
+  <men-link link-href="/group/home">
+    <button class="men-button" type="button" route-component="home-page">
+      <span class="desktop">Home</span>
+      <span class="mobile"><img loading="lazy" src="/images/home_teleport.png" /></span>
+    </button>
+  </men-link>
   <men-link link-href="/group/items">
     <button class="men-button" type="button" route-component="items-page">
       <span class="desktop">Items</span>
@@ -17494,13 +17500,19 @@ var AppNavigation = class extends BaseElement {
   <men-link link-href="/group/clues">
     <button class="men-button" type="button" route-component="stash-page">
       <span class="desktop">Clues</span>
-      <span class="mobile"><img loading="lazy" src="/ui/952-0.png" /></span>
+      <span class="mobile"><img loading="lazy" src="/images/summary-icons/clue_scrolls_all.png" /></span>
     </button>
   </men-link>
   <men-link link-href="/group/events">
     <button class="men-button" type="button" route-component="events-page">
       <span class="desktop">Events</span>
       <span class="mobile"><img loading="lazy" src="/ui/776-0.png" /></span>
+    </button>
+  </men-link>
+  <men-link link-href="/group/blog">
+    <button class="men-button" type="button" route-component="blog-page">
+      <span class="desktop">Blog</span>
+      <span class="mobile"><img loading="lazy" src="/ui/1298-0.png" /></span>
     </button>
   </men-link>
   <men-link link-href="/group/settings">
@@ -17549,6 +17561,683 @@ var AppNavigation = class extends BaseElement {
   }
 };
 customElements.define("app-navigation", AppNavigation);
+
+// src/data/collection-log.ts
+var duplicateCollectionLogItems = /* @__PURE__ */ new Map([
+  // Duplicate mining outfit from volcanic mine and motherlode mine pages
+  [29472, 12013],
+  // Prospector helmet
+  [29474, 12014],
+  // Prospector jacket
+  [29476, 12015],
+  // Prospector legs
+  [29478, 12016]
+  // Prospector boots
+]);
+var PlayerLog = class {
+  playerName;
+  unlockedItems;
+  unlockedItemsCountByPage;
+  logs;
+  constructor(playerName, items) {
+    this.playerName = playerName;
+    this.unlockedItems = /* @__PURE__ */ new Map();
+    this.unlockedItemsCountByPage = /* @__PURE__ */ new Map();
+    this.logs = [];
+    if (items) {
+      for (const item of items) {
+        if (collectionLog.duplicateMapping.has(item.id)) {
+          item.id = collectionLog.duplicateMapping.get(item.id) ?? item.id;
+          if (this.unlockedItems.has(item.id)) {
+            item.quantity += this.unlockedItems.get(item.id) ?? 0;
+          }
+        }
+        this.unlockedItems.set(item.id, item.quantity);
+      }
+    }
+    for (const tab of collectionLog.info) {
+      for (const page of tab.pages) {
+        const pageItems = collectionLog.pageItems.get(page.name) ?? [];
+        let pageItemCount = 0;
+        for (const item of pageItems) {
+          if ((this.unlockedItems.get(item.id) ?? 0) > 0) ++pageItemCount;
+        }
+        this.unlockedItemsCountByPage.set(page.name, pageItemCount);
+      }
+    }
+  }
+  isLogComplete(pageName) {
+    return this.unlockedItemsCountByPage.get(pageName) === (collectionLog.pageItems.get(pageName) ?? []).length;
+  }
+  completionStateClass(pageName) {
+    const unlockedItemsCount = this.unlockedItemsCountByPage.get(pageName) ?? 0;
+    const totalItemsInPage = (collectionLog.pageItems.get(pageName) ?? []).length;
+    if (totalItemsInPage === unlockedItemsCount) {
+      return "collection-log__complete";
+    } else if (unlockedItemsCount > 0) {
+      return "collection-log__in-progress";
+    }
+    return "collection-log__not-started";
+  }
+  getPage(pageName) {
+    return this.logs.find((log) => log.page_name === pageName);
+  }
+};
+var CollectionLog = class {
+  info;
+  duplicateMapping;
+  pageItems;
+  totalUniqueItems;
+  playerLogs;
+  playerNames;
+  otherPlayers;
+  constructor() {
+    this.info = [];
+    this.duplicateMapping = /* @__PURE__ */ new Map();
+    this.pageItems = /* @__PURE__ */ new Map();
+    this.totalUniqueItems = 0;
+    this.playerLogs = /* @__PURE__ */ new Map();
+    this.playerNames = [];
+    this.otherPlayers = [];
+  }
+  async initLogInfo() {
+    if (this.info.length > 0) return;
+    const [collectionLogInfo, collectionLogDuplicates] = await Promise.all([
+      fetch("/data/collection_log_info.json"),
+      fetch("/data/collection_log_duplicates.json")
+    ]);
+    const duplicateMapping = await collectionLogDuplicates.json();
+    const reverseMapping = /* @__PURE__ */ new Map();
+    for (const [itemId, dupeItemIds] of Object.entries(duplicateMapping)) {
+      for (const dupeItemId of dupeItemIds) {
+        const a = Number(dupeItemId);
+        if (reverseMapping.has(a)) {
+          continue;
+        }
+        reverseMapping.set(a, Number(itemId));
+      }
+    }
+    this.info = await collectionLogInfo.json();
+    this.duplicateMapping = reverseMapping;
+    this.pageItems = /* @__PURE__ */ new Map();
+    const uniqueItems = /* @__PURE__ */ new Set();
+    for (const tab of this.info) {
+      for (const page of tab.pages) {
+        page.items.forEach((item) => uniqueItems.add(item.id));
+        this.pageItems.set(page.name, page.items);
+        page.sortName = utility.removeArticles(page.name);
+      }
+    }
+    this.totalUniqueItems = uniqueItems.size - duplicateCollectionLogItems.size;
+  }
+  async load(groupData2) {
+    this.playerLogs = /* @__PURE__ */ new Map();
+    for (const member of groupData2.members.values()) {
+      if (member.name === "@SHARED") continue;
+      this.playerLogs.set(member.name, new PlayerLog(member.name, member.collectionLog));
+    }
+    this.playerNames = Array.from(this.playerLogs.keys());
+  }
+  tabName(tabId) {
+    switch (tabId) {
+      case 0:
+        return "Bosses";
+      case 1:
+        return "Raids";
+      case 2:
+        return "Clues";
+      case 3:
+        return "Minigames";
+      case 4:
+        return "Other";
+    }
+    return "Other";
+  }
+  loadPlayer(playerName) {
+    this.otherPlayers = this.playerNames.filter((x) => x !== playerName);
+  }
+  isLogComplete(playerName, pageName) {
+    const playerLog = this.playerLogs.get(playerName);
+    return playerLog?.isLogComplete(pageName) || false;
+  }
+  completionStateClass(playerName, pageName) {
+    const playerLog = this.playerLogs.get(playerName);
+    return playerLog?.completionStateClass(pageName) || "collection-log__not-started";
+  }
+  totalUnlockedItems(playerName) {
+    const playerLog = this.playerLogs.get(playerName);
+    const unlockedItems = playerLog?.unlockedItems;
+    let unlockedItemsCount = 0;
+    if (unlockedItems) {
+      unlockedItemsCount = playerLog.unlockedItems.size;
+      for (const [a, b] of duplicateCollectionLogItems.entries()) {
+        if (unlockedItems.has(a) && unlockedItems.has(b)) {
+          --unlockedItemsCount;
+        }
+      }
+    }
+    return unlockedItemsCount;
+  }
+  pageSize(pageName) {
+    return (this.pageItems.get(pageName) ?? []).length;
+  }
+  completionCountForPage(playerName, pageName) {
+    const playerLog = this.playerLogs.get(playerName);
+    return playerLog?.unlockedItemsCountByPage.get(pageName) || 0;
+  }
+  pageInfo(pageName) {
+    for (const tab of this.info) {
+      for (const page of tab.pages) {
+        if (page.name === pageName) return page;
+      }
+    }
+    return null;
+  }
+  unlockedItemCount(playerName, itemId) {
+    return this.playerLogs.get(playerName)?.unlockedItems.get(itemId) || 0;
+  }
+  isItemUnlocked(playerName, itemId) {
+    return this.playerLogs.get(playerName)?.unlockedItems.has(itemId) || false;
+  }
+};
+var collectionLog = new CollectionLog();
+
+// src/home-page/home-page.ts
+var CATEGORY_COLORS = {
+  "Game Updates": "#ff981f",
+  Community: "#0dc10d",
+  "Dev Blogs": "#00c8ff",
+  "Future Updates": "#ffff00",
+  Events: "#ff00ff"
+};
+var EVENT_TYPE_COLORS = {
+  boss: "#ff981f",
+  skilling: "#0dc10d",
+  minigame: "#00c8ff",
+  quest: "#ffff00",
+  raid: "#ff4444",
+  pking: "#ff00ff",
+  other: "#cccccc"
+};
+function escapeHtml(str) {
+  const div = document.createElement("div");
+  div.textContent = str;
+  return div.innerHTML;
+}
+function formatNumber(n) {
+  return n.toLocaleString();
+}
+function formatDate(dateStr) {
+  const date5 = new Date(dateStr);
+  return date5.toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
+}
+function formatGp(n) {
+  if (n >= 1e9) return `${(n / 1e9).toFixed(1)}B`;
+  if (n >= 1e6) return `${(n / 1e6).toFixed(1)}M`;
+  if (n >= 1e3) return `${(n / 1e3).toFixed(1)}K`;
+  return String(n);
+}
+var HomePage = class extends BaseElement {
+  members = [];
+  blogPosts = [];
+  upcomingEvents = [];
+  ytVideos = [];
+  twitchStream = null;
+  html() {
+    return `<div class="home-page">
+  <div class="home-page__columns">
+    <div class="home-page__main">
+      <!-- Group Stats Row -->
+      <section class="home-page__section">
+        <h2 class="home-page__section-title">Group Overview</h2>
+        <div class="home-page__stats-grid"></div>
+      </section>
+
+      <!-- Members -->
+      <section class="home-page__section">
+        <h2 class="home-page__section-title">Members</h2>
+        <div class="home-page__members"></div>
+      </section>
+
+      <!-- Bottom row: News + Events side by side -->
+      <div class="home-page__bottom-row">
+        <section class="home-page__section home-page__section--grow">
+          <div class="home-page__section-header">
+            <h2 class="home-page__section-title">OSRS News</h2>
+            <a class="home-page__more-link" href="/group/blog">View all \u2192</a>
+          </div>
+          <div class="home-page__news-list"></div>
+        </section>
+
+        <section class="home-page__section home-page__section--side">
+          <div class="home-page__section-header">
+            <h2 class="home-page__section-title">Upcoming Events</h2>
+            <a class="home-page__more-link" href="/group/events">View all \u2192</a>
+          </div>
+          <div class="home-page__events-list"></div>
+        </section>
+      </div>
+
+      <!-- Quick Links -->
+      <section class="home-page__section">
+        <h2 class="home-page__section-title">Explore</h2>
+        <div class="home-page__quick-links">
+          <a class="home-page__qlink rsborder rsbackground" href="/group/items">
+            <img src="/ui/777-0.png" alt="" />Items
+          </a>
+          <a class="home-page__qlink rsborder rsbackground" href="/group/map">
+            <img src="/ui/1698-0.png" alt="" />Map
+          </a>
+          <a class="home-page__qlink rsborder rsbackground" href="/group/graphs">
+            <img src="/ui/3579-0.png" alt="" />Graphs
+          </a>
+          <a class="home-page__qlink rsborder rsbackground" href="/group/panels">
+            <img src="/ui/1707-0.png" alt="" />Panels
+          </a>
+          <a class="home-page__qlink rsborder rsbackground" href="/group/dps">
+            <img src="/ui/198-0.png" alt="" />DPS Calc
+          </a>
+          <a class="home-page__qlink rsborder rsbackground" href="/group/banked-xp">
+            <img src="/ui/205-0.png" alt="" />Banked XP
+          </a>
+          <a class="home-page__qlink rsborder rsbackground" href="/group/clues">
+            <img src="/ui/778-0.png" alt="" />Clues
+          </a>
+          <a class="home-page__qlink rsborder rsbackground" href="/group/events">
+            <img src="/ui/776-0.png" alt="" />Events
+          </a>
+        </div>
+      </section>
+    </div>
+
+    <!-- Sidebar -->
+    <aside class="home-page__yt-sidebar">
+      <!-- Twitch -->
+      <div class="home-page__section-header">
+        <h2 class="home-page__section-title">Twitch</h2>
+        <a class="home-page__more-link" href="https://www.twitch.tv/oldschoolrs" target="_blank" rel="noopener noreferrer">Channel \u2192</a>
+      </div>
+      <div class="home-page__twitch-card"></div>
+
+      <div class="home-page__section-header" style="margin-top: 8px;">
+        <h2 class="home-page__section-title">OSRS Videos</h2>
+        <a class="home-page__more-link" href="https://www.youtube.com/@OldSchoolRuneScape" target="_blank" rel="noopener noreferrer">Channel \u2192</a>
+      </div>
+      <div class="home-page__yt-list"></div>
+    </aside>
+  </div>
+</div>
+`;
+  }
+  connectedCallback() {
+    super.connectedCallback();
+    this.render();
+    this.subscribe("members-updated", (members) => {
+      this.members = members;
+      this.updateDashboard();
+    });
+    this.fetchBlogPosts();
+    this.fetchEvents();
+    this.fetchYtVideos();
+    this.fetchTwitchStream();
+  }
+  async fetchBlogPosts() {
+    try {
+      const res = await fetch("/api/osrs-news");
+      if (res.ok) {
+        this.blogPosts = await res.json();
+        this.renderNews();
+      }
+    } catch {
+    }
+  }
+  async fetchEvents() {
+    const group = storage.getGroup();
+    if (!group || group.groupName === "@EXAMPLE") return;
+    try {
+      const headers = {};
+      if (group.groupToken) headers["Authorization"] = group.groupToken;
+      const res = await fetch(`/api/group/${group.groupName}/events`, { headers });
+      if (res.ok) {
+        const allEvents = await res.json();
+        const now = Date.now();
+        this.upcomingEvents = allEvents.filter((e) => {
+          const start = new Date(e.event_time).getTime();
+          const end = e.event_end_time ? new Date(e.event_end_time).getTime() : null;
+          return start > now || end !== null && end > now;
+        }).sort((a, b) => new Date(a.event_time).getTime() - new Date(b.event_time).getTime()).slice(0, 5);
+        this.renderEvents();
+      }
+    } catch {
+    }
+  }
+  async fetchYtVideos() {
+    try {
+      const res = await fetch("/api/osrs-youtube");
+      if (res.ok) {
+        this.ytVideos = await res.json();
+        this.renderYtVideos();
+      }
+    } catch {
+    }
+  }
+  async fetchTwitchStream() {
+    try {
+      const res = await fetch("/api/osrs-twitch");
+      if (res.ok) {
+        this.twitchStream = await res.json();
+        this.renderTwitchStream();
+      }
+    } catch {
+    }
+  }
+  updateDashboard() {
+    this.renderMemberCards();
+    this.renderGroupStats();
+  }
+  renderMemberCards() {
+    const container = this.querySelector(".home-page__members");
+    if (!container) return;
+    const members = this.members.filter((m) => m.name !== "@SHARED");
+    const titles = this.getMemberTitles(members);
+    container.innerHTML = members.map((m) => {
+      const t = titles.get(m.name);
+      return this.renderMemberCard(m, t?.title || "", t?.color || "", t?.desc || "");
+    }).join("");
+  }
+  renderMemberCard(member, title, titleColor, titleDesc) {
+    const totalLevel = this.getTotalLevel(member);
+    const totalXp = this.getTotalXp(member);
+    const questsDone = this.getQuestsCompleted(member);
+    const totalQuests = Object.keys(Quest.questData).length;
+    const collectionCount = collectionLog.totalUnlockedItems(member.name);
+    const collectionTotal = collectionLog.totalUniqueItems;
+    const diaryDone = this.getDiaryTasksCompleted(member);
+    const combatLevel = member.combatLevel ?? 3;
+    const inactive = member.inactive;
+    const statusDot = inactive ? "home-page__dot--offline" : "home-page__dot--online";
+    const topSkills = this.getTopSkills(member, 3);
+    return `
+      <div class="home-page__member-card rsborder rsbackground">
+        <div class="home-page__member-header">
+          <div class="home-page__member-name-row">
+            <span class="home-page__dot ${statusDot}"></span>
+            <span class="home-page__member-name">${escapeHtml(member.name)}</span>
+          </div>
+          <span class="home-page__combat-badge">
+            <img src="/ui/197-0.png" class="home-page__combat-icon" alt="" />${combatLevel}
+          </span>
+        </div>
+        ${title ? `<span class="home-page__member-title" style="color:${titleColor}" title="${escapeHtml(titleDesc)}">${escapeHtml(title)}</span>` : ""}
+        <div class="home-page__member-bars">
+          <div class="home-page__bar-row">
+            <span class="home-page__bar-label">Total Lvl</span>
+            <span class="home-page__bar-value">${formatNumber(totalLevel)}</span>
+          </div>
+          <div class="home-page__bar-row">
+            <span class="home-page__bar-label">Total XP</span>
+            <span class="home-page__bar-value">${formatGp(totalXp)}</span>
+          </div>
+          <div class="home-page__bar-row">
+            <span class="home-page__bar-label">Collections</span>
+            <span class="home-page__bar-value">${formatNumber(collectionCount)}${collectionTotal ? `<span class="home-page__bar-dim">/${formatNumber(collectionTotal)}</span>` : ""}</span>
+          </div>
+          <div class="home-page__bar-row">
+            <span class="home-page__bar-label">Quests</span>
+            <span class="home-page__bar-value">${questsDone}<span class="home-page__bar-dim">/${totalQuests}</span></span>
+          </div>
+          <div class="home-page__bar-row">
+            <span class="home-page__bar-label">Diaries</span>
+            <span class="home-page__bar-value">${diaryDone.done}<span class="home-page__bar-dim">/${diaryDone.total}</span></span>
+          </div>
+        </div>
+        ${topSkills.length > 0 ? `
+        <div class="home-page__top-skills">
+          ${topSkills.map((s) => `
+            <div class="home-page__skill-pill">
+              <img src="${Skill.getIcon(s.name)}" alt="" /><span>${s.level}</span>
+            </div>
+          `).join("")}
+        </div>` : ""}
+      </div>`;
+  }
+  renderGroupStats() {
+    const container = this.querySelector(".home-page__stats-grid");
+    if (!container) return;
+    const members = this.members.filter((m) => m.name !== "@SHARED");
+    const totalItems = Object.keys(groupData.groupItems).length;
+    const bestQp = this.getGroupQuestPoints(members);
+    const maxQp = Quest.totalPoints;
+    const totalGeValue = this.getGroupGeValue();
+    const totalHaValue = this.getGroupHaValue();
+    const onlineCount = members.filter((m) => !m.inactive).length;
+    container.innerHTML = `
+      <div class="home-page__stat-card">
+        <span class="home-page__stat-icon">\u2694\uFE0F</span>
+        <span class="home-page__stat-big">${onlineCount}<span class="home-page__stat-dim">/${members.length}</span></span>
+        <span class="home-page__stat-label">Online</span>
+      </div>
+      <div class="home-page__stat-card">
+        <span class="home-page__stat-icon">\u{1F392}</span>
+        <span class="home-page__stat-big">${formatNumber(totalItems)}</span>
+        <span class="home-page__stat-label">Unique Items</span>
+      </div>
+      <div class="home-page__stat-card">
+        <span class="home-page__stat-icon">\u{1F4DC}</span>
+        <span class="home-page__stat-big">${bestQp}<span class="home-page__stat-dim">/${maxQp || "?"}</span></span>
+        <span class="home-page__stat-label">Best QP</span>
+      </div>
+      <div class="home-page__stat-card">
+        <span class="home-page__stat-icon">\u{1F4B0}</span>
+        <span class="home-page__stat-big">${formatGp(totalGeValue)}</span>
+        <span class="home-page__stat-label">GE Value</span>
+      </div>
+      <div class="home-page__stat-card">
+        <span class="home-page__stat-icon">\u{1FA99}</span>
+        <span class="home-page__stat-big">${formatGp(totalHaValue)}</span>
+        <span class="home-page__stat-label">HA Value</span>
+      </div>
+    `;
+  }
+  renderNews() {
+    const container = this.querySelector(".home-page__news-list");
+    if (!container) return;
+    const posts = this.blogPosts.slice(0, 4);
+    if (posts.length === 0) {
+      container.innerHTML = `<span class="home-page__empty">No news available.</span>`;
+      return;
+    }
+    container.innerHTML = posts.map((post) => {
+      const catColor = CATEGORY_COLORS[post.category] || "#ccc";
+      const img = post.imageUrl ? `<img class="home-page__news-img" src="${escapeHtml(post.imageUrl)}" alt="" loading="lazy" />` : "";
+      return `
+        <a class="home-page__news-item" href="${escapeHtml(post.link)}" target="_blank" rel="noopener noreferrer">
+          ${img}
+          <div class="home-page__news-body">
+            <div class="home-page__news-meta">
+              <span style="color:${catColor}">${escapeHtml(post.category)}</span>
+              <span class="home-page__news-date">${formatDate(post.pubDate)}</span>
+            </div>
+            <span class="home-page__news-title">${escapeHtml(post.title)}</span>
+          </div>
+        </a>`;
+    }).join("");
+  }
+  renderEvents() {
+    const container = this.querySelector(".home-page__events-list");
+    if (!container) return;
+    if (this.upcomingEvents.length === 0) {
+      container.innerHTML = `<span class="home-page__empty">No upcoming events.</span>`;
+      return;
+    }
+    container.innerHTML = this.upcomingEvents.map((e) => {
+      const color = EVENT_TYPE_COLORS[e.event_type] || EVENT_TYPE_COLORS.other;
+      const when = this.getEventTimeLabel(e);
+      return `
+        <div class="home-page__event-row" style="border-left-color:${color}">
+          <span class="home-page__event-title">${escapeHtml(e.title)}</span>
+          <span class="home-page__event-time">${escapeHtml(when)}</span>
+        </div>`;
+    }).join("");
+  }
+  renderYtVideos() {
+    const container = this.querySelector(".home-page__yt-list");
+    if (!container) return;
+    if (this.ytVideos.length === 0) {
+      container.innerHTML = `<span class="home-page__empty">No videos available.</span>`;
+      return;
+    }
+    container.innerHTML = this.ytVideos.map((v) => `
+      <a class="home-page__yt-item" href="https://www.youtube.com/watch?v=${escapeHtml(v.videoId)}" target="_blank" rel="noopener noreferrer">
+        <div class="home-page__yt-preview">
+          <img class="home-page__yt-thumb" src="${escapeHtml(v.thumbnail)}" alt="" loading="lazy" />
+          <span class="home-page__yt-title">${escapeHtml(v.title)}</span>
+        </div>
+      </a>
+    `).join("");
+  }
+  renderTwitchStream() {
+    const container = this.querySelector(".home-page__twitch-card");
+    if (!container || !this.twitchStream) return;
+    const s = this.twitchStream;
+    const statusClass = s.live ? "home-page__twitch-badge--live" : "home-page__twitch-badge--offline";
+    const statusText = s.live ? "LIVE" : "OFFLINE";
+    const title = s.title ? escapeHtml(s.title) : s.live ? "Live now" : "Last stream";
+    const thumb = s.thumbnail ? `<img class="home-page__twitch-thumb" src="${escapeHtml(s.thumbnail)}" alt="" loading="lazy" />` : `<div class="home-page__twitch-thumb home-page__twitch-thumb--placeholder"></div>`;
+    container.innerHTML = `
+      <a class="home-page__twitch-link" href="${escapeHtml(s.link || "https://www.twitch.tv/oldschoolrs")}" target="_blank" rel="noopener noreferrer">
+        <div class="home-page__twitch-preview">
+          ${thumb}
+          <span class="home-page__twitch-badge ${statusClass}">${statusText}</span>
+          <span class="home-page__twitch-title">${title}</span>
+        </div>
+      </a>
+    `;
+  }
+  getEventTimeLabel(event) {
+    const now = Date.now();
+    const start = new Date(event.event_time).getTime();
+    const diff = start - now;
+    if (diff <= 0) return "Happening now";
+    const mins = Math.ceil(diff / 6e4);
+    if (mins < 60) return `In ${mins}m`;
+    const hours = Math.floor(mins / 60);
+    if (hours < 24) return `In ${hours}h`;
+    const days = Math.floor(hours / 24);
+    return `In ${days}d`;
+  }
+  getTotalLevel(member) {
+    if (!member.skills) return 0;
+    const overall = member.skills[SkillName.Overall];
+    return overall?.level ?? 0;
+  }
+  getTotalXp(member) {
+    if (!member.skills) return 0;
+    const overall = member.skills[SkillName.Overall];
+    return overall?.xp ?? 0;
+  }
+  getQuestsCompleted(member) {
+    let count = 0;
+    for (const quest of Object.values(member.quests)) {
+      if (quest.state === QuestState.FINISHED) count++;
+    }
+    return count;
+  }
+  getDiaryTasksCompleted(member) {
+    if (!member.diaries) return { done: 0, total: 0 };
+    let done = 0;
+    let total = 0;
+    for (const region of Object.values(member.diaries)) {
+      for (const tasks of Object.values(region)) {
+        for (const completed of tasks) {
+          total++;
+          if (completed) done++;
+        }
+      }
+    }
+    return { done, total };
+  }
+  getTopSkills(member, count) {
+    if (!member.skills) return [];
+    return Object.values(member.skills).filter((s) => s.name !== SkillName.Overall).sort((a, b) => b.level - a.level).slice(0, count).map((s) => ({ name: s.name, level: s.level }));
+  }
+  getGroupQuestPoints(members) {
+    let best = 0;
+    for (const member of members) {
+      let points = 0;
+      for (const quest of Object.values(member.quests)) {
+        if (quest.state === QuestState.FINISHED) {
+          const data = Quest.questData[quest.id];
+          if (data) points += Number(data.points) || 0;
+        }
+      }
+      if (points > best) best = points;
+    }
+    return best;
+  }
+  getGroupGeValue() {
+    let total = 0;
+    for (const item of Object.values(groupData.groupItems)) {
+      total += (item.gePrice ?? 0) * item.quantity;
+    }
+    return total;
+  }
+  getGroupHaValue() {
+    let total = 0;
+    for (const item of Object.values(groupData.groupItems)) {
+      total += (item.highAlch ?? 0) * item.quantity;
+    }
+    return total;
+  }
+  getMemberTitles(members) {
+    const titles = /* @__PURE__ */ new Map();
+    const claimed = /* @__PURE__ */ new Set();
+    const candidates = [
+      { title: "Gold Goblin", desc: "Highest GE value in the group", color: "#ffd700", score: (m) => this.getMemberGeValue(m), higher: true },
+      { title: "Broke Boy", desc: "Lowest GE value... someone's gotta be last", color: "#8b6914", score: (m) => this.getMemberGeValue(m), higher: false },
+      { title: "Sweat Lord", desc: "Most total XP \u2014 do they ever log off?", color: "#ff4444", score: (m) => this.getTotalXp(m), higher: true },
+      { title: "Combat Monkey", desc: "Highest combat level in the group", color: "#ff6600", score: (m) => m.combatLevel ?? 3, higher: true },
+      { title: "Pacifist", desc: "Lowest combat level \u2014 violence is never the answer", color: "#88ddff", score: (m) => m.combatLevel ?? 3, higher: false },
+      { title: "Lore Nerd", desc: "Most quests completed \u2014 actually reads the dialogue", color: "#c8a2f8", score: (m) => this.getQuestsCompleted(m), higher: true },
+      { title: "Tree Hugger", desc: "Highest Woodcutting \u2014 talks to trees", color: "#4caf50", score: (m) => m.skills?.[SkillName.Woodcutting]?.level ?? 0, higher: true },
+      { title: "Rock Sniffer", desc: "Highest Mining \u2014 can smell copper from a mile away", color: "#a0826d", score: (m) => m.skills?.[SkillName.Mining]?.level ?? 0, higher: true },
+      { title: "Fish Whisperer", desc: "Highest Fishing \u2014 the fish fear them", color: "#42a5f5", score: (m) => m.skills?.[SkillName.Fishing]?.level ?? 0, higher: true },
+      { title: "Kitchen Menace", desc: "Highest Cooking \u2014 burns water occasionally", color: "#ff9800", score: (m) => m.skills?.[SkillName.Cooking]?.level ?? 0, higher: true },
+      { title: "Touch Grass", desc: "Highest Farming \u2014 ironically never goes outside", color: "#66bb6a", score: (m) => m.skills?.[SkillName.Farming]?.level ?? 0, higher: true },
+      { title: "Pray Warrior", desc: "Highest Prayer \u2014 buries bones for fun", color: "#e0e0e0", score: (m) => m.skills?.[SkillName.Prayer]?.level ?? 0, higher: true },
+      { title: "Sticky Fingers", desc: "Highest Thieving \u2014 check your pockets", color: "#ab47bc", score: (m) => m.skills?.[SkillName.Thieving]?.level ?? 0, higher: true },
+      { title: "Wizard Wannabe", desc: "Highest Magic \u2014 splashes in their sleep", color: "#5c6bc0", score: (m) => m.skills?.[SkillName.Magic]?.level ?? 0, higher: true },
+      { title: "Gym Rat", desc: "Highest Strength \u2014 never skips arm day", color: "#ef5350", score: (m) => m.skills?.[SkillName.Strength]?.level ?? 0, higher: true },
+      { title: "Bug Catcher", desc: "Highest Hunter \u2014 has a net collection", color: "#8bc34a", score: (m) => m.skills?.[SkillName.Hunter]?.level ?? 0, higher: true },
+      { title: "Arsonist", desc: "Highest Firemaking \u2014 suspiciously into flames", color: "#ff5722", score: (m) => m.skills?.[SkillName.Firemaking]?.level ?? 0, higher: true },
+      { title: "Parkour Pro", desc: "Highest Agility \u2014 rooftop enjoyer", color: "#26c6da", score: (m) => m.skills?.[SkillName.Agility]?.level ?? 0, higher: true },
+      { title: "Ghost", desc: "Most inactive \u2014 are they even real?", color: "#666", score: (m) => m.inactive ? 1 : 0, higher: true }
+    ];
+    for (const c of candidates) {
+      if (claimed.size >= members.length) break;
+      const eligible = members.filter((m) => !claimed.has(m.name));
+      if (eligible.length === 0) break;
+      const sorted = [...eligible].sort(
+        (a, b) => c.higher ? c.score(b) - c.score(a) : c.score(a) - c.score(b)
+      );
+      const winner = sorted[0];
+      if (c.score(winner) > 0 || !c.higher) {
+        titles.set(winner.name, { title: c.title, color: c.color, desc: c.desc });
+        claimed.add(winner.name);
+      }
+    }
+    return titles;
+  }
+  getMemberGeValue(member) {
+    let total = 0;
+    for (const item of member.allItems()) {
+      const qty = member.totalItemQuantity(item.itemId);
+      total += (item.gePrice ?? 0) * qty;
+    }
+    return total;
+  }
+};
+customElements.define("home-page", HomePage);
 
 // src/items-page/items-page.ts
 var ItemsPage = class extends BaseElement {
@@ -19208,7 +19897,7 @@ var AppInitializer = class extends BaseElement {
 customElements.define("app-initializer", AppInitializer);
 
 // src/group-settings/group-settings.ts
-function escapeHtml(str) {
+function escapeHtml2(str) {
   const div = document.createElement("div");
   div.textContent = str;
   return div.innerHTML;
@@ -19222,44 +19911,53 @@ var GroupSettings = class extends BaseElement {
     const selectedPanelDockSide = appearance.getLayout();
     const style = appearance.getTheme();
     return `<div class="rsborder rsbackground group-settings__container">
-  <h3>Member settings</h3>
-  <p>These <span class="emphasize">do</span> need to match the in-game names.</p>
-  <div class="group-settings__section-content group-settings__members"></div>
+  <div class="group-settings__tabs">
+    <button class="group-settings__tab group-settings__tab--active" data-tab="members">Members</button>
+    <button class="group-settings__tab" data-tab="appearance">Appearance</button>
+    <button class="group-settings__tab" data-tab="identity">Identity</button>
+    <button class="group-settings__tab" data-tab="discord">Discord</button>
+  </div>
 
-  <h3>Appearance settings</h3>
-  <fieldset class="group-settings__panels">
-    <legend>Player panels</legend>
-    <div>
-      <input id="panel-dock__left" type="radio" value="left" name="panel-dock-side" ${selectedPanelDockSide !== "row-reverse" ? "checked" : ""} />
-      <label for="panel-dock__left">Dock panels to left</label>
-    </div>
-    <div>
-      <input id="panel-dock__right" type="radio" value="right" name="panel-dock-side" ${selectedPanelDockSide === "row-reverse" ? "checked" : ""}/>
-      <label for="panel-dock__right">Dock panels to right</label>
-    </div>
-  </fieldset>
+  <div class="group-settings__panel group-settings__panel--active" data-panel="members">
+    <p>These <span class="emphasize">do</span> need to match the in-game names.</p>
+    <div class="group-settings__members"></div>
+  </div>
 
-  <fieldset class="group-settings__style">
-    <legend>Style</legend>
-    <div>
-      <input id="style__light" type="radio" value="light" name="appearance-style" ${style !== "dark" ? "checked" : ""} />
-      <label for="style__light">Light</label>
-    </div>
-    <div>
-      <input id="style__dark" type="radio" value="dark" name="appearance-style" ${style === "dark" ? "checked" : ""}/>
-      <label for="style__dark">Dark</label>
-    </div>
-  </fieldset>
+  <div class="group-settings__panel" data-panel="appearance">
+    <fieldset class="group-settings__panels">
+      <legend>Player panels</legend>
+      <div>
+        <input id="panel-dock__left" type="radio" value="left" name="panel-dock-side" ${selectedPanelDockSide !== "row-reverse" ? "checked" : ""} />
+        <label for="panel-dock__left">Dock panels to left</label>
+      </div>
+      <div>
+        <input id="panel-dock__right" type="radio" value="right" name="panel-dock-side" ${selectedPanelDockSide === "row-reverse" ? "checked" : ""}/>
+        <label for="panel-dock__right">Dock panels to right</label>
+      </div>
+    </fieldset>
 
-  <h3>Identity</h3>
-  <p>Playing as: <span class="group-settings__identity-name emphasize"></span></p>
-  <div class="group-settings__section-content">
+    <fieldset class="group-settings__style">
+      <legend>Style</legend>
+      <div>
+        <input id="style__light" type="radio" value="light" name="appearance-style" ${style !== "dark" ? "checked" : ""} />
+        <label for="style__light">Light</label>
+      </div>
+      <div>
+        <input id="style__dark" type="radio" value="dark" name="appearance-style" ${style === "dark" ? "checked" : ""}/>
+        <label for="style__dark">Dark</label>
+      </div>
+    </fieldset>
+  </div>
+
+  <div class="group-settings__panel" data-panel="identity">
+    <p>Playing as: <span class="group-settings__identity-name emphasize"></span></p>
     <button class="men-button small" id="change-identity-btn">Change character</button>
   </div>
 
-  <h3>Discord settings</h3>
-  <p>Optional \u2014 link your group's Discord for notifications.</p>
-  <div class="group-settings__section-content group-settings__discord-content"></div>
+  <div class="group-settings__panel" data-panel="discord">
+    <p>Optional \u2014 link your group's Discord for notifications.</p>
+    <div class="group-settings__discord-content"></div>
+  </div>
 </div>
 `;
   }
@@ -19283,6 +19981,23 @@ var GroupSettings = class extends BaseElement {
     this.updateIdentityDisplay();
     this.subscribe("active-member-changed", () => this.updateIdentityDisplay());
     this.fetchDiscordSettings();
+    this.initTabs();
+  }
+  initTabs() {
+    const tabs = this.querySelectorAll(".group-settings__tab");
+    for (const tab of Array.from(tabs)) {
+      this.eventListener(tab, "click", () => {
+        const target = tab.getAttribute("data-tab");
+        if (!target) return;
+        for (const t of Array.from(tabs)) {
+          t.classList.toggle("group-settings__tab--active", t === tab);
+        }
+        const panels = this.querySelectorAll(".group-settings__panel");
+        for (const p of Array.from(panels)) {
+          p.classList.toggle("group-settings__panel--active", p.getAttribute("data-panel") === target);
+        }
+      });
+    }
   }
   handleStyleChange() {
     const styleInput = this.querySelector('input[name="appearance-style"]:checked');
@@ -19382,8 +20097,8 @@ var GroupSettings = class extends BaseElement {
     const memberRows = this.discordSettings.members.map(
       (m) => `
         <div class="group-settings__discord-member">
-          <label class="group-settings__discord-label">${escapeHtml(m.name)}${m.has_discord_id ? ' <span class="group-settings__discord-set">Set \u2713</span>' : ""}</label>
-          <input type="text" class="group-settings__discord-input" data-member-name="${escapeHtml(m.name)}" value="" placeholder="${m.has_discord_id ? "Enter new ID to update" : "Discord User ID"}" />
+          <label class="group-settings__discord-label">${escapeHtml2(m.name)}${m.has_discord_id ? ' <span class="group-settings__discord-set">Set \u2713</span>' : ""}</label>
+          <input type="text" class="group-settings__discord-input" data-member-name="${escapeHtml2(m.name)}" value="" placeholder="${m.has_discord_id ? "Enter new ID to update" : "Discord User ID"}" />
         </div>`
     ).join("");
     container.innerHTML = `
@@ -21284,186 +21999,6 @@ var CanvasMap = class extends BaseElement {
   }
 };
 customElements.define("canvas-map", CanvasMap);
-
-// src/data/collection-log.ts
-var duplicateCollectionLogItems = /* @__PURE__ */ new Map([
-  // Duplicate mining outfit from volcanic mine and motherlode mine pages
-  [29472, 12013],
-  // Prospector helmet
-  [29474, 12014],
-  // Prospector jacket
-  [29476, 12015],
-  // Prospector legs
-  [29478, 12016]
-  // Prospector boots
-]);
-var PlayerLog = class {
-  playerName;
-  unlockedItems;
-  unlockedItemsCountByPage;
-  logs;
-  constructor(playerName, items) {
-    this.playerName = playerName;
-    this.unlockedItems = /* @__PURE__ */ new Map();
-    this.unlockedItemsCountByPage = /* @__PURE__ */ new Map();
-    this.logs = [];
-    if (items) {
-      for (const item of items) {
-        if (collectionLog.duplicateMapping.has(item.id)) {
-          item.id = collectionLog.duplicateMapping.get(item.id) ?? item.id;
-          if (this.unlockedItems.has(item.id)) {
-            item.quantity += this.unlockedItems.get(item.id) ?? 0;
-          }
-        }
-        this.unlockedItems.set(item.id, item.quantity);
-      }
-    }
-    for (const tab of collectionLog.info) {
-      for (const page of tab.pages) {
-        const pageItems = collectionLog.pageItems.get(page.name) ?? [];
-        let pageItemCount = 0;
-        for (const item of pageItems) {
-          if ((this.unlockedItems.get(item.id) ?? 0) > 0) ++pageItemCount;
-        }
-        this.unlockedItemsCountByPage.set(page.name, pageItemCount);
-      }
-    }
-  }
-  isLogComplete(pageName) {
-    return this.unlockedItemsCountByPage.get(pageName) === (collectionLog.pageItems.get(pageName) ?? []).length;
-  }
-  completionStateClass(pageName) {
-    const unlockedItemsCount = this.unlockedItemsCountByPage.get(pageName) ?? 0;
-    const totalItemsInPage = (collectionLog.pageItems.get(pageName) ?? []).length;
-    if (totalItemsInPage === unlockedItemsCount) {
-      return "collection-log__complete";
-    } else if (unlockedItemsCount > 0) {
-      return "collection-log__in-progress";
-    }
-    return "collection-log__not-started";
-  }
-  getPage(pageName) {
-    return this.logs.find((log) => log.page_name === pageName);
-  }
-};
-var CollectionLog = class {
-  info;
-  duplicateMapping;
-  pageItems;
-  totalUniqueItems;
-  playerLogs;
-  playerNames;
-  otherPlayers;
-  constructor() {
-    this.info = [];
-    this.duplicateMapping = /* @__PURE__ */ new Map();
-    this.pageItems = /* @__PURE__ */ new Map();
-    this.totalUniqueItems = 0;
-    this.playerLogs = /* @__PURE__ */ new Map();
-    this.playerNames = [];
-    this.otherPlayers = [];
-  }
-  async initLogInfo() {
-    if (this.info.length > 0) return;
-    const [collectionLogInfo, collectionLogDuplicates] = await Promise.all([
-      fetch("/data/collection_log_info.json"),
-      fetch("/data/collection_log_duplicates.json")
-    ]);
-    const duplicateMapping = await collectionLogDuplicates.json();
-    const reverseMapping = /* @__PURE__ */ new Map();
-    for (const [itemId, dupeItemIds] of Object.entries(duplicateMapping)) {
-      for (const dupeItemId of dupeItemIds) {
-        const a = Number(dupeItemId);
-        if (reverseMapping.has(a)) {
-          continue;
-        }
-        reverseMapping.set(a, Number(itemId));
-      }
-    }
-    this.info = await collectionLogInfo.json();
-    this.duplicateMapping = reverseMapping;
-    this.pageItems = /* @__PURE__ */ new Map();
-    const uniqueItems = /* @__PURE__ */ new Set();
-    for (const tab of this.info) {
-      for (const page of tab.pages) {
-        page.items.forEach((item) => uniqueItems.add(item.id));
-        this.pageItems.set(page.name, page.items);
-        page.sortName = utility.removeArticles(page.name);
-      }
-    }
-    this.totalUniqueItems = uniqueItems.size - duplicateCollectionLogItems.size;
-  }
-  async load(groupData2) {
-    this.playerLogs = /* @__PURE__ */ new Map();
-    for (const member of groupData2.members.values()) {
-      if (member.name === "@SHARED") continue;
-      this.playerLogs.set(member.name, new PlayerLog(member.name, member.collectionLog));
-    }
-    this.playerNames = Array.from(this.playerLogs.keys());
-  }
-  tabName(tabId) {
-    switch (tabId) {
-      case 0:
-        return "Bosses";
-      case 1:
-        return "Raids";
-      case 2:
-        return "Clues";
-      case 3:
-        return "Minigames";
-      case 4:
-        return "Other";
-    }
-    return "Other";
-  }
-  loadPlayer(playerName) {
-    this.otherPlayers = this.playerNames.filter((x) => x !== playerName);
-  }
-  isLogComplete(playerName, pageName) {
-    const playerLog = this.playerLogs.get(playerName);
-    return playerLog?.isLogComplete(pageName) || false;
-  }
-  completionStateClass(playerName, pageName) {
-    const playerLog = this.playerLogs.get(playerName);
-    return playerLog?.completionStateClass(pageName) || "collection-log__not-started";
-  }
-  totalUnlockedItems(playerName) {
-    const playerLog = this.playerLogs.get(playerName);
-    const unlockedItems = playerLog?.unlockedItems;
-    let unlockedItemsCount = 0;
-    if (unlockedItems) {
-      unlockedItemsCount = playerLog.unlockedItems.size;
-      for (const [a, b] of duplicateCollectionLogItems.entries()) {
-        if (unlockedItems.has(a) && unlockedItems.has(b)) {
-          --unlockedItemsCount;
-        }
-      }
-    }
-    return unlockedItemsCount;
-  }
-  pageSize(pageName) {
-    return (this.pageItems.get(pageName) ?? []).length;
-  }
-  completionCountForPage(playerName, pageName) {
-    const playerLog = this.playerLogs.get(playerName);
-    return playerLog?.unlockedItemsCountByPage.get(pageName) || 0;
-  }
-  pageInfo(pageName) {
-    for (const tab of this.info) {
-      for (const page of tab.pages) {
-        if (page.name === pageName) return page;
-      }
-    }
-    return null;
-  }
-  unlockedItemCount(playerName, itemId) {
-    return this.playerLogs.get(playerName)?.unlockedItems.get(itemId) || 0;
-  }
-  isItemUnlocked(playerName, itemId) {
-    return this.playerLogs.get(playerName)?.unlockedItems.has(itemId) || false;
-  }
-};
-var collectionLog = new CollectionLog();
 
 // src/collection-log/collection-log.ts
 var CollectionLog2 = class extends BaseElement {
@@ -50320,7 +50855,7 @@ var EVENT_TYPE_INFO = {
   pking: { label: "PK Trip", color: "#ff00ff" },
   other: { label: "Other", color: "#cccccc" }
 };
-function escapeHtml2(str) {
+function escapeHtml3(str) {
   const div = document.createElement("div");
   div.textContent = str;
   return div.innerHTML;
@@ -50463,16 +50998,16 @@ var EventsPage = class extends BaseElement {
       <div class="events-page__card${pastClass}" data-event-id="${event.event_id}">
         <div class="events-page__card-header">
           <span class="events-page__card-type" style="color: ${info.color}">${info.label}</span>
-          <span class="events-page__card-time">${escapeHtml2(this.formatEventTime(event.event_time))}${event.event_end_time ? ` \u2014 ${escapeHtml2(this.formatEventTime(event.event_end_time))}` : ""}</span>
+          <span class="events-page__card-time">${escapeHtml3(this.formatEventTime(event.event_time))}${event.event_end_time ? ` \u2014 ${escapeHtml3(this.formatEventTime(event.event_end_time))}` : ""}</span>
         </div>
         <div class="events-page__card-title-row">
           ${iconHtml}
-          <h3 class="events-page__card-title">${escapeHtml2(event.title)}</h3>
+          <h3 class="events-page__card-title">${escapeHtml3(event.title)}</h3>
         </div>
-        ${event.description ? `<p class="events-page__card-desc">${escapeHtml2(event.description)}</p>` : ""}
+        ${event.description ? `<p class="events-page__card-desc">${escapeHtml3(event.description)}</p>` : ""}
         <div class="events-page__card-footer">
-          <span class="events-page__card-relative">${escapeHtml2(this.getRelativeTime(event.event_time))}</span>
-          <span class="events-page__card-author">Posted by ${escapeHtml2(event.created_by)}</span>
+          <span class="events-page__card-relative">${escapeHtml3(this.getRelativeTime(event.event_time))}</span>
+          <span class="events-page__card-author">Posted by ${escapeHtml3(event.created_by)}</span>
           ${this.isDemo ? "" : `<button class="events-page__delete-btn" data-delete-id="${event.event_id}" title="Cancel event">\xD7</button>`}
         </div>
       </div>`;
@@ -50504,7 +51039,7 @@ var EventsPage = class extends BaseElement {
     const members = [...groupData.members.values()].filter((m) => m.name !== "@SHARED").map((m) => m.name);
     const typeOptions = Object.entries(EVENT_TYPE_INFO).map(([key, v]) => `<option value="${key}">${v.label}</option>`).join("");
     const activeMember = storage.getActiveMember();
-    const memberOptions = members.map((n) => `<option value="${escapeHtml2(n)}"${n === activeMember ? " selected" : ""}>${escapeHtml2(n)}</option>`).join("");
+    const memberOptions = members.map((n) => `<option value="${escapeHtml3(n)}"${n === activeMember ? " selected" : ""}>${escapeHtml3(n)}</option>`).join("");
     return `
       <div class="events-page__form rsborder rsbackground">
         <h3 class="events-page__form-title rstext">Post a New Adventure</h3>
@@ -50654,7 +51189,7 @@ var EventsPage = class extends BaseElement {
 customElements.define("events-page", EventsPage);
 
 // src/event-banner/event-banner.ts
-var EVENT_TYPE_COLORS = {
+var EVENT_TYPE_COLORS2 = {
   boss: "#ff981f",
   skilling: "#0dc10d",
   minigame: "#00c8ff",
@@ -50663,7 +51198,7 @@ var EVENT_TYPE_COLORS = {
   pking: "#ff00ff",
   other: "#cccccc"
 };
-function escapeHtml3(str) {
+function escapeHtml4(str) {
   const div = document.createElement("div");
   div.textContent = str;
   return div.innerHTML;
@@ -50761,20 +51296,117 @@ var EventBanner = class extends BaseElement {
   renderBanners() {
     if (this.activeEvents.length === 0) return "";
     return this.activeEvents.map((e) => {
-      const color = EVENT_TYPE_COLORS[e.event_type] || EVENT_TYPE_COLORS.other;
+      const color = EVENT_TYPE_COLORS2[e.event_type] || EVENT_TYPE_COLORS2.other;
       const iconHtml = e.icon ? `<img class="event-banner__icon" src="${iconSrc(e.icon)}" alt="" />` : "";
       return `<div class="event-banner__item" style="border-left-color: ${color}">
           ${iconHtml}
-          <span class="event-banner__title">${escapeHtml3(e.title)}</span>
-          <span class="event-banner__time">${escapeHtml3(this.getTimeLabel(e))}</span>
+          <span class="event-banner__title">${escapeHtml4(e.title)}</span>
+          <span class="event-banner__time">${escapeHtml4(this.getTimeLabel(e))}</span>
         </div>`;
     }).join("");
   }
 };
 customElements.define("event-banner", EventBanner);
 
+// src/blog-page/blog-page.ts
+var CATEGORY_COLORS2 = {
+  "Game Updates": "#ff981f",
+  Community: "#0dc10d",
+  "Dev Blogs": "#00c8ff",
+  "Future Updates": "#ffff00",
+  Events: "#ff00ff"
+};
+function escapeHtml5(str) {
+  const div = document.createElement("div");
+  div.textContent = str;
+  return div.innerHTML;
+}
+function formatDate2(dateStr) {
+  const date5 = new Date(dateStr);
+  return date5.toLocaleDateString("en-GB", {
+    day: "numeric",
+    month: "short",
+    year: "numeric"
+  });
+}
+var BlogPage = class extends BaseElement {
+  posts;
+  loading;
+  error;
+  constructor() {
+    super();
+    this.posts = [];
+    this.loading = true;
+    this.error = "";
+  }
+  html() {
+    return `<div class="blog-page">
+  <div class="blog-page__header">
+    <h2 class="blog-page__title rstext">OSRS News</h2>
+  </div>
+
+  ${this.renderContent()}
+</div>
+`;
+  }
+  connectedCallback() {
+    super.connectedCallback();
+    this.posts = [];
+    this.loading = true;
+    this.error = "";
+    this.render();
+    this.fetchBlog();
+  }
+  async fetchBlog() {
+    try {
+      const response = await fetch("/api/osrs-news");
+      if (!response.ok) {
+        throw new Error("Failed to fetch news");
+      }
+      const data = await response.json();
+      this.posts = data;
+      this.loading = false;
+      this.render();
+    } catch {
+      this.loading = false;
+      this.error = "Failed to load OSRS news.";
+      this.render();
+    }
+  }
+  renderPost(post) {
+    const categoryColor = CATEGORY_COLORS2[post.category] || "#cccccc";
+    const imageHtml = post.imageUrl ? `<img class="blog-page__post-image" src="${escapeHtml5(post.imageUrl)}" alt="" loading="lazy" />` : "";
+    return `
+      <a class="blog-page__post" href="${escapeHtml5(post.link)}" target="_blank" rel="noopener noreferrer">
+        ${imageHtml}
+        <div class="blog-page__post-body">
+          <div class="blog-page__post-meta">
+            <span class="blog-page__post-category" style="color: ${categoryColor}">${escapeHtml5(post.category)}</span>
+            <span class="blog-page__post-date">${formatDate2(post.pubDate)}</span>
+          </div>
+          <h3 class="blog-page__post-title">${escapeHtml5(post.title)}</h3>
+          <p class="blog-page__post-desc">${escapeHtml5(post.description)}</p>
+        </div>
+      </a>
+    `;
+  }
+  renderContent() {
+    if (this.loading) {
+      return `<div class="blog-page__loading">Loading news...</div>`;
+    }
+    if (this.error) {
+      return `<div class="blog-page__error">${escapeHtml5(this.error)}</div>`;
+    }
+    if (this.posts.length === 0) {
+      return `<div class="blog-page__empty">No news posts found.</div>`;
+    }
+    return `<div class="blog-page__posts">${this.posts.map((p) => this.renderPost(p)).join("")}</div>`;
+  }
+};
+customElements.define("blog-page", BlogPage);
+
 // src/member-select-dialog/member-select-dialog.ts
-function escapeHtml4(str) {
+function escapeHtml6(str) {
   const div = document.createElement("div");
   div.textContent = str;
   return div.innerHTML;
@@ -50814,7 +51446,7 @@ var MemberSelectDialog = class extends BaseElement {
   }
   renderMembers() {
     return this.members.map(
-      (name) => `<button class="member-select__btn men-button" data-name="${escapeHtml4(name)}">${escapeHtml4(name)}</button>`
+      (name) => `<button class="member-select__btn men-button" data-name="${escapeHtml6(name)}">${escapeHtml6(name)}</button>`
     ).join("");
   }
 };

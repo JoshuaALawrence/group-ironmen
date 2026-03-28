@@ -56,6 +56,24 @@ export class GroupSettings extends BaseElement {
     this.updateIdentityDisplay();
     this.subscribe("active-member-changed", () => this.updateIdentityDisplay());
     this.fetchDiscordSettings();
+    this.initTabs();
+  }
+
+  initTabs(): void {
+    const tabs = this.querySelectorAll<HTMLButtonElement>(".group-settings__tab");
+    for (const tab of Array.from(tabs)) {
+      this.eventListener(tab, "click", () => {
+        const target = tab.getAttribute("data-tab");
+        if (!target) return;
+        for (const t of Array.from(tabs)) {
+          t.classList.toggle("group-settings__tab--active", t === tab);
+        }
+        const panels = this.querySelectorAll<HTMLElement>(".group-settings__panel");
+        for (const p of Array.from(panels)) {
+          p.classList.toggle("group-settings__panel--active", p.getAttribute("data-panel") === target);
+        }
+      });
+    }
   }
 
   handleStyleChange(): void {

@@ -1,0 +1,125 @@
+blog-page {
+  display: block;
+  height: 100%;
+  overflow-y: auto;
+}
+
+.blog-page {
+  padding: 12px;
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.blog-page__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.blog-page__title {
+  font-size: 22px;
+  color: var(--orange);
+  margin: 0;
+}
+
+.blog-page__loading,
+.blog-page__error,
+.blog-page__empty {
+  text-align: center;
+  padding: 24px;
+  color: var(--primary-text);
+  font-size: 16px;
+}
+
+.blog-page__error {
+  color: #ff4444;
+}
+
+.blog-page__posts {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.blog-page__post {
+  display: flex;
+  gap: 12px;
+  padding: 10px;
+  background: var(--elevated);
+  border: 1px solid var(--light-border);
+  border-radius: 3px;
+  text-decoration: none;
+  color: var(--primary-text);
+  transition: background 0.15s;
+  cursor: pointer;
+}
+
+.blog-page__post:hover {
+  background: var(--hover);
+}
+
+.blog-page__post-image {
+  width: 120px;
+  height: 80px;
+  object-fit: cover;
+  border-radius: 3px;
+  flex-shrink: 0;
+}
+
+.blog-page__post-body {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.blog-page__post-meta {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  font-size: 14px;
+}
+
+.blog-page__post-category {
+  font-family: rssmall;
+  font-weight: bold;
+  font-size: 14px;
+}
+
+.blog-page__post-date {
+  color: #b0aaaa;
+  font-size: 13px;
+}
+
+.blog-page__post-title {
+  margin: 0;
+  font-size: 18px;
+  font-family: rslarge;
+  color: var(--orange);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.blog-page__post-desc {
+  margin: 0;
+  font-size: 15px;
+  color: #d4cfc8;
+  line-height: 1.3;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+@media (max-width: 600px) {
+  .blog-page__post {
+    flex-direction: column;
+  }
+
+  .blog-page__post-image {
+    width: 100%;
+    height: 140px;
+  }
+}
