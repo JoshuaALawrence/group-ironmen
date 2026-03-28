@@ -269,6 +269,8 @@ async function updateGePrices(): Promise<void> {
   gePricesJson = JSON.stringify(gePrices);
 }
 
+let geUpdaterInterval: ReturnType<typeof setInterval> | undefined;
+
 export function startGeUpdater(): void {
   const update = async () => {
     try {
@@ -279,8 +281,11 @@ export function startGeUpdater(): void {
     }
   };
   update();
-  setInterval(update, 14400 * 1000); // 4 hours
+  if (geUpdaterInterval) clearInterval(geUpdaterInterval);
+  geUpdaterInterval = setInterval(update, 14400 * 1000); // 4 hours
 }
+
+let skillsAggregatorInterval: ReturnType<typeof setInterval> | undefined;
 
 export function startSkillsAggregator(): void {
   const run = async () => {
@@ -297,7 +302,8 @@ export function startSkillsAggregator(): void {
     }
   };
   run();
-  setInterval(run, 1800 * 1000); // 30 minutes
+  if (skillsAggregatorInterval) clearInterval(skillsAggregatorInterval);
+  skillsAggregatorInterval = setInterval(run, 1800 * 1000); // 30 minutes
 }
 
 export async function handleGetWiseOldManPlayerBossKc(req: Request, res: Response): Promise<void> {

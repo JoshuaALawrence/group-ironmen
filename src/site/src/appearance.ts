@@ -6,14 +6,27 @@ declare global {
 }
 
 class Appearance {
+  private themeMediaQuery: MediaQueryList | null;
+  private themeChangeHandler: (() => void) | null;
+
   constructor() {
+    this.themeMediaQuery = null;
+    this.themeChangeHandler = null;
     if (window.matchMedia) {
-      window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => {
-        this.updateTheme();
-      });
+      this.themeMediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
+      this.themeChangeHandler = () => this.updateTheme();
+      this.themeMediaQuery.addEventListener("change", this.themeChangeHandler);
     }
 
     this.updateLayout();
+  }
+
+  destroy(): void {
+    if (this.themeMediaQuery && this.themeChangeHandler) {
+      this.themeMediaQuery.removeEventListener("change", this.themeChangeHandler);
+      this.themeMediaQuery = null;
+      this.themeChangeHandler = null;
+    }
   }
 
   setLayout(layout: string): void {

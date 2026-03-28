@@ -720,6 +720,14 @@ export class DpsCalc extends BaseElement {
   }
 
   disconnectedCallback(): void {
+    if (this.searchDebounceTimer) {
+      clearTimeout(this.searchDebounceTimer);
+      this.searchDebounceTimer = null;
+    }
+    if (this.monsterSearchDebounceTimer) {
+      clearTimeout(this.monsterSearchDebounceTimer);
+      this.monsterSearchDebounceTimer = null;
+    }
     super.disconnectedCallback();
   }
 

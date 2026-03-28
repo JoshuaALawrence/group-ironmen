@@ -14,12 +14,18 @@ class Router {
   registeredRoutes: Map<string, RouteLike>;
   routeAliases: Map<string, Set<string>>;
   activeRoute: RouteLike | null;
+  private locationChangeHandler: () => void;
 
   constructor() {
     this.registeredRoutes = new Map();
     this.routeAliases = new Map();
     this.activeRoute = null;
-    window.addEventListener("locationchange", this.handleLocationChange.bind(this));
+    this.locationChangeHandler = this.handleLocationChange.bind(this);
+    window.addEventListener("locationchange", this.locationChangeHandler);
+  }
+
+  destroy(): void {
+    window.removeEventListener("locationchange", this.locationChangeHandler);
   }
 
   register(path: string, route: RouteLike): void {

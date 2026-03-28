@@ -122,6 +122,8 @@ export class Api {
 
   async disable() {
     this.enabled = false;
+    const pendingHandle = this.liveUpdateHandle;
+    this.liveUpdateHandle = undefined;
     this.groupName = undefined;
     this.groupToken = undefined;
     this.groupDataSyncQueued = false;
@@ -134,8 +136,8 @@ export class Api {
       this.groupEventsAbortController = undefined;
     }
 
-    if (this.liveUpdateHandle && this.usingIntervalUpdates) {
-      const liveUpdateHandle = await this.liveUpdateHandle;
+    if (pendingHandle && this.usingIntervalUpdates) {
+      const liveUpdateHandle = await pendingHandle;
       if (typeof liveUpdateHandle === "number") {
         window.clearInterval(liveUpdateHandle);
       }

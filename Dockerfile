@@ -5,6 +5,9 @@ RUN npm ci --ignore-scripts
 COPY src/ ./src/
 RUN npx tsc && cd src/site && node build.js --prod
 
+# Prune source maps and build artifacts not needed at runtime
+RUN rm -f src/site/public/app.js.map
+
 FROM node:20-alpine AS production
 RUN addgroup -g 1001 -S appgroup && \
     adduser -S appuser -u 1001 -G appgroup

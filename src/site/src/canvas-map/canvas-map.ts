@@ -104,6 +104,8 @@ export class CanvasMap extends BaseElement {
   touch!: TouchState;
   update!: (timestamp: number) => void;
   updateRequested: number;
+  animationFrameId: number;
+  disposed: boolean;
   validTiles: Array<Set<number>>;
   locations: MapIconGrid;
   mapLabels: MapLabelGrid;
@@ -123,6 +125,8 @@ export class CanvasMap extends BaseElement {
     this.previousFrameTime = performance.now();
     this.followingPlayer = { name: null };
     this.updateRequested = 0;
+    this.animationFrameId = 0;
+    this.disposed = false;
     this.validTiles = [];
     this.locations = {};
     this.mapLabels = {};
@@ -191,13 +195,23 @@ export class CanvasMap extends BaseElement {
     this.camera.y.goTo(startY, 1);
 
     this.getMapJson();
+    this.disposed = false;
     this.update = this._update.bind(this);
     this.requestUpdate();
-    window.requestAnimationFrame(this.update);
+    this.animationFrameId = window.requestAnimationFrame(this.update);
   }
 
   disconnectedCallback(): void {
     super.disconnectedCallback();
+    this.disposed = true;
+    window.cancelAnimationFrame(this.animationFrameId);
+    this.playerMarkers.clear();
+    this.interactingMarkers.clear();
+    this.mapLabelImages.clear();
+    for (const tileMap of this.tiles) {
+      tileMap.clear();
+    }
+    this.tilesInView = [];
   }
 
   async getMapJson(): Promise<void> {
@@ -430,7 +444,9 @@ export class CanvasMap extends BaseElement {
     }
 
     this.updateRequested = doAnotherUpdate ? Math.max(1, this.updateRequested) : this.updateRequested;
-    window.requestAnimationFrame(this.update);
+    if (!this.disposed) {
+      this.animationFrameId = window.requestAnimationFrame(this.update);
+    }
   }
 
   addInteractingMarker(x: number, y: number, label: string): Marker {
