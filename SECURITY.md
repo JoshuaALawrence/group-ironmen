@@ -12,7 +12,7 @@ If you discover a security vulnerability in this project, please report it respo
 
 **Do NOT open a public GitHub issue for security vulnerabilities.**
 
-Instead, please email **[security@group-ironmen.com]** with:
+Instead, please email **[joshua@lawrence.zip]** with:
 
 - A description of the vulnerability
 - Steps to reproduce
@@ -26,8 +26,8 @@ You can expect an initial response within **72 hours**. We will work with you to
 This project employs the following security practices:
 
 - **CodeQL** static analysis on every push and weekly schedules
-- **Dependabot** automated dependency updates for npm, Cargo, Docker, and GitHub Actions
-- **npm audit** and **cargo audit** run in CI to catch known vulnerabilities
+- **Dependabot** automated dependency updates for npm, Docker, and GitHub Actions
+- **npm audit** run in CI to catch known vulnerabilities
 - **Trivy** container image scanning for critical and high severity CVEs
 - **Non-root Docker containers** for both frontend and backend services
 - **Multi-stage Docker builds** to minimize attack surface
