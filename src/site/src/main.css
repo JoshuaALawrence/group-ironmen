@@ -409,6 +409,14 @@ ul {
   pointer-events: none;
 }
 
+.no-pointer-events .authed-section__main-content {
+  pointer-events: none;
+}
+
+.no-pointer-events .authed-section__outlet {
+  pointer-events: none;
+}
+
 .dialog {
   display: none;
   justify-content: center;

@@ -18144,11 +18144,13 @@ var HomePage = class extends BaseElement {
     return count;
   }
   getDiaryTasksCompleted(member) {
-    if (!member.diaries) return { done: 0, total: 0 };
+    if (!member.diaries || typeof member.diaries !== "object") return { done: 0, total: 0 };
     let done = 0;
     let total = 0;
     for (const region of Object.values(member.diaries)) {
+      if (!region || typeof region !== "object") continue;
       for (const tasks of Object.values(region)) {
+        if (!Array.isArray(tasks)) continue;
         for (const completed of tasks) {
           total++;
           if (completed) done++;
@@ -18195,35 +18197,33 @@ var HomePage = class extends BaseElement {
     const candidates = [
       { title: "Gold Goblin", desc: "Highest GE value in the group", color: "#ffd700", score: (m) => this.getMemberGeValue(m), higher: true },
       { title: "Broke Boy", desc: "Lowest GE value... someone's gotta be last", color: "#8b6914", score: (m) => this.getMemberGeValue(m), higher: false },
-      { title: "Sweat Lord", desc: "Most total XP \u2014 do they ever log off?", color: "#ff4444", score: (m) => this.getTotalXp(m), higher: true },
+      { title: "Sweat Lord", desc: "Most total XP... do they ever log off?", color: "#ff4444", score: (m) => this.getTotalXp(m), higher: true },
       { title: "Combat Monkey", desc: "Highest combat level in the group", color: "#ff6600", score: (m) => m.combatLevel ?? 3, higher: true },
-      { title: "Pacifist", desc: "Lowest combat level \u2014 violence is never the answer", color: "#88ddff", score: (m) => m.combatLevel ?? 3, higher: false },
-      { title: "Lore Nerd", desc: "Most quests completed \u2014 actually reads the dialogue", color: "#c8a2f8", score: (m) => this.getQuestsCompleted(m), higher: true },
-      { title: "Tree Hugger", desc: "Highest Woodcutting \u2014 talks to trees", color: "#4caf50", score: (m) => m.skills?.[SkillName.Woodcutting]?.level ?? 0, higher: true },
-      { title: "Rock Sniffer", desc: "Highest Mining \u2014 can smell copper from a mile away", color: "#a0826d", score: (m) => m.skills?.[SkillName.Mining]?.level ?? 0, higher: true },
-      { title: "Fish Whisperer", desc: "Highest Fishing \u2014 the fish fear them", color: "#42a5f5", score: (m) => m.skills?.[SkillName.Fishing]?.level ?? 0, higher: true },
-      { title: "Kitchen Menace", desc: "Highest Cooking \u2014 burns water occasionally", color: "#ff9800", score: (m) => m.skills?.[SkillName.Cooking]?.level ?? 0, higher: true },
-      { title: "Touch Grass", desc: "Highest Farming \u2014 ironically never goes outside", color: "#66bb6a", score: (m) => m.skills?.[SkillName.Farming]?.level ?? 0, higher: true },
-      { title: "Pray Warrior", desc: "Highest Prayer \u2014 buries bones for fun", color: "#e0e0e0", score: (m) => m.skills?.[SkillName.Prayer]?.level ?? 0, higher: true },
-      { title: "Sticky Fingers", desc: "Highest Thieving \u2014 check your pockets", color: "#ab47bc", score: (m) => m.skills?.[SkillName.Thieving]?.level ?? 0, higher: true },
-      { title: "Wizard Wannabe", desc: "Highest Magic \u2014 splashes in their sleep", color: "#5c6bc0", score: (m) => m.skills?.[SkillName.Magic]?.level ?? 0, higher: true },
-      { title: "Gym Rat", desc: "Highest Strength \u2014 never skips arm day", color: "#ef5350", score: (m) => m.skills?.[SkillName.Strength]?.level ?? 0, higher: true },
-      { title: "Bug Catcher", desc: "Highest Hunter \u2014 has a net collection", color: "#8bc34a", score: (m) => m.skills?.[SkillName.Hunter]?.level ?? 0, higher: true },
-      { title: "Arsonist", desc: "Highest Firemaking \u2014 suspiciously into flames", color: "#ff5722", score: (m) => m.skills?.[SkillName.Firemaking]?.level ?? 0, higher: true },
-      { title: "Parkour Pro", desc: "Highest Agility \u2014 rooftop enjoyer", color: "#26c6da", score: (m) => m.skills?.[SkillName.Agility]?.level ?? 0, higher: true },
-      { title: "Ghost", desc: "Most inactive \u2014 are they even real?", color: "#666", score: (m) => m.inactive ? 1 : 0, higher: true }
+      { title: "Pacifist", desc: "Lowest combat level... violence is never the answer", color: "#88ddff", score: (m) => m.combatLevel ?? 3, higher: false },
+      { title: "Lore Nerd", desc: "Most quests completed... actually reads the dialogue", color: "#c8a2f8", score: (m) => this.getQuestsCompleted(m), higher: true },
+      { title: "Tree Hugger", desc: "Highest Woodcutting... talks to trees", color: "#4caf50", score: (m) => m.skills?.[SkillName.Woodcutting]?.level ?? 0, higher: true },
+      { title: "Rock Sniffer", desc: "Highest Mining... can smell copper from a mile away", color: "#a0826d", score: (m) => m.skills?.[SkillName.Mining]?.level ?? 0, higher: true },
+      { title: "Fish Whisperer", desc: "Highest Fishing... the fish fear them", color: "#42a5f5", score: (m) => m.skills?.[SkillName.Fishing]?.level ?? 0, higher: true },
+      { title: "Kitchen Menace", desc: "Highest Cooking... burns water occasionally", color: "#ff9800", score: (m) => m.skills?.[SkillName.Cooking]?.level ?? 0, higher: true },
+      { title: "Touch Grass", desc: "Highest Farming... ironically never goes outside", color: "#66bb6a", score: (m) => m.skills?.[SkillName.Farming]?.level ?? 0, higher: true },
+      { title: "Pray Warrior", desc: "Highest Prayer... buries bones for fun", color: "#e0e0e0", score: (m) => m.skills?.[SkillName.Prayer]?.level ?? 0, higher: true },
+      { title: "Sticky Fingers", desc: "Highest Thieving... check your pockets", color: "#ab47bc", score: (m) => m.skills?.[SkillName.Thieving]?.level ?? 0, higher: true },
+      { title: "Wizard Wannabe", desc: "Highest Magic... splashes in their sleep", color: "#5c6bc0", score: (m) => m.skills?.[SkillName.Magic]?.level ?? 0, higher: true },
+      { title: "Gym Rat", desc: "Highest Strength... never skips arm day", color: "#ef5350", score: (m) => m.skills?.[SkillName.Strength]?.level ?? 0, higher: true },
+      { title: "Bug Catcher", desc: "Highest Hunter... has a net collection", color: "#8bc34a", score: (m) => m.skills?.[SkillName.Hunter]?.level ?? 0, higher: true },
+      { title: "Arsonist", desc: "Highest Firemaking... suspiciously into flames", color: "#ff5722", score: (m) => m.skills?.[SkillName.Firemaking]?.level ?? 0, higher: true },
+      { title: "Parkour Pro", desc: "Highest Agility... rooftop enjoyer", color: "#26c6da", score: (m) => m.skills?.[SkillName.Agility]?.level ?? 0, higher: true }
     ];
     for (const c of candidates) {
       if (claimed.size >= members.length) break;
-      const eligible = members.filter((m) => !claimed.has(m.name));
-      if (eligible.length === 0) break;
-      const sorted = [...eligible].sort(
+      const allSorted = [...members].sort(
         (a, b) => c.higher ? c.score(b) - c.score(a) : c.score(a) - c.score(b)
       );
-      const winner = sorted[0];
-      if (c.score(winner) > 0 || !c.higher) {
-        titles.set(winner.name, { title: c.title, color: c.color, desc: c.desc });
-        claimed.add(winner.name);
+      const trueBest = allSorted[0];
+      if (claimed.has(trueBest.name)) continue;
+      if (c.score(trueBest) > 0 || !c.higher) {
+        titles.set(trueBest.name, { title: c.title, color: c.color, desc: c.desc });
+        claimed.add(trueBest.name);
       }
     }
     return titles;

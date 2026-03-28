@@ -6,6 +6,7 @@ map-page {
   display: flex;
   overflow-x: auto;
   padding: 0 4px;
+  pointer-events: auto;
 }
 
 .map-page__focus-player-buttons {
