@@ -103,12 +103,12 @@ let newsRefreshInterval: ReturnType<typeof setInterval> | undefined;
 
 function decodeXmlEntities(str: string): string {
   return str
-    .replace(/&amp;/g, '&')
     .replace(/&lt;/g, '<')
     .replace(/&gt;/g, '>')
     .replace(/&apos;/g, "'")
     .replace(/&quot;/g, '"')
-    .replace(/&#39;/g, "'");
+    .replace(/&#39;/g, "'")
+    .replace(/&amp;/g, '&');
 }
 
 async function refreshOsrsNews(): Promise<void> {
