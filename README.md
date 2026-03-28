@@ -36,6 +36,7 @@ A real-time group tracking system for Old School RuneScape Group Ironman teams. 
 
 Key improvements over the upstream repository:
 
+- Dashboard added
 - Expanded tracking: collection log, achievement diaries, seed vault, stash units, boss KC
 - Integrated DPS calculator with full equipment and prayer support
 - Historical skill XP graphing with configurable time periods
@@ -44,6 +45,35 @@ Key improvements over the upstream repository:
 - Hardened Docker Compose stack with health checks, resource limits, and structured logging
 - Makefile with targets for dev, lint, test, coverage, build, cache update, and publishing
 - Wise Old Man API integration for boss kill counts and activity data
+
+
+Dashboard
+<img width="1919" height="962" alt="image" src="https://github.com/user-attachments/assets/98298526-d107-4831-8ff0-72a4eba7f90f" />
+
+DPS
+<img width="1620" height="811" alt="image" src="https://github.com/user-attachments/assets/dc672a95-e60e-468b-bbc2-526c737b096d" />
+
+Banked EXP
+<img width="1608" height="962" alt="image" src="https://github.com/user-attachments/assets/94063cc9-cae9-4028-9358-c8f67e4a0e36" />
+
+Events
+<img width="1568" height="916" alt="image" src="https://github.com/user-attachments/assets/174f9cbc-be51-47b4-8f2a-4d88f2303d84" />
+
+Blog
+<img width="1595" height="972" alt="image" src="https://github.com/user-attachments/assets/5400cb13-d574-4c4e-897f-26745c873132" />
+
+Clues
+<img width="1612" height="966" alt="image" src="https://github.com/user-attachments/assets/788da914-6397-4975-b932-093005217f54" />
+
+
+DISCORD
+-----
+Item Requests
+<img width="633" height="236" alt="image" src="https://github.com/user-attachments/assets/a5e0c573-04af-48ba-88e9-137de8b409b5" />
+
+Event Notifications
+<img width="409" height="270" alt="image" src="https://github.com/user-attachments/assets/195f3cba-3c11-4780-85af-6ba0f9d9eb8a" />
+
 
 ---
 
