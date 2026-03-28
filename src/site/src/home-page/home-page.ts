@@ -496,7 +496,7 @@ export class HomePage extends BaseElement {
   getMemberGeValue(member: MemberData): number {
     let total = 0;
     for (const item of member.allItems()) {
-      const qty = member.totalItemQuantity(item.itemId);
+      const qty = member.totalItemQuantity(item.id);
       total += (item.gePrice ?? 0) * qty;
     }
     return total;
