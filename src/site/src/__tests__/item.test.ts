@@ -2,12 +2,6 @@ import { describe, expect, it } from "vitest";
 import { GroupData } from "../data/group-data";
 import { Item } from "../data/item";
 
-type TestGroupItem = Item & {
-  quantities: Record<string, number>;
-  isTradeable: boolean | null;
-  visible: boolean;
-};
-
 describe("Item", () => {
   it("exposes tradeability when item data includes it", () => {
     Item.itemDetails = {
@@ -25,10 +19,10 @@ describe("Item", () => {
   it("can hide only explicitly untradeable items", () => {
     const data = new GroupData();
     data.groupItems = {
-      1: Object.assign(new Item(1, 10), { quantities: { Alice: 10 }, isTradeable: true, visible: true }),
-      2: Object.assign(new Item(2, 1), { quantities: { Alice: 1 }, isTradeable: false, visible: true }),
-      3: Object.assign(new Item(3, 1), { quantities: { Alice: 1 }, isTradeable: null, visible: true }),
-    } as Record<number, TestGroupItem>;
+      1: { id: 1, name: "Coins", quantity: 10, quantities: { Alice: 10 }, isTradeable: true, visible: true, highAlch: 0, gePrice: 0, imageUrl: "", wikiLink: "" },
+      2: { id: 2, name: "Quest item", quantity: 1, quantities: { Alice: 1 }, isTradeable: false, visible: true, highAlch: 0, gePrice: 0, imageUrl: "", wikiLink: "" },
+      3: { id: 3, name: "Legacy item", quantity: 1, quantities: { Alice: 1 }, isTradeable: null, visible: true, highAlch: 0, gePrice: 0, imageUrl: "", wikiLink: "" },
+    };
 
     data.applyTradeabilityFilter(true);
 

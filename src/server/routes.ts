@@ -572,7 +572,7 @@ authedRouter.delete('/events/:event_id', async (req: Request, res: Response) => 
 authedRouter.get('/discord-settings', async (req: Request, res: Response) => {
   try {
     const settings = await db.getDiscordSettings((req as any).groupId);
-    // Mask sensitive values — only reveal whether they are set
+    // Mask sensitive values - only reveal whether they are set
     res.json({
       has_webhook: settings.webhook_url.length > 0,
       members: settings.members.map((m) => ({

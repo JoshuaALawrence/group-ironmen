@@ -2285,7 +2285,7 @@ export class PlayerVsNPCCalc {
       }
     }
 
-    // Dragon/Crystal halberd — 2nd hit at ¾ attack roll (only if monster size > 1)
+    // Dragon/Crystal halberd - 2nd hit at ¾ attack roll (only if monster size > 1)
     if (spec && this.wearing(["Dragon halberd", "Crystal halberd"]) && (this.monster.size || 1) > 1) {
       const secondHitAttackRoll = Math.trunc((this.getMaxAttackRoll() * 3) / 4);
       const secondHitAcc = PlayerVsNPCCalc.getNormalAccuracyRoll(secondHitAttackRoll, this.getNPCDefenceRoll());
@@ -2405,7 +2405,7 @@ export class PlayerVsNPCCalc {
       dist = dist.transform(multiplyTransformer(factor, 150));
     }
 
-    // Saradomin sword spec — magic hitsplat 1-16
+    // Saradomin sword spec - magic hitsplat 1-16
     if (spec && this.wearing("Saradomin sword")) {
       const magicHit = HitDistribution.linear(1.0, 1, 16);
       dist = dist.transform((h: Hitsplat) => {
@@ -2538,7 +2538,7 @@ export class PlayerVsNPCCalc {
       dist = dist.transform(divisionTransformer(2));
     }
 
-    // Ruby bolts (AFTER corp — ruby proc damage bypasses Corp reduction)
+    // Ruby bolts (AFTER corp - ruby proc damage bypasses Corp reduction)
     if (
       this.player.style.type === "ranged" &&
       this.player.equipment.weapon?.name?.includes("rossbow") &&

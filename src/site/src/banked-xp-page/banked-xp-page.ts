@@ -260,7 +260,7 @@ export class BankedXpPage extends BaseElement {
 
     // Try to update item rows in-place (preserves activity dropdowns)
     if (!this.updateItemValuesInPlace()) {
-      // Item set changed — need full grid rebuild
+      // Item set changed - need full grid rebuild
       const grid = this.querySelector(".banked-xp__items-grid");
       if (grid) {
         grid.innerHTML = this.renderItemHeader() + this.renderItemRows();
@@ -793,7 +793,7 @@ export class BankedXpPage extends BaseElement {
           ${
             activities.length > 0
               ? `<select class="banked-xp__activity-select" data-idx="${idx}">${activityOptions}</select>`
-              : "<span style='color:#888'>—</span>"
+              : "<span style='color:#888'>-</span>"
           }
         </div>
         <span class="banked-xp__item-qty">${this.formatNumber(effectiveQty)}</span>

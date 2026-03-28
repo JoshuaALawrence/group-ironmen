@@ -1486,7 +1486,7 @@ export class DpsCalc extends BaseElement {
         if (equipPiece) {
           this.equipment[slotName] = equipPiece;
         } else {
-          // Item worn but not in DPS calc database — show it with zero stats
+          // Item worn but not in DPS calc database - show it with zero stats
           this.equipment[slotName] = {
             id: item.id,
             name: `Unknown item (${item.id})`,
@@ -2067,14 +2067,14 @@ export class DpsCalc extends BaseElement {
         key: "maxHit",
         label: "Max hit",
         title: "The maximum hit that you will deal to the monster",
-        format: (v) => (v !== null && v !== undefined ? `${Math.max(0, v)}` : "—"),
+        format: (v) => (v !== null && v !== undefined ? `${Math.max(0, v)}` : "-"),
         best: "max",
       },
       {
         key: "dps",
         label: "DPS",
         title: "The average damage you will deal per-second",
-        format: (v) => (Number.isFinite(v) ? v.toFixed(3) : "—"),
+        format: (v) => (Number.isFinite(v) ? v.toFixed(3) : "-"),
         best: "max",
         highlight: true,
       },
@@ -2082,21 +2082,21 @@ export class DpsCalc extends BaseElement {
         key: "ttk",
         label: "Avg. TTK",
         title: "The average time (in seconds) it will take to defeat the monster",
-        format: (v) => (Number.isFinite(v) && v > 0 ? `${v.toFixed(1)}s` : "—"),
+        format: (v) => (Number.isFinite(v) && v > 0 ? `${v.toFixed(1)}s` : "-"),
         best: "min",
       },
       {
         key: "accuracy",
         label: "Accuracy",
         title: "How accurate you are against the monster",
-        format: (v) => (Number.isFinite(v) ? `${v.toFixed(2)}%` : "—"),
+        format: (v) => (Number.isFinite(v) ? `${v.toFixed(2)}%` : "-"),
         best: "max",
       },
       {
         key: "specExpected",
         label: "Spec expected hit",
         title: "Expected damage of the special attack per use, including misses",
-        format: (v) => (Number.isFinite(v) ? v.toFixed(1) : "—"),
+        format: (v) => (Number.isFinite(v) ? v.toFixed(1) : "-"),
         best: "max",
       },
     ];
@@ -2105,14 +2105,14 @@ export class DpsCalc extends BaseElement {
         key: "attackSpeed",
         label: "Attack Speed",
         title: "Attack speed in ticks and seconds",
-        format: (v) => (Number.isFinite(v) && v > 0 ? `${v}t (${(v * 0.6).toFixed(1)}s)` : "—"),
+        format: (v) => (Number.isFinite(v) && v > 0 ? `${v}t (${(v * 0.6).toFixed(1)}s)` : "-"),
         best: "min",
       },
       {
         key: "htk",
         label: "Avg. Hits to Kill",
         title: "Average number of hits to defeat the monster",
-        format: (v) => (Number.isFinite(v) && v > 0 ? v.toFixed(1) : "—"),
+        format: (v) => (Number.isFinite(v) && v > 0 ? v.toFixed(1) : "-"),
         best: "min",
       },
     ];

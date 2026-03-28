@@ -167,7 +167,7 @@ export class EventsPage extends BaseElement {
       <div class="events-page__card${pastClass}" data-event-id="${event.event_id}">
         <div class="events-page__card-header">
           <span class="events-page__card-type" style="color: ${info.color}">${info.label}</span>
-          <span class="events-page__card-time">${escapeHtml(this.formatEventTime(event.event_time))}${event.event_end_time ? ` — ${escapeHtml(this.formatEventTime(event.event_end_time))}` : ''}</span>
+          <span class="events-page__card-time">${escapeHtml(this.formatEventTime(event.event_time))}${event.event_end_time ? ` - ${escapeHtml(this.formatEventTime(event.event_end_time))}` : ''}</span>
         </div>
         <div class="events-page__card-title-row">
           ${iconHtml}

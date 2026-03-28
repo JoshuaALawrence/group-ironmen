@@ -119,7 +119,7 @@ export class EventBanner extends BaseElement {
       return mins <= 1 ? "Starting now!" : `Starts in ${mins}m`;
     }
 
-    // Event has started — show time until end if available
+    // Event has started - show time until end if available
     if (event.event_end_time) {
       const end = new Date(event.event_end_time).getTime();
       const diffToEnd = end - now;
