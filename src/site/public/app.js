@@ -16586,16 +16586,17 @@ var Api = class {
     }
   }
   processGroupEventBuffer(buffer) {
+    let startIdx = 0;
     let eventBoundary = buffer.indexOf("\n\n");
     while (eventBoundary !== -1) {
-      const rawEvent = buffer.slice(0, eventBoundary);
-      buffer = buffer.slice(eventBoundary + 2);
-      if (rawEvent.split("\n").some((line) => line.startsWith("data:"))) {
+      const rawEvent = buffer.substring(startIdx, eventBoundary);
+      if (rawEvent.includes("data:")) {
         this.triggerGroupDataSync();
       }
-      eventBoundary = buffer.indexOf("\n\n");
+      startIdx = eventBoundary + 2;
+      eventBoundary = buffer.indexOf("\n\n", startIdx);
     }
-    return buffer;
+    return startIdx === 0 ? buffer : buffer.substring(startIdx);
   }
   async getGroupData() {
     const nextCheck = this.nextCheck;
@@ -20188,6 +20189,7 @@ var CanvasMap = class extends BaseElement {
   update;
   updateRequested;
   animationFrameId;
+  coordDisplayPending;
   disposed;
   validTiles;
   locations;
@@ -20208,6 +20210,7 @@ var CanvasMap = class extends BaseElement {
     this.followingPlayer = { name: null };
     this.updateRequested = 0;
     this.animationFrameId = 0;
+    this.coordDisplayPending = false;
     this.disposed = false;
     this.validTiles = [];
     this.locations = {};
@@ -20809,12 +20812,12 @@ var CanvasMap = class extends BaseElement {
     if (elapsed) {
       const eventsToKeep = 10;
       this.cursor.frameX.push(-dx / elapsed);
-      if (this.cursor.frameX.length > eventsToKeep) {
-        this.cursor.frameX = this.cursor.frameX.slice(this.cursor.frameX.length - eventsToKeep);
+      while (this.cursor.frameX.length > eventsToKeep) {
+        this.cursor.frameX.shift();
       }
       this.cursor.frameY.push(dy / elapsed);
-      if (this.cursor.frameY.length > eventsToKeep) {
-        this.cursor.frameY = this.cursor.frameY.slice(this.cursor.frameY.length - eventsToKeep);
+      while (this.cursor.frameY.length > eventsToKeep) {
+        this.cursor.frameY.shift();
       }
     }
     if (this.camera.isDragging) {
@@ -20838,7 +20841,13 @@ var CanvasMap = class extends BaseElement {
     this.cursor.canvasX = this.cursor.worldX * this.pixelsPerGameTile;
     this.cursor.canvasY = -this.cursor.worldY * this.pixelsPerGameTile + this.tileSize - this.pixelsPerGameTile;
     this.requestUpdate();
-    this.coordinatesDisplay.innerText = `${this.cursor.worldX}, ${this.cursor.worldY}`;
+    if (!this.coordDisplayPending) {
+      this.coordDisplayPending = true;
+      requestAnimationFrame(() => {
+        this.coordDisplayPending = false;
+        this.coordinatesDisplay.innerText = `${this.cursor.worldX}, ${this.cursor.worldY}`;
+      });
+    }
   }
   onScroll(event) {
     if (this.camera.isDragging) return;
@@ -45091,13 +45100,11 @@ var BankedXpPage = class extends BaseElement {
       this.subscribe(`skills:${member.name}`, () => {
         this.refreshData();
         this.updateDisplay();
-        this.bindDynamicEvents();
       });
     }
     this.refreshData();
     this.render();
     this.bindEvents();
-    this.bindDynamicEvents();
   }
   disconnectedCallback() {
     super.disconnectedCallback();
@@ -45112,13 +45119,11 @@ var BankedXpPage = class extends BaseElement {
       this.subscribe(`skills:${member.name}`, () => {
         this.refreshData();
         this.updateDisplay();
-        this.bindDynamicEvents();
       });
     }
     this.refreshData();
     this.render();
     this.bindEvents();
-    this.bindDynamicEvents();
   }
   handleItemsUpdated() {
     this.refreshData();
@@ -45323,7 +45328,6 @@ var BankedXpPage = class extends BaseElement {
         this.saveState();
         this.recalculate();
         this.updateDisplay();
-        this.bindDynamicEvents();
       });
     }
     const limitLevelCheckbox = this.querySelector("#banked-xp__limit-level");
@@ -45333,7 +45337,6 @@ var BankedXpPage = class extends BaseElement {
         this.saveState();
         this.refreshData();
         this.updateDisplay();
-        this.bindDynamicEvents();
       });
     }
     const multiplierInput = this.querySelector("#banked-xp__multiplier");
@@ -45343,7 +45346,6 @@ var BankedXpPage = class extends BaseElement {
         this.saveState();
         this.recalculate();
         this.updateDisplay();
-        this.bindDynamicEvents();
       });
     }
     this.querySelectorAll(".banked-xp__modifier-check").forEach((cb) => {
@@ -45358,7 +45360,6 @@ var BankedXpPage = class extends BaseElement {
         this.buildEnabledModifiers();
         this.recalculate();
         this.updateDisplay();
-        this.bindDynamicEvents();
       });
     });
     this.querySelectorAll(".banked-xp__modifier-piece").forEach((btn) => {
@@ -45376,7 +45377,6 @@ var BankedXpPage = class extends BaseElement {
         this.buildEnabledModifiers();
         this.recalculate();
         this.updateDisplay();
-        this.bindDynamicEvents();
       });
     });
     const ignoreAllBtn = this.querySelector("#banked-xp__ignore-all");
@@ -45386,7 +45386,6 @@ var BankedXpPage = class extends BaseElement {
         this.saveItemStates();
         this.recalculate();
         this.updateDisplay();
-        this.bindDynamicEvents();
       });
     }
     const unignoreAllBtn = this.querySelector("#banked-xp__unignore-all");
@@ -45396,11 +45395,9 @@ var BankedXpPage = class extends BaseElement {
         this.saveItemStates();
         this.recalculate();
         this.updateDisplay();
-        this.bindDynamicEvents();
       });
     }
     this.bindItemEvents();
-    this.bindDynamicEvents();
   }
   bindItemEvents() {
     this.querySelectorAll(".banked-xp__item-icon").forEach((icon) => {
@@ -45412,7 +45409,6 @@ var BankedXpPage = class extends BaseElement {
           this.saveItemStates();
           this.recalculate();
           this.updateDisplay();
-          this.bindDynamicEvents();
         }
       });
     });
@@ -45425,7 +45421,6 @@ var BankedXpPage = class extends BaseElement {
           this.saveItemStates();
           this.recalculate();
           this.updateDisplay();
-          this.bindDynamicEvents();
         }
       });
     });
@@ -45442,7 +45437,6 @@ var BankedXpPage = class extends BaseElement {
             this.saveItemStates();
             this.recalculate();
             this.updateDisplay();
-            this.bindDynamicEvents();
           }
         }
       });

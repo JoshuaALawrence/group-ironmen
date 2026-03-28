@@ -332,17 +332,12 @@ export async function createGroup(createGroupData: CreateGroupData): Promise<voi
     );
     const groupId = groupRes.rows[0].group_id;
 
+    const allMemberNames = [SHARED_MEMBER, ...createGroupData.member_names];
+    const placeholders = allMemberNames.map((_, i) => `($1, $${i + 2})`).join(', ');
     await client.query(
-      'INSERT INTO groupironman.members (group_id, member_name) VALUES($1, $2)',
-      [groupId, SHARED_MEMBER]
+      `INSERT INTO groupironman.members (group_id, member_name) VALUES ${placeholders}`,
+      [groupId, ...allMemberNames]
     );
-
-    for (const memberName of createGroupData.member_names) {
-      await client.query(
-        'INSERT INTO groupironman.members (group_id, member_name) VALUES($1, $2)',
-        [groupId, memberName]
-      );
-    }
 
     await client.query('COMMIT');
   } catch (err) {

@@ -231,20 +231,21 @@ export class Api {
   }
 
   processGroupEventBuffer(buffer: string) {
+    let startIdx = 0;
     let eventBoundary = buffer.indexOf("\n\n");
 
     while (eventBoundary !== -1) {
-      const rawEvent = buffer.slice(0, eventBoundary);
-      buffer = buffer.slice(eventBoundary + 2);
+      const rawEvent = buffer.substring(startIdx, eventBoundary);
 
-      if (rawEvent.split("\n").some((line) => line.startsWith("data:"))) {
+      if (rawEvent.includes("data:")) {
         this.triggerGroupDataSync();
       }
 
-      eventBoundary = buffer.indexOf("\n\n");
+      startIdx = eventBoundary + 2;
+      eventBoundary = buffer.indexOf("\n\n", startIdx);
     }
 
-    return buffer;
+    return startIdx === 0 ? buffer : buffer.substring(startIdx);
   }
 
   async getGroupData() {

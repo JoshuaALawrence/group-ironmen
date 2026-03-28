@@ -105,6 +105,7 @@ export class CanvasMap extends BaseElement {
   update!: (timestamp: number) => void;
   updateRequested: number;
   animationFrameId: number;
+  coordDisplayPending: boolean;
   disposed: boolean;
   validTiles: Array<Set<number>>;
   locations: MapIconGrid;
@@ -126,6 +127,7 @@ export class CanvasMap extends BaseElement {
     this.followingPlayer = { name: null };
     this.updateRequested = 0;
     this.animationFrameId = 0;
+    this.coordDisplayPending = false;
     this.disposed = false;
     this.validTiles = [];
     this.locations = {};
@@ -818,12 +820,12 @@ export class CanvasMap extends BaseElement {
     if (elapsed) {
       const eventsToKeep = 10;
       this.cursor.frameX.push(-dx / elapsed);
-      if (this.cursor.frameX.length > eventsToKeep) {
-        this.cursor.frameX = this.cursor.frameX.slice(this.cursor.frameX.length - eventsToKeep);
+      while (this.cursor.frameX.length > eventsToKeep) {
+        this.cursor.frameX.shift();
       }
       this.cursor.frameY.push(dy / elapsed);
-      if (this.cursor.frameY.length > eventsToKeep) {
-        this.cursor.frameY = this.cursor.frameY.slice(this.cursor.frameY.length - eventsToKeep);
+      while (this.cursor.frameY.length > eventsToKeep) {
+        this.cursor.frameY.shift();
       }
     }
 
@@ -852,7 +854,13 @@ export class CanvasMap extends BaseElement {
 
     this.requestUpdate();
 
-    this.coordinatesDisplay.innerText = `${this.cursor.worldX}, ${this.cursor.worldY}`;
+    if (!this.coordDisplayPending) {
+      this.coordDisplayPending = true;
+      requestAnimationFrame(() => {
+        this.coordDisplayPending = false;
+        this.coordinatesDisplay.innerText = `${this.cursor.worldX}, ${this.cursor.worldY}`;
+      });
+    }
   }
 
   onScroll(event: WheelEvent) {

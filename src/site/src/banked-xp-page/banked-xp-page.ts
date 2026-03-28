@@ -114,14 +114,12 @@ export class BankedXpPage extends BaseElement {
       this.subscribe(`skills:${member.name}`, () => {
         this.refreshData();
         this.updateDisplay();
-        this.bindDynamicEvents();
       });
     }
 
     this.refreshData();
     this.render();
     this.bindEvents();
-    this.bindDynamicEvents();
   }
 
   disconnectedCallback(): void {
@@ -140,14 +138,12 @@ export class BankedXpPage extends BaseElement {
       this.subscribe(`skills:${member.name}`, () => {
         this.refreshData();
         this.updateDisplay();
-        this.bindDynamicEvents();
       });
     }
 
     this.refreshData();
     this.render();
     this.bindEvents();
-    this.bindDynamicEvents();
   }
 
   handleItemsUpdated(): void {
@@ -407,7 +403,6 @@ export class BankedXpPage extends BaseElement {
         this.saveState();
         this.recalculate();
         this.updateDisplay();
-        this.bindDynamicEvents();
       });
     }
 
@@ -419,7 +414,6 @@ export class BankedXpPage extends BaseElement {
         this.saveState();
         this.refreshData();
         this.updateDisplay();
-        this.bindDynamicEvents();
       });
     }
 
@@ -431,7 +425,6 @@ export class BankedXpPage extends BaseElement {
         this.saveState();
         this.recalculate();
         this.updateDisplay();
-        this.bindDynamicEvents();
       });
     }
 
@@ -448,7 +441,6 @@ export class BankedXpPage extends BaseElement {
         this.buildEnabledModifiers();
         this.recalculate();
         this.updateDisplay();
-        this.bindDynamicEvents();
       });
     });
 
@@ -468,7 +460,6 @@ export class BankedXpPage extends BaseElement {
         this.buildEnabledModifiers();
         this.recalculate();
         this.updateDisplay();
-        this.bindDynamicEvents();
       });
     });
 
@@ -480,7 +471,6 @@ export class BankedXpPage extends BaseElement {
         this.saveItemStates();
         this.recalculate();
         this.updateDisplay();
-        this.bindDynamicEvents();
       });
     }
     const unignoreAllBtn = this.querySelector("#banked-xp__unignore-all");
@@ -490,12 +480,10 @@ export class BankedXpPage extends BaseElement {
         this.saveItemStates();
         this.recalculate();
         this.updateDisplay();
-        this.bindDynamicEvents();
       });
     }
 
     this.bindItemEvents();
-    this.bindDynamicEvents();
   }
 
   bindItemEvents(): void {
@@ -509,7 +497,6 @@ export class BankedXpPage extends BaseElement {
           this.saveItemStates();
           this.recalculate();
           this.updateDisplay();
-          this.bindDynamicEvents();
         }
       });
     });
@@ -524,7 +511,6 @@ export class BankedXpPage extends BaseElement {
           this.saveItemStates();
           this.recalculate();
           this.updateDisplay();
-          this.bindDynamicEvents();
         }
       });
     });
@@ -543,7 +529,6 @@ export class BankedXpPage extends BaseElement {
             this.saveItemStates();
             this.recalculate();
             this.updateDisplay();
-            this.bindDynamicEvents();
           }
         }
       });
