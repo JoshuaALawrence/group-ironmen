@@ -18,7 +18,7 @@ RUN npm ci --omit=dev --ignore-scripts && npm cache clean --force
 
 # Copy compiled server JS
 COPY --from=build /app/dist/server ./dist/server
-COPY collection_log_info.json ./
+COPY src/collection_log_info.json ./src/
 
 # Copy built frontend assets
 COPY --from=build /app/src/site/public ./src/site/public

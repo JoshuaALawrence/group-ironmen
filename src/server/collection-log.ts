@@ -29,7 +29,7 @@ export const COLLECTION_ITEM_ID_REMAP: Record<number, number> = {
 let COLLECTION_LOG_DATA: string;
 try {
   COLLECTION_LOG_DATA = fs.readFileSync(
-    path.join(__dirname, '..', '..', 'collection_log_info.json'),
+    path.join(__dirname, '..', '..', 'src', 'collection_log_info.json'),
     'utf8'
   );
 } catch {
