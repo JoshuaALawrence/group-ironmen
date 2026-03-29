@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "description": "Group Ironmen Tracker - Unified Node.js App",
   "scripts": {
+    "prepare": "dotenvx ext precommit --install",
     "start": "node dist/server/index.js",
     "build:server": "tsc",
     "typecheck:server": "tsc -p tsconfig.json --noEmit",
@@ -29,6 +30,7 @@
     "winston": "^3.14.0"
   },
   "devDependencies": {
+    "@dotenvx/dotenvx": "^1.59.1",
     "@types/compression": "^1.8.1",
     "@types/express": "^5.0.6",
     "@types/express-rate-limit": "^6.0.2",
