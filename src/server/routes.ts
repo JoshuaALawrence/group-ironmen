@@ -185,12 +185,16 @@ unauthedRouter.get('/osrs-news', (_req: Request, res: Response) => {
 // ── OSRS YouTube videos ──
 
 const OSRS_YT_RSS_URL = 'https://www.youtube.com/feeds/videos.xml?channel_id=UC0j1MpbiTFHYrUjOTwifW_w';
-let cachedYtVideos: string | null = null;
+let cachedYtVideos: string = '[]';
 let ytRefreshInterval: ReturnType<typeof setInterval> | undefined;
 
 async function refreshOsrsYtVideos(): Promise<void> {
   try {
-    const rssRes = await axios.get(OSRS_YT_RSS_URL, { timeout: 10000, responseType: 'text' });
+    const rssRes = await axios.get(OSRS_YT_RSS_URL, {
+      timeout: 10000,
+      responseType: 'text',
+      headers: { 'User-Agent': 'Mozilla/5.0 (compatible; GroupIronmenTracker/1.0)' },
+    });
     const xml = rssRes.data as string;
     const videos: Array<{ videoId: string; title: string; thumbnail: string; published: string }> = [];
 
@@ -217,7 +221,7 @@ async function refreshOsrsYtVideos(): Promise<void> {
     cachedYtVideos = JSON.stringify(videos);
     logger.info('OSRS YouTube cache refreshed');
   } catch (err) {
-    logger.error('Error refreshing OSRS YouTube feed: ' + (err as Error).message);
+    logger.error('Error refreshing OSRS YouTube feed (YouTube may be blocking server IPs): ' + (err as Error).message);
   }
 }
 
@@ -229,10 +233,6 @@ export function startOsrsYtRefresher(): void {
 }
 
 unauthedRouter.get('/osrs-youtube', (_req: Request, res: Response) => {
-  if (!cachedYtVideos) {
-    res.status(503).send('YouTube data not yet available');
-    return;
-  }
   res.set('Content-Type', 'application/json');
   res.set('Cache-Control', 'public, max-age=3600');
   res.send(cachedYtVideos);

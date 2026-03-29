@@ -56,7 +56,7 @@ describe("site scripts server", () => {
     await import("../../../site/scripts/server.ts");
 
     expect(st.use).toHaveBeenCalled();
-    expect(st.get).toHaveBeenCalledWith("*", expect.anything(), expect.any(Function));
+    expect(st.get).toHaveBeenCalledWith(/.*/, expect.anything(), expect.any(Function));
     expect(st.listen).toHaveBeenCalled();
   });
 });

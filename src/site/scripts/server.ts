@@ -58,7 +58,7 @@ app.use(express.static("public"));
 if (backend) {
   console.log(`Backend for api calls: ${backend}`);
   app.use(express.json());
-  app.use("/api*", (req, res) => {
+  app.use("/api", (req, res) => {
     const forwardUrl = backend + req.originalUrl;
     console.log(`Calling backend ${forwardUrl}`);
     const headers = Object.assign({}, req.headers) as Record<string, string>;
@@ -93,7 +93,7 @@ if (backend) {
   console.log("No backend supplied for api calls, not going to handle api requests");
 }
 
-app.get("*", pageLimiter, function (request, response) {
+app.get(/.*/, pageLimiter, function (request, response) {
   if (request.path.includes("/map") && request.path.includes(".png")) {
     response.sendStatus(404);
   } else {

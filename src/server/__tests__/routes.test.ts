@@ -346,8 +346,8 @@ describe("server routes", () => {
 
     res = makeRes();
     await findRouteHandler(unauthedRouter, "get", "/osrs-youtube")({} as any, res as any);
-    expect(res.status).toHaveBeenCalledWith(503);
-    expect(res.send).toHaveBeenCalledWith("YouTube data not yet available");
+    expect(res.set).toHaveBeenCalledWith("Content-Type", "application/json");
+    expect(res.send).toHaveBeenCalledWith("[]");
 
     res = makeRes();
     await findRouteHandler(unauthedRouter, "get", "/osrs-twitch")({} as any, res as any);

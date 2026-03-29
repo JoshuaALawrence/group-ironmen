@@ -80,8 +80,8 @@ describe("server index bootstrap", () => {
     await import("../index");
 
     expect(appState.use).toHaveBeenCalled();
-    expect(appState.get).toHaveBeenCalledWith("*", expect.anything(), expect.any(Function));
-    expect(appState.options).toHaveBeenCalledWith("*", "rate-mw", expect.any(Function));
+    expect(appState.get).toHaveBeenCalledWith(/.*/, expect.anything(), expect.any(Function));
+    expect(appState.options).toHaveBeenCalledWith(/.*/, "rate-mw", expect.any(Function));
     expect(appState.updateSchema).toHaveBeenCalled();
     expect(appState.startGeUpdater).toHaveBeenCalled();
     expect(appState.startSkillsAggregator).toHaveBeenCalled();
