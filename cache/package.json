@@ -11,7 +11,7 @@
   "dependencies": {
     "async": "^3.2.6",
     "axios": "^0.26.1",
-    "glob": "^8.0.1",
+    "glob": "^13.0.6",
     "sharp": "^0.34.5",
     "unzipper": "^0.12.3",
     "xml2js": "^0.6.2"
