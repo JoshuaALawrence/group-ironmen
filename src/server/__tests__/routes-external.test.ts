@@ -309,7 +309,8 @@ describe("server routes and external services", () => {
     state.aggregateSkills.mockResolvedValue(undefined);
     state.applySkillsRetention.mockResolvedValue(undefined);
     ext.startSkillsAggregator();
-    await Promise.resolve();
+    await new Promise((resolve) => setImmediate(resolve));
+    await new Promise((resolve) => setImmediate(resolve));
     expect(state.aggregateSkills).toHaveBeenCalled();
     expect(state.applySkillsRetention).toHaveBeenCalled();
 
