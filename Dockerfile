@@ -1,4 +1,4 @@
-FROM node:20-alpine AS build
+FROM node:25-alpine AS build
 WORKDIR /app
 COPY package*.json tsconfig.json ./
 RUN npm ci --ignore-scripts
@@ -8,7 +8,7 @@ RUN npx tsc && cd src/site && npx tsx build.ts --prod
 # Prune source maps and build artifacts not needed at runtime
 RUN rm -f src/site/public/app.js.map
 
-FROM node:20-alpine AS production
+FROM node:25-alpine AS production
 RUN apk upgrade --no-cache
 RUN addgroup -g 1001 -S appgroup && \
     adduser -S appuser -u 1001 -G appgroup
