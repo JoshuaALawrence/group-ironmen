@@ -426,7 +426,7 @@ describe("server routes", () => {
     );
     expect(res.type).toHaveBeenCalledWith("text/plain");
     expect(res.status).toHaveBeenCalledWith(409);
-    expect(res.send).toHaveBeenCalledWith("Already exists");
+    expect(res.send).toHaveBeenCalledWith("Invalid request");
 
     res = makeRes();
     await findRouteHandler(authedRouter, "post", "/add-group-member")(
@@ -502,7 +502,7 @@ describe("server routes", () => {
     );
     expect(res.type).toHaveBeenCalledWith("text/plain");
     expect(res.status).toHaveBeenCalledWith(422);
-    expect(res.send).toHaveBeenCalledWith("Bad stats payload");
+    expect(res.send).toHaveBeenCalledWith("Invalid request");
 
     state.isMemberInGroup.mockResolvedValueOnce(true);
     res = makeRes();

@@ -236,7 +236,7 @@ describe("server routes and external services", () => {
     req = { body: { name: "Alice", stats: [1, 2, 3, 4, 5, 6, 7], coordinates: [1, 2, 3], skills: new Array(23).fill(1), quests: [], inventory: [1], equipment: new Array(28).fill(0), bank: [], shared_bank: [], rune_pouch: [1,2,3,4,5,6], seed_vault: [], deposited: [], diary_vars: [], collection_log_v2: [] }, app: { locals: appLocals }, groupId: 1 };
     await findRouteHandler(authedRouter, "post", "/update-group-member")(req as any, res as any);
     expect(res.status).toHaveBeenCalledWith(400);
-    expect(res.send).toHaveBeenCalledWith("Invalid member data length");
+    expect(res.send).toHaveBeenCalledWith("Invalid request");
 
     res = makeRes();
     req = { query: { from_time: "2024-01-01T00:00:00Z" }, groupId: 1 };

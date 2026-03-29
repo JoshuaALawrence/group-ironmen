@@ -19,12 +19,7 @@ type PublicError = Error & {
 function sendPublicError(res: Response, err: unknown): void {
   const publicError = err as PublicError;
   const statusCode = typeof publicError.statusCode === 'number' ? publicError.statusCode : 400;
-  const publicMessage =
-    typeof publicError.publicMessage === 'string'
-      ? publicError.publicMessage
-      : statusCode >= 500
-        ? 'Request failed'
-        : 'Invalid request';
+  const publicMessage = statusCode >= 500 ? 'Request failed' : 'Invalid request';
 
   res.type('text/plain').status(statusCode).send(publicMessage);
 }
