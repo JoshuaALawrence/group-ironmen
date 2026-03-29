@@ -9,7 +9,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "async": "^3.2.3",
+    "async": "^3.2.6",
     "axios": "^0.26.1",
     "glob": "^8.0.1",
     "sharp": "^0.34.5",
