@@ -45,13 +45,14 @@ app.use(
 );
 
 // ── Middleware ──
+app.set('trust proxy', 1);
 app.use(compression());
 app.use(express.json({ limit: 100000 }));
 
 // ── Rate limiting ──
 const apiLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 300,
+  max: 1000,
   standardHeaders: true,
   legacyHeaders: false,
 });
