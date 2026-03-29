@@ -1,6 +1,7 @@
 import { BaseElement } from "../base-element/base-element";
-import { utility } from "../utility";
 import { Animation } from "./animation";
+
+const CURSOR_VELOCITY_SAMPLE_SIZE = 10;
 
 type Coordinates = {
   x: number;
@@ -27,6 +28,10 @@ type CursorState = {
   y: number;
   frameX: number[];
   frameY: number[];
+  frameIndex: number;
+  frameCount: number;
+  frameSumX: number;
+  frameSumY: number;
   downX?: number;
   downY?: number;
   currentX?: number;
@@ -113,6 +118,14 @@ export class CanvasMap extends BaseElement {
   mapLabelImages: Map<number, MapLabelImage>;
   locationIconsSheet!: HTMLImageElement;
   view!: MapView;
+  onPointerDownListener: EventListener;
+  onTouchStartListener: EventListener;
+  onPointerUpListener: EventListener;
+  onPointerMoveListener: EventListener;
+  onTouchMoveListener: EventListener;
+  onScrollListener: EventListener;
+  stopDraggingListener: EventListener;
+  onResizeListener: EventListener;
 
   constructor() {
     super();
@@ -134,6 +147,14 @@ export class CanvasMap extends BaseElement {
     this.mapLabels = {};
     this.mapLabelImages = new Map();
     this.view = { left: 0, right: 0, top: 0, bottom: 0 };
+    this.onPointerDownListener = this.onPointerDown.bind(this) as EventListener;
+    this.onTouchStartListener = this.onTouchStart.bind(this) as EventListener;
+    this.onPointerUpListener = this.onPointerUp.bind(this) as EventListener;
+    this.onPointerMoveListener = this.onPointerMove.bind(this) as EventListener;
+    this.onTouchMoveListener = this.onTouchMove.bind(this) as EventListener;
+    this.onScrollListener = this.onScroll.bind(this) as EventListener;
+    this.stopDraggingListener = this.stopDragging.bind(this);
+    this.onResizeListener = this.onResize.bind(this);
   }
 
   html(): string {
@@ -147,17 +168,17 @@ export class CanvasMap extends BaseElement {
     this.coordinatesDisplay = this.querySelector<HTMLElement>(".canvas-map__coordinates")!;
     this.canvas = this.querySelector<HTMLCanvasElement>("canvas")!;
     this.ctx = this.canvas.getContext("2d", { alpha: true })!;
-    this.eventListener(this, "mousedown", this.onPointerDown.bind(this) as EventListener);
-    this.eventListener(this, "touchstart", this.onTouchStart.bind(this) as EventListener);
-    this.eventListener(this, "mouseup", this.onPointerUp.bind(this));
-    this.eventListener(this, "touchend", this.onPointerUp.bind(this));
-    this.eventListener(this, "mousemove", this.onPointerMove.bind(this) as EventListener);
-    this.eventListener(this, "touchmove", this.onTouchMove.bind(this) as EventListener);
-    this.eventListener(this, "wheel", this.onScroll.bind(this) as EventListener);
-    this.eventListener(this, "mouseleave", this.stopDragging.bind(this));
-    this.eventListener(this, "mouseenter", this.stopDragging.bind(this));
-    this.eventListener(this, "touchcancel", this.stopDragging.bind(this));
-    this.eventListener(window, "resize", this.onResize.bind(this));
+    this.eventListener(this, "mousedown", this.onPointerDownListener);
+    this.eventListener(this, "touchstart", this.onTouchStartListener);
+    this.eventListener(this, "mouseup", this.onPointerUpListener);
+    this.eventListener(this, "touchend", this.onPointerUpListener);
+    this.eventListener(this, "mousemove", this.onPointerMoveListener);
+    this.eventListener(this, "touchmove", this.onTouchMoveListener);
+    this.eventListener(this, "wheel", this.onScrollListener);
+    this.eventListener(this, "mouseleave", this.stopDraggingListener);
+    this.eventListener(this, "mouseenter", this.stopDraggingListener);
+    this.eventListener(this, "touchcancel", this.stopDraggingListener);
+    this.eventListener(window, "resize", this.onResizeListener);
     this.subscribe("members-updated", (members) => this.handleUpdatedMembers(members as Array<{ name: string; coordinates?: Coordinates }>));
     this.subscribe("coordinates", (member) => this.handleUpdatedCoordinates(member as { name: string; coordinates?: Coordinates }));
 
@@ -185,8 +206,12 @@ export class CanvasMap extends BaseElement {
     this.cursor = {
       x: 0,
       y: 0,
-      frameX: [0],
-      frameY: [0],
+      frameX: [],
+      frameY: [],
+      frameIndex: 0,
+      frameCount: 0,
+      frameSumX: 0,
+      frameSumY: 0,
     };
     this.touch = {
       pinchDistance: 0,
@@ -553,15 +578,17 @@ export class CanvasMap extends BaseElement {
     const destinationSize = imageSize / scale;
 
     for (const tile of this.tilesInView) {
-      const locations = this.locations[tile.regionX]?.[tile.regionY];
+      const locations = this.locations[tile.regionX]?.[tile.regionY] as Record<string, number[]> | undefined;
       if (locations) {
-        for (const [spriteIndex, coordinates] of Object.entries(locations) as Array<[string, number[]]>) {
+        for (const spriteIndex in locations) {
+          const coordinates = locations[spriteIndex];
+          const sourceX = imageSize * Number(spriteIndex);
           for (let i = 0; i < coordinates.length; i += 2) {
             const [x, y] = this.gamePositionToCanvas(coordinates[i] ?? 0, coordinates[i + 1] ?? 0);
             try {
               this.ctx.drawImage(
                 this.locationIconsSheet,
-                imageSize * Number(spriteIndex),
+                sourceX,
                 0,
                 imageSize,
                 imageSize,
@@ -745,8 +772,10 @@ export class CanvasMap extends BaseElement {
     this.camera.x.cancelAnimation();
     this.camera.y.cancelAnimation();
     this.camera.zoom.cancelAnimation();
-    this.cursor.frameX = [];
-    this.cursor.frameY = [];
+    this.cursor.frameIndex = 0;
+    this.cursor.frameCount = 0;
+    this.cursor.frameSumX = 0;
+    this.cursor.frameSumY = 0;
     this.cursor.dx = 0;
     this.cursor.dy = 0;
     this.cursor.previousX = x;
@@ -811,29 +840,40 @@ export class CanvasMap extends BaseElement {
     }
   }
 
-  handleMovement(x: number, y: number, dx: number, dy: number) {
-    const elapsed = performance.now() - this.cursor.lastPointerMoveTime;
-    this.cursor.lastPointerMoveTime = performance.now();
+  pushCursorVelocitySample(dx: number, dy: number, elapsed: number) {
+    const index = this.cursor.frameIndex;
+    const velocityX = -dx / elapsed;
+    const velocityY = dy / elapsed;
 
-    // cursor.dx and cursor.dy are calculated as the average movement over 10 frames. This is used
-    // to calculate the speed after dragging has stopped which is used to animate and convey momentum.
+    if (this.cursor.frameCount === CURSOR_VELOCITY_SAMPLE_SIZE) {
+      this.cursor.frameSumX -= this.cursor.frameX[index] ?? 0;
+      this.cursor.frameSumY -= this.cursor.frameY[index] ?? 0;
+    } else {
+      this.cursor.frameCount += 1;
+    }
+
+    this.cursor.frameX[index] = velocityX;
+    this.cursor.frameY[index] = velocityY;
+    this.cursor.frameSumX += velocityX;
+    this.cursor.frameSumY += velocityY;
+    this.cursor.frameIndex = (index + 1) % CURSOR_VELOCITY_SAMPLE_SIZE;
+  }
+
+  handleMovement(x: number, y: number, dx: number, dy: number) {
+    const now = performance.now();
+    const elapsed = this.cursor.lastPointerMoveTime ? now - this.cursor.lastPointerMoveTime : 0;
+    this.cursor.lastPointerMoveTime = now;
+
+    // cursor.dx and cursor.dy track average movement over a short fixed window to preserve drag momentum.
     if (elapsed) {
-      const eventsToKeep = 10;
-      this.cursor.frameX.push(-dx / elapsed);
-      while (this.cursor.frameX.length > eventsToKeep) {
-        this.cursor.frameX.shift();
-      }
-      this.cursor.frameY.push(dy / elapsed);
-      while (this.cursor.frameY.length > eventsToKeep) {
-        this.cursor.frameY.shift();
-      }
+      this.pushCursorVelocitySample(dx, dy, elapsed);
     }
 
     if (this.camera.isDragging) {
       this.camera.x.goTo(this.camera.x.target - dx, 1);
       this.camera.y.goTo(this.camera.y.target + dy, 1);
-      this.cursor.dx = utility.average(this.cursor.frameX) || 0;
-      this.cursor.dy = utility.average(this.cursor.frameY) || 0;
+      this.cursor.dx = this.cursor.frameCount ? this.cursor.frameSumX / this.cursor.frameCount : 0;
+      this.cursor.dy = this.cursor.frameCount ? this.cursor.frameSumY / this.cursor.frameCount : 0;
     }
 
     this.cursor.x = x - this.canvas.offsetTop;

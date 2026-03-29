@@ -6,6 +6,7 @@ import type { GroupEventNotifier } from './notifier';
 const BATCH_SIZE = 5000;
 const CHUNK_SIZE = 50;
 const BATCH_TIMEOUT_MS = 50;
+const QUEUE_HIGH_WATER_MARK = BATCH_SIZE * 2;
 
 function mergeGroupMemberUpdates(target: MemberUpdateData, incoming: MemberUpdateData): void {
   const fields = [
@@ -24,19 +25,28 @@ function mergeGroupMemberUpdates(target: MemberUpdateData, incoming: MemberUpdat
 async function processChunk(chunk: MemberUpdateData[], notifier: GroupEventNotifier): Promise<void> {
   const client = await db.getClient();
   try {
-    for (const m of chunk) {
-      logger.info(
-        `Persisting queued group update group_id=${m.group_id || 0} member=${m.name}`
-      );
+    if (logger.isLevelEnabled('info')) {
+      for (const m of chunk) {
+        logger.info(
+          `Persisting queued group update group_id=${m.group_id || 0} member=${m.name}`
+        );
+      }
     }
 
     await db.executeBulkUpdate(client, chunk);
 
     // Notify affected groups (before deposited/shared_bank, matching Rust)
-    const groupIds = new Set(chunk.map((m) => m.group_id).filter(Boolean));
-    logger.info(
-      `Persisted group update chunk members=${chunk.length} groups=[${[...groupIds].join(',')}]`
-    );
+    const groupIds = new Set<number>();
+    for (const member of chunk) {
+      if (member.group_id) {
+        groupIds.add(member.group_id);
+      }
+    }
+    if (logger.isLevelEnabled('info')) {
+      logger.info(
+        `Persisted group update chunk members=${chunk.length} group_count=${groupIds.size}`
+      );
+    }
     for (const gid of groupIds) {
       notifier.notifyGroup(gid);
     }
@@ -70,16 +80,25 @@ export class UpdateBatcher {
   private _queue: MemberUpdateData[];
   private _timer: ReturnType<typeof setTimeout> | null;
   private _processing: boolean;
+  private _queuePressureWarningActive: boolean;
 
   constructor(notifier: GroupEventNotifier) {
     this.notifier = notifier;
     this._queue = [];
     this._timer = null;
     this._processing = false;
+    this._queuePressureWarningActive = false;
   }
 
   enqueue(member: MemberUpdateData): void {
     this._queue.push(member);
+
+    if (this._queue.length >= QUEUE_HIGH_WATER_MARK && !this._queuePressureWarningActive) {
+      this._queuePressureWarningActive = true;
+      logger.warn(
+        `Update batch queue pressure queue_length=${this._queue.length} high_water_mark=${QUEUE_HIGH_WATER_MARK}`
+      );
+    }
 
     if (this._queue.length >= BATCH_SIZE) {
       this._flush();
@@ -97,6 +116,9 @@ export class UpdateBatcher {
     if (this._queue.length === 0) return;
 
     const buffer = this._queue.splice(0, BATCH_SIZE);
+    if (this._queue.length < QUEUE_HIGH_WATER_MARK) {
+      this._queuePressureWarningActive = false;
+    }
 
     // Merge duplicate member updates
     const mergedByKey = new Map<string, MemberUpdateData>();

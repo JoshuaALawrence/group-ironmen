@@ -12,13 +12,18 @@ const EVENT_TYPE_INFO: Record<string, { label: string; color: number; emoji: str
   other: { label: 'Other', color: 0xcccccc, emoji: '📌' },
 };
 
-/** Track which event_ids we've already sent so we don't double-notify. */
-const notifiedEvents = new Set<number>();
+const POLL_INTERVAL_MS = 60000;
+const POLL_WINDOW_MS = 5 * 60000;
 
-/** Clean up old entries periodically so the set doesn't grow forever. */
-function pruneNotifiedEvents(): void {
-  if (notifiedEvents.size > 10000) {
-    notifiedEvents.clear();
+/** Track event_ids we've already sent and the event timestamp they belong to. */
+const notifiedEvents = new Map<number, number>();
+
+/** Clean up entries for events that have already started. */
+function pruneNotifiedEvents(nowMs: number): void {
+  for (const [eventId, eventTimeMs] of notifiedEvents) {
+    if (eventTimeMs < nowMs) {
+      notifiedEvents.delete(eventId);
+    }
   }
 }
 
@@ -99,21 +104,22 @@ async function sendWebhookNotification(event: db.UpcomingEventWithWebhook): Prom
  */
 async function checkAndNotify(): Promise<void> {
   try {
-    const now = new Date();
-    const fiveMinutesFromNow = new Date(now.getTime() + 5 * 60000);
+    const nowMs = Date.now();
+    const windowEndMs = nowMs + POLL_WINDOW_MS;
 
     const events = await db.getUpcomingEventsWithWebhooks(
-      now.toISOString(),
-      fiveMinutesFromNow.toISOString()
+      new Date(nowMs).toISOString(),
+      new Date(windowEndMs).toISOString()
     );
 
     for (const event of events) {
       if (notifiedEvents.has(event.event_id)) continue;
-      notifiedEvents.add(event.event_id);
+      const eventTimeMs = Date.parse(event.event_time);
+      notifiedEvents.set(event.event_id, Number.isNaN(eventTimeMs) ? windowEndMs : eventTimeMs);
       await sendWebhookNotification(event);
     }
 
-    pruneNotifiedEvents();
+    pruneNotifiedEvents(nowMs);
   } catch (err) {
     logger.error('Event scheduler check failed: ' + (err as Error).message);
   }
@@ -121,9 +127,15 @@ async function checkAndNotify(): Promise<void> {
 
 let schedulerInterval: ReturnType<typeof setInterval> | undefined;
 
+export function stopEventScheduler(): void {
+  if (!schedulerInterval) return;
+  clearInterval(schedulerInterval);
+  schedulerInterval = undefined;
+}
+
 export function startEventScheduler(): void {
   logger.info('Starting event Discord notification scheduler (60s interval)');
+  stopEventScheduler();
   checkAndNotify();
-  if (schedulerInterval) clearInterval(schedulerInterval);
-  schedulerInterval = setInterval(checkAndNotify, 60000);
+  schedulerInterval = setInterval(checkAndNotify, POLL_INTERVAL_MS);
 }

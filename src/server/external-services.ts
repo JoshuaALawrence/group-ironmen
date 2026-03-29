@@ -6,6 +6,7 @@ import { validName } from './validators';
 
 const JAGEX_HISCORE_USER_AGENT = 'Group Ironmen - Dprk#8740';
 const JAGEX_HISCORE_CACHE_TTL_SECONDS = 5 * 60;
+const JAGEX_HISCORE_TIMEOUT_MS = 5000;
 const WISE_OLD_MAN_PLAYER_BOSS_KC_SCHEMA_VERSION = 3;
 
 const PRIMARY_JAGEX_HISCORE_ENDPOINTS: [string, string][] = [
@@ -69,6 +70,12 @@ interface JagexActivity {
   rank: number;
 }
 
+function scheduleBackgroundRun(task: () => Promise<void>): void {
+  queueMicrotask(() => {
+    void task();
+  });
+}
+
 function encodePlayerNameForUrl(playerName: string): string {
   return playerName.replace(/ /g, '%20');
 }
@@ -108,6 +115,24 @@ function normalizeMetricName(name: string): string {
     'rifts_closed': 'guardians_of_the_rift',
   };
   return remap[metric] || metric;
+}
+
+function resolveCachedBossKcMaxAgeSeconds(payload: Record<string, unknown>): number {
+  if (typeof payload.updatedAt !== 'string') {
+    return JAGEX_HISCORE_CACHE_TTL_SECONDS;
+  }
+
+  const updatedAt = Date.parse(payload.updatedAt);
+  if (Number.isNaN(updatedAt)) {
+    return JAGEX_HISCORE_CACHE_TTL_SECONDS;
+  }
+
+  const ageSeconds = Math.floor((Date.now() - updatedAt) / 1000);
+  return Math.max(0, JAGEX_HISCORE_CACHE_TTL_SECONDS - ageSeconds);
+}
+
+function setBossKcCacheControl(res: Response, maxAgeSeconds: number): void {
+  res.set('Cache-Control', `public, max-age=${Math.max(0, maxAgeSeconds)}`);
 }
 
 function normalizeJagexActivityMap(activities: JagexActivity[]): Record<string, NormalizedActivity> {
@@ -218,6 +243,7 @@ async function fetchJagexHiscoreResponse(playerName: string): Promise<[JagexPlay
           Accept: 'application/json',
           'User-Agent': JAGEX_HISCORE_USER_AGENT,
         },
+        timeout: JAGEX_HISCORE_TIMEOUT_MS,
         validateStatus: (s) => s < 500,
       });
       if (res.status === 404) continue;
@@ -238,6 +264,7 @@ async function fetchSeasonalJagexHiscoreResponse(playerName: string): Promise<Ja
         Accept: 'application/json',
         'User-Agent': JAGEX_HISCORE_USER_AGENT,
       },
+      timeout: JAGEX_HISCORE_TIMEOUT_MS,
       validateStatus: (s) => s < 500,
     });
     if (res.status === 404) return null;
@@ -271,6 +298,12 @@ async function updateGePrices(): Promise<void> {
 
 let geUpdaterInterval: ReturnType<typeof setInterval> | undefined;
 
+export function stopGeUpdater(): void {
+  if (!geUpdaterInterval) return;
+  clearInterval(geUpdaterInterval);
+  geUpdaterInterval = undefined;
+}
+
 export function startGeUpdater(): void {
   const update = async () => {
     try {
@@ -280,12 +313,18 @@ export function startGeUpdater(): void {
       logger.error('Failed to fetch latest ge prices: ' + (err as Error).message);
     }
   };
-  update();
-  if (geUpdaterInterval) clearInterval(geUpdaterInterval);
+  stopGeUpdater();
   geUpdaterInterval = setInterval(update, 14400 * 1000); // 4 hours
+  scheduleBackgroundRun(update);
 }
 
 let skillsAggregatorInterval: ReturnType<typeof setInterval> | undefined;
+
+export function stopSkillsAggregator(): void {
+  if (!skillsAggregatorInterval) return;
+  clearInterval(skillsAggregatorInterval);
+  skillsAggregatorInterval = undefined;
+}
 
 export function startSkillsAggregator(): void {
   const run = async () => {
@@ -301,9 +340,9 @@ export function startSkillsAggregator(): void {
       logger.error('Failed to apply skills retention: ' + (err as Error).message);
     }
   };
-  run();
-  if (skillsAggregatorInterval) clearInterval(skillsAggregatorInterval);
+  stopSkillsAggregator();
   skillsAggregatorInterval = setInterval(run, 1800 * 1000); // 30 minutes
+  scheduleBackgroundRun(run);
 }
 
 export async function handleGetWiseOldManPlayerBossKc(req: Request, res: Response): Promise<void> {
@@ -316,7 +355,7 @@ export async function handleGetWiseOldManPlayerBossKc(req: Request, res: Respons
   const cacheKey = playerName.toLowerCase();
   const cached = await db.getCachedWiseOldManPlayerBossKc(cacheKey);
   if (cached && (cached as Record<string, unknown>).schemaVersion as number >= WISE_OLD_MAN_PLAYER_BOSS_KC_SCHEMA_VERSION) {
-    res.set('Cache-Control', 'no-store');
+    setBossKcCacheControl(res, resolveCachedBossKcMaxAgeSeconds(cached as Record<string, unknown>));
     res.json(cached);
     return;
   }
@@ -339,7 +378,7 @@ export async function handleGetWiseOldManPlayerBossKc(req: Request, res: Respons
   const expiresAt = new Date(Date.now() + JAGEX_HISCORE_CACHE_TTL_SECONDS * 1000);
   await db.upsertWiseOldManPlayerBossKc(cacheKey, playerBossKc, expiresAt);
 
-  res.set('Cache-Control', 'no-store');
+  setBossKcCacheControl(res, JAGEX_HISCORE_CACHE_TTL_SECONDS);
   res.json(playerBossKc);
 }
 

@@ -6,6 +6,8 @@ type RouteLike = Element & {
 };
 
 export class AppNavigation extends BaseElement {
+  private routeButtons: HTMLButtonElement[] = [];
+
   html(): string {
     const group = storage.getGroup();
     return `{{app-navigation.html}}`;
@@ -14,6 +16,7 @@ export class AppNavigation extends BaseElement {
   connectedCallback(): void {
     super.connectedCallback();
     this.render();
+    this.routeButtons = Array.from(this.querySelectorAll("button"));
     this.subscribe("route-activated", this.handleRouteActivated.bind(this));
   }
 
@@ -23,7 +26,9 @@ export class AppNavigation extends BaseElement {
     }
 
     const routeComponent = (route as RouteLike).getAttribute("route-component");
-    const buttons = Array.from(this.querySelectorAll("button"));
+    const buttons = this.routeButtons.length > 0
+      ? this.routeButtons
+      : Array.from(this.querySelectorAll("button"));
     for (const button of buttons) {
       const component = button.getAttribute("route-component");
       if (routeComponent === component) {

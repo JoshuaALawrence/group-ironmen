@@ -13,9 +13,23 @@ import { GroupEventNotifier } from './notifier';
 import { UpdateBatcher } from './update-batcher';
 import { unauthedRouter, authedRouter, startOsrsNewsRefresher, startOsrsYtRefresher, startTwitchRefresher } from './routes';
 import * as externalServices from './external-services';
-import { startEventScheduler } from './event-scheduler';
+import * as eventScheduler from './event-scheduler';
 
 const app = express();
+
+type StopFn = () => void;
+
+const stoppableExternalServices = externalServices as typeof externalServices & {
+  stopGeUpdater?: StopFn;
+  stopSkillsAggregator?: StopFn;
+};
+
+const stoppableEventScheduler = eventScheduler as typeof eventScheduler & {
+  stopEventScheduler?: StopFn;
+};
+
+let server: ReturnType<typeof app.listen> | undefined;
+let shuttingDown = false;
 
 // ── Logging ──
 app.use(
@@ -97,6 +111,51 @@ app.get('*', pageLimiter, (req, res) => {
   res.sendFile(path.join(sitePublicDir, 'index.html'));
 });
 
+function tryStop(name: string, stopFn?: StopFn): void {
+  if (!stopFn) {
+    return;
+  }
+
+  try {
+    stopFn();
+  } catch (err) {
+    logger.error(`Failed to stop ${name}: ${(err as Error).message}`);
+  }
+}
+
+function registerShutdownHooks(): void {
+  const shutdown = (signal: NodeJS.Signals): void => {
+    if (shuttingDown) {
+      return;
+    }
+
+    shuttingDown = true;
+    logger.info(`Received ${signal}, shutting down gracefully`);
+
+    tryStop('GE updater', stoppableExternalServices.stopGeUpdater);
+    tryStop('skills aggregator', stoppableExternalServices.stopSkillsAggregator);
+    tryStop('event scheduler', stoppableEventScheduler.stopEventScheduler);
+
+    if (!server) {
+      process.exit(0);
+      return;
+    }
+
+    server.close((err?: Error) => {
+      if (err) {
+        logger.error(`Server shutdown failed: ${err.message}`);
+        process.exit(1);
+        return;
+      }
+
+      process.exit(0);
+    });
+  };
+
+  process.once('SIGINT', shutdown);
+  process.once('SIGTERM', shutdown);
+}
+
 // ── Startup ──
 async function start(): Promise<void> {
   try {
@@ -110,14 +169,15 @@ async function start(): Promise<void> {
 
   externalServices.startGeUpdater();
   externalServices.startSkillsAggregator();
-  startEventScheduler();
+  eventScheduler.startEventScheduler();
   startOsrsNewsRefresher();
   startOsrsYtRefresher();
   startTwitchRefresher();
 
-  app.listen(config.port, '0.0.0.0', () => {
+  server = app.listen(config.port, '0.0.0.0', () => {
     logger.info(`Unified server listening on http://0.0.0.0:${config.port}`);
   });
 }
 
+registerShutdownHooks();
 start();

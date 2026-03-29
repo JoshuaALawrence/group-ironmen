@@ -149,7 +149,7 @@ describe("external services", () => {
     await ext.handleGetWiseOldManPlayerBossKc({ params: { playerName: "Alice" } } as never, res as never);
 
     expect(state.axiosGet).not.toHaveBeenCalled();
-    expect(res.set).toHaveBeenCalledWith("Cache-Control", "no-store");
+    expect(res.set).toHaveBeenCalledWith("Cache-Control", "public, max-age=300");
     expect(res.json).toHaveBeenCalledWith(cached);
   });
 
@@ -206,7 +206,7 @@ describe("external services", () => {
     const payload = res.json.mock.calls[0][0];
     const summary = summaryByMetric(payload.summary);
 
-    expect(res.set).toHaveBeenCalledWith("Cache-Control", "no-store");
+    expect(res.set).toHaveBeenCalledWith("Cache-Control", "public, max-age=300");
     expect(payload.schemaVersion).toBe(3);
     expect(payload.playerName).toBe("Alice Bob");
     expect(payload.profileUrl).toBe(

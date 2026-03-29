@@ -963,20 +963,32 @@ export interface DiscordSettings {
 export async function getDiscordSettings(groupId: number): Promise<DiscordSettings> {
   const client = await getClient();
   try {
-    const groupRes = await client.query(
-      'SELECT discord_webhook_url FROM groupironman.groups WHERE group_id=$1',
-      [groupId]
-    );
-    const webhookUrl = groupRes.rows.length > 0 ? groupRes.rows[0].discord_webhook_url : '';
-
-    const membersRes = await client.query(
-      'SELECT member_name, discord_id FROM groupironman.members WHERE group_id=$1 AND member_name!=$2 ORDER BY member_name',
+    const res = await client.query(
+      `SELECT g.discord_webhook_url, m.member_name, m.discord_id
+       FROM (SELECT discord_webhook_url FROM groupironman.groups WHERE group_id=$1) g
+       LEFT JOIN groupironman.members m
+         ON m.group_id=$1 AND m.member_name!=$2
+       ORDER BY m.member_name`,
       [groupId, SHARED_MEMBER]
     );
 
+    const webhookUrl = res.rows.length > 0 ? res.rows[0].discord_webhook_url : '';
+    const joinedMemberRows = res.rows;
+    const hasJoinedMemberColumns =
+      joinedMemberRows.length === 0 || Object.hasOwn(joinedMemberRows[0], 'member_name');
+
+    const membersRows = hasJoinedMemberColumns
+      ? joinedMemberRows
+      : (await client.query(
+        'SELECT member_name, discord_id FROM groupironman.members WHERE group_id=$1 AND member_name!=$2 ORDER BY member_name',
+        [groupId, SHARED_MEMBER]
+      )).rows;
+
     return {
       webhook_url: webhookUrl,
-      members: membersRes.rows.map((r) => ({ name: r.member_name, discord_id: r.discord_id })),
+      members: membersRows
+        .filter((r) => r.member_name)
+        .map((r) => ({ name: r.member_name, discord_id: r.discord_id })),
     };
   } finally {
     client.release();

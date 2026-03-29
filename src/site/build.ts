@@ -7,6 +7,11 @@ import type { Plugin } from "esbuild";
 
 const cleanCSSInstance = new CleanCSS({});
 const productionMode = process.argv.some((arg) => arg === "--prod");
+const emitProductionSourcemaps = process.argv.some(
+  (arg) => arg === "--sourcemap" || arg === "--prod-sourcemap"
+);
+const components: string[] = JSON.parse(fs.readFileSync("components.json", "utf8"));
+const componentSet = new Set<string>(components);
 if (productionMode) {
   console.log("Production mode is enabled");
 }
@@ -25,6 +30,10 @@ function resolveSiteEntryPoint(): string {
 const mapJsonPlugin: Plugin = {
   name: "mapTilesJson",
   setup(_build) {
+    if (!productionMode && fs.existsSync("public/data/map.json")) {
+      return;
+    }
+
     const mapImageFiles = fs
       .readdirSync("public/map")
       .filter((file) => file.endsWith(".webp"))
@@ -47,14 +56,12 @@ const mapJsonPlugin: Plugin = {
 const componentBuildPlugin: Plugin = {
   name: "componentBuild",
   setup(build) {
-    const components = new Set<string>(JSON.parse(fs.readFileSync("components.json", "utf8")));
-
     build.onLoad({ filter: /\.[jt]s$/ }, async (args) => {
       const componentDir = path.dirname(args.path);
       const extension = path.extname(args.path);
       const componentName = path.basename(args.path, extension);
 
-      const isComponent = components.has(componentName);
+      const isComponent = componentSet.has(componentName);
       let jsText = await fs.promises.readFile(args.path, "utf8");
       if (isComponent) {
         try {
@@ -89,7 +96,6 @@ const buildLoggingPlugin: Plugin = {
 const htmlBuildPlugin: Plugin = {
   name: "htmlBuild",
   setup(build) {
-    const components: string[] = JSON.parse(fs.readFileSync("components.json", "utf8"));
     const imagesToInline = [
       "/ui/border-button.png",
       "/ui/border-button-dark.png",
@@ -136,10 +142,12 @@ const minifyJsPlugin: Plugin = {
       console.log("Minifying app.js");
       const code = await fs.promises.readFile("public/app.js", "utf8");
       const result = await minify(code, {
-        sourceMap: {
-          filename: "app.js",
-          url: "app.js.map",
-        },
+        sourceMap: emitProductionSourcemaps
+          ? {
+              filename: "app.js",
+              url: "app.js.map",
+            }
+          : false,
         ecma: 2017,
         mangle: {
           keep_classnames: false,
@@ -155,7 +163,11 @@ const minifyJsPlugin: Plugin = {
       });
 
       await fs.promises.writeFile("public/app.js", result.code!);
-      await fs.promises.writeFile("public/app.js.map", result.map!);
+      if (result.map) {
+        await fs.promises.writeFile("public/app.js.map", result.map);
+      } else {
+        await fs.promises.rm("public/app.js.map", { force: true });
+      }
     });
   },
 };
@@ -166,7 +178,7 @@ async function build() {
     .build({
       entryPoints: [resolveSiteEntryPoint()],
       bundle: true,
-      sourcemap: true,
+      sourcemap: !productionMode || emitProductionSourcemaps,
       minify: false,
       format: "esm",
       outfile: "public/app.js",

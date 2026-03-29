@@ -433,21 +433,64 @@ authedRouter.get('/group-events', (req: Request, res: Response) => {
   });
   res.flushHeaders();
 
-  res.write(': connected\n\n');
+  let keepAlive: ReturnType<typeof setInterval> | undefined;
+  let unsub: (() => void) | undefined;
+  let cleanedUp = false;
 
-  const keepAlive = setInterval(() => {
-    res.write(': keep-alive\n\n');
+  const cleanup = () => {
+    if (cleanedUp) {
+      return;
+    }
+
+    cleanedUp = true;
+
+    if (keepAlive !== undefined) {
+      clearInterval(keepAlive);
+    }
+
+    unsub?.();
+  };
+
+  const writeEvent = (chunk: string): boolean => {
+    if (cleanedUp || res.writableEnded || res.destroyed) {
+      cleanup();
+      return false;
+    }
+
+    try {
+      res.write(chunk);
+      return true;
+    } catch {
+      cleanup();
+      return false;
+    }
+  };
+
+  req.on('close', cleanup);
+  if (typeof (res as any).on === 'function') {
+    (res as any).on('close', cleanup);
+    (res as any).on('error', cleanup);
+  }
+
+  if (!writeEvent(': connected\n\n')) {
+    return;
+  }
+
+  keepAlive = setInterval(() => {
+    writeEvent(': keep-alive\n\n');
   }, 30000);
 
   const sub = req.app.locals.notifier.subscribe((req as any).groupId);
-  const unsub = sub.on(() => {
-    res.write('data: update\n\n');
+  const nextUnsub = sub.on(() => {
+    writeEvent('data: update\n\n');
   });
 
-  req.on('close', () => {
-    clearInterval(keepAlive);
-    unsub();
-  });
+  if (cleanedUp) {
+    nextUnsub();
+    return;
+  }
+
+  unsub = nextUnsub;
 });
 
 authedRouter.get('/get-skill-data', async (req: Request, res: Response) => {
