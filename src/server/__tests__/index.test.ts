@@ -24,6 +24,7 @@ vi.mock("express", () => {
   const app = {
     use: appState.use,
     get: appState.get,
+    set: vi.fn(),
     listen: appState.listen,
     options: appState.options,
     locals: appState.locals,
