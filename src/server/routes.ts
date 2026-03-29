@@ -11,6 +11,24 @@ import authMiddleware from './auth-middleware';
 
 const SHARED_MEMBER = db.SHARED_MEMBER;
 
+type PublicError = Error & {
+  statusCode?: number;
+  publicMessage?: string;
+};
+
+function sendPublicError(res: Response, err: unknown): void {
+  const publicError = err as PublicError;
+  const statusCode = typeof publicError.statusCode === 'number' ? publicError.statusCode : 400;
+  const publicMessage =
+    typeof publicError.publicMessage === 'string'
+      ? publicError.publicMessage
+      : statusCode >= 500
+        ? 'Request failed'
+        : 'Invalid request';
+
+  res.type('text/plain').status(statusCode).send(publicMessage);
+}
+
 // ── Unauthed router (/api) ──
 
 export const unauthedRouter = express.Router();
@@ -317,7 +335,7 @@ authedRouter.post('/add-group-member', async (req: Request, res: Response) => {
     res.status(201).end();
   } catch (err) {
     if ((err as any).statusCode) {
-      res.type('text/plain').status((err as any).statusCode).send((err as Error).message);
+      sendPublicError(res, err);
       return;
     }
     logger.error('Error adding group member: ' + (err as Error).message);
@@ -392,7 +410,7 @@ authedRouter.post('/update-group-member', async (req: Request, res: Response) =>
     res.status(200).end();
   } catch (err) {
     if ((err as any).statusCode) {
-      res.type('text/plain').status((err as any).statusCode).send((err as Error).message);
+      sendPublicError(res, err);
       return;
     }
     logger.error('Error updating group member: ' + (err as Error).message);
@@ -540,7 +558,7 @@ authedRouter.post('/events', async (req: Request, res: Response) => {
     res.status(201).json(event);
   } catch (err) {
     if ((err as any).statusCode) {
-      res.type('text/plain').status((err as any).statusCode).send((err as Error).message);
+      sendPublicError(res, err);
       return;
     }
     logger.error('Error creating group event: ' + (err as Error).message);

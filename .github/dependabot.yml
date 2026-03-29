@@ -3,8 +3,7 @@ updates:
   - package-ecosystem: "npm"
     directory: "/"
     schedule:
-      interval: "weekly"
-      day: "monday"
+      interval: "daily"
     open-pull-requests-limit: 10
     reviewers:
       - "JoshuaALawrence"
@@ -15,8 +14,7 @@ updates:
   - package-ecosystem: "npm"
     directory: "/cache"
     schedule:
-      interval: "weekly"
-      day: "monday"
+      interval: "daily"
     open-pull-requests-limit: 5
     reviewers:
       - "JoshuaALawrence"
@@ -27,8 +25,7 @@ updates:
   - package-ecosystem: "npm"
     directory: "/backup"
     schedule:
-      interval: "weekly"
-      day: "monday"
+      interval: "daily"
     open-pull-requests-limit: 5
     reviewers:
       - "JoshuaALawrence"
@@ -39,8 +36,7 @@ updates:
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
-      interval: "weekly"
-      day: "monday"
+      interval: "daily"
     open-pull-requests-limit: 5
     reviewers:
       - "JoshuaALawrence"
@@ -51,8 +47,7 @@ updates:
   - package-ecosystem: "docker"
     directory: "/"
     schedule:
-      interval: "weekly"
-      day: "monday"
+      interval: "daily"
     reviewers:
       - "JoshuaALawrence"
     labels:

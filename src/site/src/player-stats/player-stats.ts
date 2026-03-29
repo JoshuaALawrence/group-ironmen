@@ -1,5 +1,11 @@
 import { BaseElement } from "../base-element/base-element";
 
+function escapeHtml(str: string): string {
+  const div = document.createElement("div");
+  div.textContent = str;
+  return div.innerHTML;
+}
+
 type StatValue = {
   current: number;
   max: number;

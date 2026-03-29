@@ -5,8 +5,14 @@
   "scripts": {
     "start": "node dist/server/index.js",
     "build:server": "tsc",
+    "typecheck:server": "tsc -p tsconfig.json --noEmit",
     "build:site": "cd src/site && tsx build.ts --prod",
     "typecheck:site": "tsc -p src/site/tsconfig.json",
+    "test:server": "vitest run src/server/__tests__ --environment node",
+    "test:site": "vitest run --config src/site/vitest.config.ts",
+    "test:coverage:site": "vitest run --config src/site/vitest.config.ts --coverage",
+    "test": "npm run test:server && npm run test:site",
+    "verify": "npm run typecheck:server && npm run typecheck:site && npm run test:server && npm run test:coverage:site && npm run build",
     "build": "tsc && cd src/site && tsx build.ts --prod",
     "clean": "cd src/site && tsx scripts/clean.ts",
     "dev": "tsx scripts/dev.ts"

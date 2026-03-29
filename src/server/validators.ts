@@ -19,12 +19,14 @@ export function validateMemberPropLength(
 ): void {
   if (value == null) return;
   if (!Array.isArray(value) && !Buffer.isBuffer(value)) {
-    throw Object.assign(new Error(`${propName} must be an array`), { statusCode: 400 });
+    const message = `${propName} must be an array`;
+    throw Object.assign(new Error(message), { statusCode: 400, publicMessage: 'Invalid member data' });
   }
   if (value.length < min || value.length > max) {
+    const message = `${propName} length violated range constraint ${min}..=${max} actual=${value.length}`;
     throw Object.assign(
-      new Error(`${propName} length violated range constraint ${min}..=${max} actual=${value.length}`),
-      { statusCode: 400 }
+      new Error(message),
+      { statusCode: 400, publicMessage: 'Invalid member data length' }
     );
   }
 }

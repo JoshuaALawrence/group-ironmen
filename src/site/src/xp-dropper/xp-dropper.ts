@@ -26,13 +26,16 @@ export class XpDropper extends BaseElement {
   }
 
   handleNewXpDrops(xpDrops: XpDrop[]) {
-    let dropsHtml = "";
-    for (const drop of xpDrops) {
-      dropsHtml += `<div><img class="xp-droppper__skill-icon" src="${drop.icon}" />+${drop.xp}</div>`;
-    }
     const dropContainer = document.createElement("div");
     dropContainer.classList.add("xp-dropper__drop");
-    dropContainer.innerHTML = dropsHtml;
+    for (const drop of xpDrops) {
+      const dropEl = document.createElement("div");
+      const iconEl = document.createElement("img");
+      iconEl.classList.add("xp-droppper__skill-icon");
+      iconEl.src = drop.icon;
+      dropEl.append(iconEl, document.createTextNode(`+${drop.xp}`));
+      dropContainer.appendChild(dropEl);
+    }
     dropContainer.style.paddingTop = this.offsetHeight + "px";
     dropContainer.addEventListener("animationend", () => dropContainer.remove());
     this.appendChild(dropContainer);

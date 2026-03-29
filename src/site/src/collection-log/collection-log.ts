@@ -91,7 +91,10 @@ export class CollectionLog extends BaseElement {
       else button.classList.remove("collection-log__tab-button-active");
     });
     if (this.tabContent) {
-      this.tabContent.innerHTML = `<collection-log-tab player-name="${this.playerName ?? ""}" tab-id="${tabId}"></collection-log-tab>`;
+      const tabEl = document.createElement("collection-log-tab");
+      tabEl.setAttribute("player-name", this.playerName ?? "");
+      tabEl.setAttribute("tab-id", String(tabId));
+      this.tabContent.replaceChildren(tabEl);
     }
   }
 }

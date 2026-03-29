@@ -132,7 +132,7 @@ export class CreateGroup extends BaseElement {
   }
 
   async createGroup(): Promise<void> {
-    this.serverError.innerHTML = "";
+    this.serverError.textContent = "";
     if (!this.groupName.valid || !this.validateMemberNames()) {
       return;
     }
@@ -141,7 +141,7 @@ export class CreateGroup extends BaseElement {
     if (this.captchaEnabled) {
       captchaResponse = window.hcaptcha?.getResponse(this.captchaWidgetID) ?? "";
       if (!captchaResponse) {
-        this.serverError.innerHTML = "Complete the captcha";
+        this.serverError.textContent = "Complete the captcha";
         return;
       }
     }
@@ -167,14 +167,15 @@ export class CreateGroup extends BaseElement {
       const result = await api.createGroup(groupName, memberNames, captchaResponse);
       if (!result.ok) {
         const message = await result.text();
-        this.serverError.innerHTML = `Error creating group: ${message}`;
+        this.serverError.textContent = `Error creating group: ${message}`;
       } else {
         const createdGroup = createGroupResponseSchema.parse(await result.json());
         storage.storeGroup(createdGroup.name, createdGroup.token);
         window.history.pushState("", "", "/setup-instructions");
       }
     } catch (error) {
-      this.serverError.innerHTML = `Error creating group: ${error}`;
+      const message = error instanceof Error ? error.message : String(error);
+      this.serverError.textContent = `Error creating group: ${message}`;
     } finally {
       submitBtn.disabled = false;
     }

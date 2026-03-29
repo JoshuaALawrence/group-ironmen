@@ -432,9 +432,10 @@ export async function addGroupMember(groupId: number, memberName: string): Promi
     );
     const count = parseInt(countRes.rows[0].count, 10);
     if (count >= 5) {
+      const message = 'Group has already reached the maximum amount of players';
       const err = Object.assign(
-        new Error('Group has already reached the maximum amount of players'),
-        { statusCode: 400 }
+        new Error(message),
+        { statusCode: 400, publicMessage: message }
       );
       throw err;
     }
@@ -922,7 +923,8 @@ export async function createGroupEvent(
   icon: string
 ): Promise<GroupEvent> {
   if (!VALID_EVENT_TYPES.includes(eventType)) {
-    const err = Object.assign(new Error('Invalid event type'), { statusCode: 400 });
+    const message = 'Invalid event type';
+    const err = Object.assign(new Error(message), { statusCode: 400, publicMessage: message });
     throw err;
   }
   const client = await getClient();

@@ -77,7 +77,7 @@ export class PlayerInteracting extends BaseElement {
       this.hideTimeout = window.setTimeout(this.hide.bind(this), this.staleTimeout);
       this.hitpointsBar?.update(interacting.ratio / interacting.scale);
       if (this.nameEl) {
-        this.nameEl.innerHTML = interacting.name;
+        this.nameEl.textContent = interacting.name;
       }
       this.show();
     }

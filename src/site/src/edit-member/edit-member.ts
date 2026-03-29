@@ -51,11 +51,11 @@ export class EditMember extends BaseElement {
   }
 
   hideError(): void {
-    this.error.innerHTML = "";
+    this.error.textContent = "";
   }
 
   showError(message: string): void {
-    this.error.innerHTML = message;
+    this.error.textContent = message;
   }
 
   async renameMember(): Promise<void> {
@@ -82,7 +82,8 @@ export class EditMember extends BaseElement {
         this.showError(`Failed to rename member ${message}`);
       }
     } catch (error) {
-      this.showError(`Failed to rename member ${error}`);
+      const message = error instanceof Error ? error.message : String(error);
+      this.showError(`Failed to rename member ${message}`);
     } finally {
       loadingScreenManager.hideLoadingScreen();
     }
@@ -109,7 +110,8 @@ export class EditMember extends BaseElement {
             this.showError(`Failed to remove member ${message}`);
           }
         } catch (error) {
-          this.showError(`Failed to remove member ${error}`);
+          const message = error instanceof Error ? error.message : String(error);
+          this.showError(`Failed to remove member ${message}`);
         } finally {
           loadingScreenManager.hideLoadingScreen();
         }
@@ -135,7 +137,8 @@ export class EditMember extends BaseElement {
         this.showError(`Failed to add member ${message}`);
       }
     } catch (error) {
-      this.showError(`Failed to add member ${error}`);
+      const message = error instanceof Error ? error.message : String(error);
+      this.showError(`Failed to add member ${message}`);
     } finally {
       loadingScreenManager.hideLoadingScreen();
     }

@@ -55,12 +55,12 @@ export class MenInput extends BaseElement {
 
   makeInvalid(invalidReason: string): void {
     this.input.classList.add("invalid");
-    this.validationError.innerHTML = invalidReason;
+    this.validationError.textContent = invalidReason;
   }
 
   makeValid(): void {
     this.input.classList.remove("invalid");
-    this.validationError.innerHTML = "";
+    this.validationError.textContent = "";
   }
 
   get value(): string | undefined {

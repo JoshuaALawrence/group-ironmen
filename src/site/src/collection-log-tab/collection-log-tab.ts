@@ -60,7 +60,11 @@ export class CollectionLogTab extends BaseElement {
       else button.classList.remove("collection-log__page-active");
     });
     if (this.pageContainer) {
-      this.pageContainer.innerHTML = `<collection-log-page player-name="${this.playerName ?? ""}" page-name="${pageName}" tab-id="${this.tabId}"></collection-log-page>`;
+      const pageEl = document.createElement("collection-log-page");
+      pageEl.setAttribute("player-name", this.playerName ?? "");
+      pageEl.setAttribute("page-name", pageName);
+      pageEl.setAttribute("tab-id", String(this.tabId));
+      this.pageContainer.replaceChildren(pageEl);
     }
   }
 }

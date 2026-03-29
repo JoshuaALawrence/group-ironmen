@@ -1,10 +1,10 @@
 * @JoshuaALawrence
 
 # Frontend
-/site/ @JoshuaALawrence
+/src/site/ @JoshuaALawrence
 
 # Backend
-/server/ @JoshuaALawrence
+/src/server/ @JoshuaALawrence
 
 # Infrastructure & CI
 /.github/ @JoshuaALawrence

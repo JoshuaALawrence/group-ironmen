@@ -23,12 +23,50 @@ const COIN_STACKS: Array<[number, number]> = [
   [1, 996],
 ];
 
+const PANEL_COMPONENTS = [
+  "player-inventory",
+  "player-equipment",
+  "player-skills",
+  "player-quests",
+  "player-diaries",
+] as const;
+
+type PanelComponent = (typeof PANEL_COMPONENTS)[number];
+
+const PANEL_COMPONENT_SET = new Set<string>(PANEL_COMPONENTS);
+
+function escapeHtml(str: string): string {
+  const div = document.createElement("div");
+  div.textContent = str;
+  return div.innerHTML;
+}
+
+function isPanelComponent(value: string | null): value is PanelComponent {
+  return value !== null && PANEL_COMPONENT_SET.has(value);
+}
+
+function createPanelComponent(component: PanelComponent): HTMLElement {
+  switch (component) {
+    case "player-inventory":
+      return document.createElement("player-inventory");
+    case "player-equipment":
+      return document.createElement("player-equipment");
+    case "player-skills":
+      return document.createElement("player-skills");
+    case "player-quests":
+      return document.createElement("player-quests");
+    case "player-diaries":
+      return document.createElement("player-diaries");
+  }
+}
+
 export class PlayerPanel extends BaseElement {
   playerName: string | null;
   contentArea: HTMLElement | null;
   bankValueTextEl: HTMLElement | null;
   bankValueImgEl: HTMLImageElement | null;
-  activeComponent: string | number | null;
+  activeComponent: PanelComponent | null;
+  componentButtons: Map<PanelComponent, HTMLElement>;
 
   constructor() {
     super();
@@ -37,6 +75,7 @@ export class PlayerPanel extends BaseElement {
     this.bankValueTextEl = null;
     this.bankValueImgEl = null;
     this.activeComponent = null;
+    this.componentButtons = new Map();
   }
 
   html(): string {
@@ -52,6 +91,13 @@ export class PlayerPanel extends BaseElement {
     const collectionLogButton = this.querySelector<HTMLElement>(".player-panel__collection-log");
     const bankButton = this.querySelector<HTMLElement>(".player-panel__bank");
     const bossKcButton = this.querySelector<HTMLElement>(".player-panel__boss-kc");
+    this.componentButtons = new Map();
+    for (const button of Array.from(this.querySelectorAll<HTMLElement>("button[data-component]"))) {
+      const component = button.getAttribute("data-component");
+      if (isPanelComponent(component)) {
+        this.componentButtons.set(component, button);
+      }
+    }
     if (minibar) {
       this.eventListener(minibar, "click", this.handleMiniBarClick.bind(this) as EventListener);
     }
@@ -126,30 +172,27 @@ export class PlayerPanel extends BaseElement {
 
   handleMiniBarClick(event: Event): void {
     const target = event.target;
-    const component = target instanceof Element ? target.getAttribute("data-component") : null;
+    const requestedComponent = target instanceof Element ? target.getAttribute("data-component") : null;
+    const component = isPanelComponent(requestedComponent) ? requestedComponent : null;
     if (component && this.activeComponent !== component) {
       if (this.contentArea) {
         this.contentArea.textContent = '';
-        const el = document.createElement(component);
+        const el = createPanelComponent(component);
         el.setAttribute('player-name', this.playerName ?? '');
         this.contentArea.appendChild(el);
       }
 
       if (this.activeComponent) {
-        this.querySelector<HTMLElement>(`button[data-component="${this.activeComponent}"]`)?.classList.remove(
-          "player-panel__tab-active"
-        );
+        this.componentButtons.get(this.activeComponent)?.classList.remove("player-panel__tab-active");
       }
-      this.querySelector<HTMLElement>(`button[data-component="${component}"]`)?.classList.add("player-panel__tab-active");
+      this.componentButtons.get(component)?.classList.add("player-panel__tab-active");
       this.activeComponent = component;
       this.classList.add("expanded");
     } else if (this.activeComponent && this.activeComponent === component) {
       if (this.contentArea) {
-        this.contentArea.innerHTML = "";
+        this.contentArea.textContent = "";
       }
-      this.querySelector<HTMLElement>(`button[data-component="${this.activeComponent}"]`)?.classList.remove(
-        "player-panel__tab-active"
-      );
+      this.componentButtons.get(this.activeComponent)?.classList.remove("player-panel__tab-active");
       this.activeComponent = null;
       this.classList.remove("expanded");
     }

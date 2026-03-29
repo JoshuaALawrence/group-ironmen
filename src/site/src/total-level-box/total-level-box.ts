@@ -46,7 +46,7 @@ export class TotalLevelBox extends BaseElement {
       return;
     }
 
-    this.totalLevel.innerHTML = String(skill.level);
+    this.totalLevel.textContent = String(skill.level);
     this.updateTooltip(`Total XP: ${skill.xp.toLocaleString()}`);
   }
 }

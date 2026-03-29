@@ -45,6 +45,12 @@ const apiLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
 });
+const pageLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 1200,
+  standardHeaders: true,
+  legacyHeaders: false,
+});
 app.use("/api", apiLimiter);
 
 app.use(express.static("public"));
@@ -87,7 +93,7 @@ if (backend) {
   console.log("No backend supplied for api calls, not going to handle api requests");
 }
 
-app.get("*", function (request, response) {
+app.get("*", pageLimiter, function (request, response) {
   if (request.path.includes("/map") && request.path.includes(".png")) {
     response.sendStatus(404);
   } else {

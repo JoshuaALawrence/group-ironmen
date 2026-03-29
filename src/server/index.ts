@@ -41,6 +41,12 @@ const apiLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
 });
+const pageLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 1200,
+  standardHeaders: true,
+  legacyHeaders: false,
+});
 app.use('/api', apiLimiter);
 
 // ── Shared state ──
@@ -57,7 +63,7 @@ app.use((_req, res, next) => {
   res.header('Access-Control-Max-Age', '3600');
   next();
 });
-app.options('*', (_req, res) => res.sendStatus(204));
+app.options('*', pageLimiter, (_req, res) => res.sendStatus(204));
 
 // ── API routes ──
 app.use('/api/group/:group_name', authedRouter);
@@ -84,7 +90,7 @@ const sitePublicDir = resolveSitePublicDir();
 app.use(express.static(sitePublicDir));
 
 // SPA catch-all: serve index.html for any non-API, non-map-PNG route
-app.get('*', (req, res) => {
+app.get('*', pageLimiter, (req, res) => {
   if (req.path.includes('/map') && req.path.includes('.png')) {
     return res.sendStatus(404);
   }

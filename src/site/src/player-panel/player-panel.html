@@ -1,4 +1,4 @@
-<player-stats player-name="${this.playerName}"></player-stats>
+<player-stats player-name="${escapeHtml(this.playerName ?? "")}"></player-stats>
 <div class="player-panel__bank-value">
   <img src="/icons/items/995.webp" width="18" height="18" />
   <span class="player-panel__bank-value-text"></span>
