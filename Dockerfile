@@ -9,6 +9,7 @@ RUN npx tsc && cd src/site && npx tsx build.ts --prod
 RUN rm -f src/site/public/app.js.map
 
 FROM node:20-alpine AS production
+RUN apk upgrade --no-cache
 RUN addgroup -g 1001 -S appgroup && \
     adduser -S appuser -u 1001 -G appgroup
 WORKDIR /app
@@ -22,6 +23,8 @@ COPY src/collection_log_info.json ./src/
 
 # Copy built frontend assets
 COPY --from=build /app/src/site/public ./src/site/public
+
+RUN rm -rf /usr/local/lib/node_modules/npm /usr/local/bin/npm /usr/local/bin/npx
 
 USER appuser
 EXPOSE 4000
