@@ -18,5 +18,12 @@
     "types": ["node", "vitest/globals"]
   },
   "include": ["src/**/*"],
-  "exclude": ["node_modules", "public", "scripts"]
+  "exclude": [
+    "node_modules",
+    "public",
+    "scripts",
+    "src/**/*.test.ts",
+    "src/**/*.test.js",
+    "src/**/__tests__/**"
+  ]
 }
