@@ -15,7 +15,7 @@ const helperState = vi.hoisted(() => ({
   clearInterval: vi.fn(),
 }));
 
-vi.mock("./db", () => ({
+vi.mock("../db", () => ({
   getGroup: helperState.getGroup,
   getUpcomingEventsWithWebhooks: helperState.getUpcomingEventsWithWebhooks,
   getClient: helperState.getClient,
